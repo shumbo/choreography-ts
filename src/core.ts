@@ -48,9 +48,10 @@ export type CallChoreography<L extends string> = <LL extends L, T, Args>(
 export type Unwrap<L1 extends string> = <T>(located: Located<T, L1>) => T;
 
 export interface Backend<L extends string> {
-  run: <L1 extends L>(
-    choreography: Choreography<L, void, void>,
-    location: L1
+  run: <L1 extends L, Args>(
+    choreography: Choreography<L, void, Args>,
+    location: L1,
+    args: Args
   ) => Promise<void>;
 }
 

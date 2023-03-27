@@ -26,7 +26,7 @@ const testChoreography: Choreography<Locations, void> = async ({
   });
 };
 
-const bookseller: Choreography<Locations, void> = async ({
+const bookseller: Choreography<Locations, void, null> = async ({
   locally,
   comm,
   broadcast,
@@ -75,11 +75,11 @@ const bookseller: Choreography<Locations, void> = async ({
 };
 
 async function main(location: string) {
-  const backend = new HttpBackend({
+  const backend = new HttpBackend<Locations>({
     seller: ["localhost", 3000],
     buyer: ["localhost", 3001],
   });
-  backend.run(bookseller, location as any);
+  backend.run(bookseller, location as any, null);
 }
 
 main(process.argv[2]!);

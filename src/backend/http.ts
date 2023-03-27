@@ -22,9 +22,10 @@ type HttpConfig<L extends string> = Record<L, [string, number]>;
 
 export class HttpBackend<L extends string> implements Backend<L> {
   constructor(private config: HttpConfig<L>) {}
-  public async run<L1 extends L>(
-    choreography: Choreography<L, void>,
-    location: L1
+  public async run<L1 extends L, Args>(
+    choreography: Choreography<L, void, Args>,
+    location: L1,
+    args: Args
   ) {
     const [hostname, port] = this.config[location];
     const key = Symbol(location);
@@ -120,7 +121,15 @@ export class HttpBackend<L extends string> implements Backend<L> {
       }
     };
 
-    await choreography({ locally, comm, broadcast, call: undefined as any });
+    await choreography(
+      {
+        locally,
+        comm,
+        broadcast,
+        call: undefined as any,
+      },
+      args
+    );
 
     server.close();
   }

@@ -1,9 +1,9 @@
 /**
  * A choreography involving locations of type `L` and returning a located value
  */
-export type Choreography<L extends string, T, Args = void> = (
+export type Choreography<L extends string, T, GArgs = void> = (
   deps: Dependencies<L>,
-  args: Args
+  globalArgs: GArgs
 ) => Promise<T>;
 
 /**
@@ -41,17 +41,17 @@ export type Broadcast<L extends string> = <L1 extends L, T>(
   value: Located<T, L1>
 ) => Promise<T>;
 
-export type CallChoreography<L extends string> = <LL extends L, T, Args>(
-  choreography: Choreography<LL, T, Args>
+export type CallChoreography<L extends string> = <LL extends L, T, GArgs>(
+  choreography: Choreography<LL, T, GArgs>
 ) => Promise<T>;
 
 export type Unwrap<L1 extends string> = <T>(located: Located<T, L1>) => T;
 
 export interface Backend<L extends string> {
-  run: <L1 extends L, Args>(
-    choreography: Choreography<L, void, Args>,
+  run: <L1 extends L, GArgs>(
+    choreography: Choreography<L, void, GArgs>,
     location: L1,
-    args: Args
+    args: GArgs
   ) => Promise<void>;
 }
 

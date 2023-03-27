@@ -1,4 +1,4 @@
-import { Choreography, Located } from "../../src";
+import { Choreography } from "../../src";
 import { HttpBackend } from "../../src/backend/http";
 
 type Locations = "buyer" | "seller";
@@ -79,7 +79,7 @@ async function main(location: string) {
     seller: ["localhost", 3000],
     buyer: ["localhost", 3001],
   });
-  backend.run(bookseller, location as any, null);
+  backend.run(bookseller, location as any, null, undefined);
 }
 
 main(process.argv[2]!);

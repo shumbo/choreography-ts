@@ -1,4 +1,4 @@
-import { Choreography, HttpBackend } from "..";
+import { Choreography, HttpBackend, Located } from "..";
 
 const locations = ["alice", "bob", "carol"] as const;
 type Locations = (typeof locations)[number];
@@ -14,7 +14,28 @@ describe("HTTP Backend", () => {
     const c: Choreography<Locations, void, string> = async ({}, q) => {
       expect(q).toBe(p);
     };
-    await Promise.all(locations.map((l) => backend.run(c, l, p)));
+    await Promise.all(locations.map((l) => backend.run(c, l, p, undefined)));
+  });
+  test("local arguments", async () => {
+    const p = "Alice's Secret Message";
+    const c: Choreography<Locations, void, null, { alice: string }> = async (
+      { locally },
+      _,
+      l
+    ) => {
+      await locally("alice", (unwrap) => {
+        expect(unwrap(l.alice)).toBe(p);
+      });
+    };
+    if (false) {
+      // @ts-expect-error
+      await backend.run(c, "alice", null, 1); // wrong type
+    }
+    await Promise.all([
+      backend.run(c, "alice", null, p),
+      backend.run(c, "bob", null, undefined),
+      backend.run(c, "carol", null, undefined),
+    ]);
   });
   test("comm", async () => {
     const helloWorld: Choreography<Locations, void> = async ({
@@ -28,7 +49,7 @@ describe("HTTP Backend", () => {
       });
     };
     await Promise.all(
-      locations.map((l) => backend.run(helloWorld, l, undefined))
+      locations.map((l) => backend.run(helloWorld, l, null, undefined))
     );
   });
   test("broadcast", async () => {
@@ -40,6 +61,8 @@ describe("HTTP Backend", () => {
       const msg = await broadcast("alice", localMsg);
       expect(msg).toBe("Hello everyone!");
     };
-    await Promise.all(locations.map((l) => backend.run(test, l, undefined)));
+    await Promise.all(
+      locations.map((l) => backend.run(test, l, null, undefined))
+    );
   });
 });

@@ -1,9 +1,12 @@
 /**
  * A choreography involving locations of type `L` and returning a located value
  */
-export type Choreography<L extends string, T, GArgs = void> = (
+export type Choreography<L extends string, T, GArgs = null, LArgs = {}> = (
   deps: Dependencies<L>,
-  globalArgs: GArgs
+  globalArgs: GArgs,
+  locatedArgs: {
+    [L1 in keyof LArgs]: L1 extends string ? Located<LArgs[L1], L1> : undefined;
+  }
 ) => Promise<T>;
 
 /**
@@ -41,17 +44,29 @@ export type Broadcast<L extends string> = <L1 extends L, T>(
   value: Located<T, L1>
 ) => Promise<T>;
 
-export type CallChoreography<L extends string> = <LL extends L, T, GArgs>(
-  choreography: Choreography<LL, T, GArgs>
+export type CallChoreography<L extends string> = <
+  LL extends L,
+  T,
+  GArgs,
+  LArgs
+>(
+  choreography: Choreography<LL, T, GArgs, LArgs>
 ) => Promise<T>;
 
 export type Unwrap<L1 extends string> = <T>(located: Located<T, L1>) => T;
 
+export type LocatedArgsAt<
+  LArgs extends object,
+  L extends string,
+  L1 extends L
+> = L1 extends keyof LArgs ? LArgs[L1] : L1 extends L ? unknown : never;
+
 export interface Backend<L extends string> {
-  run: <L1 extends L, GArgs>(
-    choreography: Choreography<L, void, GArgs>,
+  run: <L1 extends L, GArgs, LArgs extends object>(
+    choreography: Choreography<L, void, GArgs, LArgs>,
     location: L1,
-    args: GArgs
+    args: GArgs,
+    locatedArgs: LocatedArgsAt<LArgs, L, L1>
   ) => Promise<void>;
 }
 

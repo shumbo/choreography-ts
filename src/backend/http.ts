@@ -10,6 +10,7 @@ import {
   Unwrap,
   Comm,
   Broadcast,
+  LocatedArgsAt,
 } from "../core";
 import { Queue } from "../lib/queue";
 
@@ -22,10 +23,11 @@ type HttpConfig<L extends string> = Record<L, [string, number]>;
 
 export class HttpBackend<L extends string> implements Backend<L> {
   constructor(private config: HttpConfig<L>) {}
-  public async run<L1 extends L, GArgs>(
-    choreography: Choreography<L, void, GArgs>,
+  public async run<L1 extends L, GArgs = void, LArgs extends object = {}>(
+    choreography: Choreography<L, void, GArgs, LArgs>,
     location: L1,
-    globalArgs: GArgs
+    globalArgs: GArgs,
+    locatedArgs: LocatedArgsAt<LArgs, L, L1>
   ) {
     const [hostname, port] = this.config[location];
     const key = Symbol(location);
@@ -128,7 +130,9 @@ export class HttpBackend<L extends string> implements Backend<L> {
         broadcast,
         call: undefined as any,
       },
-      globalArgs
+      globalArgs,
+      // TODO: Can we get get rid of this cast?
+      { [location]: new Located(locatedArgs, key) } as any
     );
 
     server.close();

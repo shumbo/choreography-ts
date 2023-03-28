@@ -1,4 +1,4 @@
-import { Choreography, HttpBackend, Located } from "..";
+import { Choreography, HttpBackend } from "..";
 
 const locations = ["alice", "bob", "carol"] as const;
 type Locations = (typeof locations)[number];
@@ -36,6 +36,20 @@ describe("HTTP Backend", () => {
       backend.run(c, "bob", null, undefined),
       backend.run(c, "carol", null, undefined),
     ]);
+  });
+  test("local return values", async () => {
+    const c: Choreography<Locations, { bob: string }, null> = async ({
+      locally,
+      comm,
+    }) => {
+      const a = await locally("alice", () => "Hello, world!");
+      const b = await comm("alice", "bob", a);
+      return { bob: b };
+    };
+    const alicePromise = backend.run(c, "alice", null, undefined);
+    const bobPromise = backend.run(c, "bob", null, undefined);
+    await alicePromise;
+    expect(await bobPromise).toBe("Hello, world!");
   });
   test("comm", async () => {
     const helloWorld: Choreography<Locations, void> = async ({

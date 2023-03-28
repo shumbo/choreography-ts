@@ -1,13 +1,20 @@
 /**
  * A choreography involving locations of type `L` and returning a located value
  */
-export type Choreography<L extends string, T, GArgs = null, LArgs = {}> = (
+export type Choreography<
+  L extends string,
+  Return = {},
+  GArgs = null,
+  LArgs = {}
+> = (
   deps: Dependencies<L>,
   globalArgs: GArgs,
   locatedArgs: {
     [L1 in keyof LArgs]: L1 extends string ? Located<LArgs[L1], L1> : undefined;
   }
-) => Promise<T>;
+) => Promise<{
+  [L1 in keyof Return]: L1 extends string ? Located<Return[L1], L1> : undefined;
+}>;
 
 /**
  * The dependencies of a choreography
@@ -62,12 +69,12 @@ export type LocatedArgsAt<
 > = L1 extends keyof LArgs ? LArgs[L1] : L1 extends L ? unknown : never;
 
 export interface Backend<L extends string> {
-  run: <L1 extends L, GArgs, LArgs extends object>(
-    choreography: Choreography<L, void, GArgs, LArgs>,
+  run: <L1 extends L, GArgs, LArgs extends object, Ret = void>(
+    choreography: Choreography<L, Ret, GArgs, LArgs>,
     location: L1,
     args: GArgs,
     locatedArgs: LocatedArgsAt<LArgs, L, L1>
-  ) => Promise<void>;
+  ) => Promise<L1 extends keyof Ret ? Ret[L1] : never>;
 }
 
 export class Located<T, L1 extends string> {
@@ -77,6 +84,7 @@ export class Located<T, L1 extends string> {
   }
   /**
    *
+   * @internal
    * @param key
    * @returns
    */

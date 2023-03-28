@@ -26,11 +26,11 @@ const testChoreography: Choreography<Locations, void> = async ({
   });
 };
 
-const bookseller: Choreography<Locations, void, null> = async ({
-  locally,
-  comm,
-  broadcast,
-}) => {
+const bookseller: Choreography<
+  Locations,
+  { buyer: Date | null },
+  null
+> = async ({ locally, comm, broadcast }) => {
   const titleAtBuyer = await locally("buyer", () => {
     return "HoTT";
   });
@@ -67,10 +67,12 @@ const bookseller: Choreography<Locations, void, null> = async ({
         `Your book will be delivered on ${unwrap(deliveryDateAtBuyer)}`
       );
     });
+    return { buyer: deliveryDateAtBuyer };
   } else {
     await locally("buyer", () => {
       console.log("You don't have enough money to buy this book");
     });
+    return { buyer: await locally("buyer", () => null) };
   }
 };
 

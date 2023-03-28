@@ -23,12 +23,17 @@ type HttpConfig<L extends string> = Record<L, [string, number]>;
 
 export class HttpBackend<L extends string> implements Backend<L> {
   constructor(private config: HttpConfig<L>) {}
-  public async run<L1 extends L, GArgs = void, LArgs extends object = {}>(
-    choreography: Choreography<L, void, GArgs, LArgs>,
+  public async run<
+    L1 extends L,
+    GArgs = void,
+    LArgs extends object = {},
+    Ret = void
+  >(
+    choreography: Choreography<L, Ret, GArgs, LArgs>,
     location: L1,
     globalArgs: GArgs,
     locatedArgs: LocatedArgsAt<LArgs, L, L1>
-  ) {
+  ): Promise<L1 extends keyof Ret ? Ret[L1] : never> {
     const [hostname, port] = this.config[location];
     const key = Symbol(location);
 
@@ -123,7 +128,7 @@ export class HttpBackend<L extends string> implements Backend<L> {
       }
     };
 
-    await choreography(
+    const ret = await choreography(
       {
         locally,
         comm,
@@ -136,6 +141,9 @@ export class HttpBackend<L extends string> implements Backend<L> {
     );
 
     server.close();
+
+    // @ts-ignore
+    return ret?.[location]?.getValue(key);
   }
 }
 

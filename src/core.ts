@@ -3,17 +3,21 @@
  */
 export type Choreography<
   L extends string,
-  Return = {},
+  Return extends {
+    [L1 in L]?: any;
+  } = {},
   GArgs = null,
-  LArgs = {}
+  LArgs extends {
+    [L1 in L]?: any;
+  } = {}
 > = (
   deps: Dependencies<L>,
   globalArgs: GArgs,
   locatedArgs: {
-    [L1 in keyof LArgs]: L1 extends string ? Located<LArgs[L1], L1> : undefined;
+    [L1 in keyof LArgs]: L1 extends string ? Located<LArgs[L1], L1> : never;
   }
 ) => Promise<{
-  [L1 in keyof Return]: L1 extends string ? Located<Return[L1], L1> : undefined;
+  [L1 in keyof Return]: L1 extends string ? Located<Return[L1], L1> : never;
 }>;
 
 /**
@@ -53,27 +57,42 @@ export type Broadcast<L extends string> = <L1 extends L, T>(
 
 export type CallChoreography<L extends string> = <
   LL extends L,
-  T,
+  Return extends {
+    [L1 in L]?: any;
+  },
   GArgs,
-  LArgs
+  LArgs extends {
+    [L1 in L]?: any;
+  }
 >(
-  choreography: Choreography<LL, T, GArgs, LArgs>
-) => Promise<T>;
+  choreography: Choreography<LL, Return, GArgs, LArgs>,
+  args: GArgs,
+  locatedArgs: {
+    [L1 in keyof LArgs]: L1 extends string ? Located<LArgs[L1], L1> : never;
+  }
+) => Promise<{
+  [L1 in keyof Return]: L1 extends string ? Located<Return[L1], L1> : never;
+}>;
 
 export type Unwrap<L1 extends string> = <T>(located: Located<T, L1>) => T;
 
-export type LocatedArgsAt<
-  LArgs extends object,
-  L extends string,
-  L1 extends L
-> = L1 extends keyof LArgs ? LArgs[L1] : L1 extends L ? unknown : never;
-
 export interface Backend<L extends string> {
-  run: <L1 extends L, GArgs, LArgs extends object, Ret = void>(
+  run: <
+    L1 extends L,
+    GArgs,
+    LArgs extends {
+      [L1 in L]: any;
+    },
+    Ret extends {
+      [L1 in L]: any;
+    }
+  >(
     choreography: Choreography<L, Ret, GArgs, LArgs>,
     location: L1,
     args: GArgs,
-    locatedArgs: LocatedArgsAt<LArgs, L, L1>
+    locatedArgs: {
+      [P in L1]: P extends keyof LArgs ? LArgs[P] : never;
+    }
   ) => Promise<L1 extends keyof Ret ? Ret[L1] : never>;
 }
 

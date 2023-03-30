@@ -1,9 +1,9 @@
-import { Choreography } from "../../src";
+import { Choreography, Located } from "../../src";
 import { HttpBackend } from "../../src/backend/http";
 
 type Locations = "buyer" | "seller";
 
-const testChoreography: Choreography<Locations, void> = async ({
+const testChoreography: Choreography<Locations, {}, null, {}> = async ({
   locally,
   comm,
   broadcast,
@@ -24,13 +24,15 @@ const testChoreography: Choreography<Locations, void> = async ({
     // @ts-expect-error
     const _ = unwrap(y);
   });
+
+  return {};
 };
 
-const bookseller: Choreography<
-  Locations,
-  { buyer: Date | null },
-  null
-> = async ({ locally, comm, broadcast }) => {
+const bookseller: Choreography<Locations, { buyer: Date | null }> = async ({
+  locally,
+  comm,
+  broadcast,
+}) => {
   const titleAtBuyer = await locally("buyer", () => {
     return "HoTT";
   });
@@ -81,7 +83,7 @@ async function main(location: string) {
     seller: ["localhost", 3000],
     buyer: ["localhost", 3001],
   });
-  backend.run(bookseller, location as any, null, undefined);
+  backend.run(bookseller, location as any, null, {});
 }
 
 main(process.argv[2]!);

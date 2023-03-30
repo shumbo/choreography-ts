@@ -10,7 +10,7 @@ import {
   Unwrap,
   Comm,
   Broadcast,
-  LocatedArgsAt,
+  CallChoreography,
 } from "../core";
 import { Queue } from "../lib/queue";
 
@@ -23,16 +23,13 @@ type HttpConfig<L extends string> = Record<L, [string, number]>;
 
 export class HttpBackend<L extends string> implements Backend<L> {
   constructor(private config: HttpConfig<L>) {}
-  public async run<
-    L1 extends L,
-    GArgs = void,
-    LArgs extends object = {},
-    Ret = void
-  >(
+  public async run<L1 extends L, GArgs, LArgs extends { [L2 in L]?: any }, Ret>(
     choreography: Choreography<L, Ret, GArgs, LArgs>,
     location: L1,
     globalArgs: GArgs,
-    locatedArgs: LocatedArgsAt<LArgs, L, L1>
+    locatedArgs: {
+      [P in L1 extends keyof LArgs ? L1 : never]: LArgs[P];
+    }
   ): Promise<L1 extends keyof Ret ? Ret[L1] : never> {
     const [hostname, port] = this.config[location];
     const key = Symbol(location);
@@ -128,16 +125,35 @@ export class HttpBackend<L extends string> implements Backend<L> {
       }
     };
 
+    const call: CallChoreography<L> = async <
+      LL extends L,
+      Ret extends {
+        [L1 in L]: any;
+      },
+      GArgs,
+      LArgs extends {
+        [L1 in L]?: any;
+      }
+    >(
+      c: Choreography<LL, Ret, GArgs, LArgs>,
+      args: GArgs,
+      l: {
+        [L1 in keyof LArgs]: L1 extends string ? Located<LArgs[L1], L1> : never;
+      }
+    ) => {
+      return await c({ locally, comm, broadcast, call }, args, l);
+    };
+
     const ret = await choreography(
       {
         locally,
         comm,
         broadcast,
-        call: undefined as any,
+        call,
       },
       globalArgs,
       // TODO: Can we get get rid of this cast?
-      { [location]: new Located(locatedArgs, key) } as any
+      { [location]: new Located((locatedArgs as any)[location], key) } as any
     );
 
     server.close();

@@ -4,16 +4,13 @@ import { HttpBackend } from "../../src/backend/http";
 const locations = ["alice", "bob"] as const;
 type Locations = (typeof locations)[number];
 
-const helloWorld: Choreography<Locations, {}, null> = async ({
-  locally,
-  comm,
-}) => {
+const helloWorld: Choreography<Locations> = async ({ locally, comm }) => {
   const msg = await locally("alice", () => "Hello, world!");
   const msgAtBob = await comm("alice", "bob", msg);
   await locally("bob", (unwrap) => {
     console.log(unwrap(msgAtBob));
   });
-  return {};
+  return [];
 };
 
 async function main(location: string) {
@@ -24,7 +21,7 @@ async function main(location: string) {
     alice: ["localhost", 3000],
     bob: ["localhost", 3001],
   });
-  backend.run(helloWorld, location as any, null, {});
+  backend.run(helloWorld, location as any, []);
 }
 
 main(process.argv[2]!);

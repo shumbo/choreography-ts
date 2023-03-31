@@ -10,8 +10,9 @@ import {
   Unwrap,
   Comm,
   Broadcast,
-  CallChoreography,
+  Call,
   Location,
+  LocatedElements,
 } from "../core";
 import { Queue } from "../lib/queue";
 
@@ -24,14 +25,15 @@ type HttpConfig<L extends Location> = Record<L, [string, number]>;
 
 export class HttpBackend<L extends Location> implements Backend<L> {
   constructor(private config: HttpConfig<L>) {}
-  public async run<L1 extends L, GArgs, LArgs extends { [L2 in L]?: any }, Ret>(
-    choreography: Choreography<L, Ret, GArgs, LArgs>,
+  public async run<
+    L1 extends L,
+    Args extends Located<any, L>[],
+    Return extends Located<any, L>[]
+  >(
+    choreography: Choreography<L, Args, Return>,
     location: L1,
-    globalArgs: GArgs,
-    locatedArgs: {
-      [P in L1 extends keyof LArgs ? L1 : never]: LArgs[P];
-    }
-  ): Promise<L1 extends keyof Ret ? Ret[L1] : never> {
+    args: LocatedElements<L, L1, Args>
+  ): Promise<LocatedElements<L, L1, Return>> {
     const [hostname, port] = this.config[location];
     const key = Symbol(location.toString());
 
@@ -49,7 +51,6 @@ export class HttpBackend<L extends Location> implements Backend<L> {
     });
     const server = await startApplication(app, port, hostname);
 
-    // make dependencies
     const locally: Locally<L> = async <L2 extends L, T>(
       loc: L2,
       callback: (unwrap: Unwrap<L2>) => T
@@ -126,41 +127,27 @@ export class HttpBackend<L extends Location> implements Backend<L> {
       }
     };
 
-    const call: CallChoreography<L> = async <
+    const call: Call<L> = async <
       LL extends L,
-      Ret extends {
-        [L1 in LL]: any;
-      },
-      GArgs,
-      LArgs extends {
-        [L1 in LL]: any;
-      }
+      Args extends Located<any, LL>[],
+      Return extends Located<any, LL>[]
     >(
-      c: Choreography<LL, Ret, GArgs, LArgs>,
-      args: GArgs,
-      l: {
-        [L1 in keyof LArgs]: Located<LArgs[L1], L1>;
-      }
+      c: Choreography<LL, Args, Return>,
+      a: Args
     ) => {
-      return await c({ locally, comm, broadcast, call }, args, l);
+      return await c({ locally, comm, broadcast, call }, a);
     };
 
     const ret = await choreography(
-      {
-        locally,
-        comm,
-        broadcast,
-        call,
-      },
-      globalArgs,
-      // TODO: Can we get get rid of this cast?
-      { [location]: new Located((locatedArgs as any)[location], key) } as any
+      { locally, comm, broadcast, call },
+      args.map((x) => new Located(x, key)) as any
     );
 
     server.close();
 
-    // @ts-ignore
-    return ret?.[location]?.getValue(key);
+    return ret.map((x) =>
+      x instanceof Located ? x.getValue(key) : undefined
+    ) as any;
   }
 }
 

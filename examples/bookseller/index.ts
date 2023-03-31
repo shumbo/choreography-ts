@@ -1,9 +1,8 @@
-import { Choreography, Located } from "../../src";
-import { HttpBackend } from "../../src/backend/http";
+import { Choreography, Located, HttpBackend } from "../../src";
 
 type Locations = "buyer" | "seller";
 
-const testChoreography: Choreography<Locations, {}, null, {}> = async ({
+const testChoreography: Choreography<Locations> = async ({
   locally,
   comm,
   broadcast,
@@ -25,14 +24,14 @@ const testChoreography: Choreography<Locations, {}, null, {}> = async ({
     const _ = unwrap(y);
   });
 
-  return {};
+  return [];
 };
 
-const bookseller: Choreography<Locations, { buyer: Date | null }> = async ({
-  locally,
-  comm,
-  broadcast,
-}) => {
+const bookseller: Choreography<
+  Locations,
+  [],
+  [Located<Date | null, "buyer">]
+> = async ({ locally, comm, broadcast }) => {
   const titleAtBuyer = await locally("buyer", () => {
     return "HoTT";
   });
@@ -69,12 +68,12 @@ const bookseller: Choreography<Locations, { buyer: Date | null }> = async ({
         `Your book will be delivered on ${unwrap(deliveryDateAtBuyer)}`
       );
     });
-    return { buyer: deliveryDateAtBuyer };
+    return [deliveryDateAtBuyer];
   } else {
     await locally("buyer", () => {
       console.log("You don't have enough money to buy this book");
     });
-    return { buyer: await locally("buyer", () => null) };
+    return [await locally("buyer", () => null)];
   }
 };
 
@@ -83,7 +82,7 @@ async function main(location: string) {
     seller: ["localhost", 3000],
     buyer: ["localhost", 3001],
   });
-  backend.run(bookseller, location as any, null, {});
+  backend.run(bookseller, location as any, []);
 }
 
 main(process.argv[2]!);

@@ -1,4 +1,4 @@
-import { Choreography, HttpBackend } from "..";
+import { Choreography, HttpBackend, Located } from "..";
 
 const locations = ["alice", "bob", "carol"] as const;
 type Locations = (typeof locations)[number];
@@ -12,47 +12,49 @@ const backend = new HttpBackend<Locations>({
 describe("HTTP Backend", () => {
   test("global arguments", async () => {
     const p = "GLOBAL ARGUMENT";
-    const c: Choreography<Locations, {}, string> = async ({}, q) => {
-      expect(q).toBe(p);
-      return {};
+    const f = (q: string) => {
+      const c: Choreography<Locations, [], []> = async ({}) => {
+        expect(q).toBe(p);
+        return [];
+      };
+      return c;
     };
-    await Promise.all(locations.map((l) => backend.run(c, l, p, {})));
+    await Promise.all(locations.map((l) => backend.run(f(p), l, [])));
   });
   test("local arguments", async () => {
     const p = "Alice's Secret Message";
-    const c: Choreography<Locations, {}, null, { alice: string }> = async (
+    const c: Choreography<Locations, [Located<string, "alice">]> = async (
       { locally },
-      _,
-      l
+      [msg]
     ) => {
       await locally("alice", (unwrap) => {
-        expect(unwrap(l.alice)).toBe(p);
+        expect(unwrap(msg)).toBe(p);
       });
-      return {};
+      return [];
     };
     if (false) {
       // @ts-expect-error
       await backend.run(c, "alice", null, 1); // wrong type
     }
     await Promise.all([
-      backend.run(c, "alice", null, { alice: p }),
-      backend.run(c, "bob", null, {}),
-      backend.run(c, "carol", null, {}),
+      backend.run(c, "alice", [p]),
+      backend.run(c, "bob", [undefined]),
+      backend.run(c, "carol", [undefined]),
     ]);
   });
   test("local return values", async () => {
-    const c: Choreography<Locations, { bob: string }, null> = async ({
+    const c: Choreography<Locations, [], [Located<string, "bob">]> = async ({
       locally,
       comm,
     }) => {
       const a = await locally("alice", () => "Hello, world!");
       const b = await comm("alice", "bob", a);
-      return { bob: b };
+      return [b];
     };
-    const alicePromise = backend.run(c, "alice", null, {});
-    const bobPromise = backend.run(c, "bob", null, {});
+    const alicePromise = backend.run(c, "alice", []);
+    const [bobMessage] = await backend.run(c, "bob", []);
     await alicePromise;
-    expect(await bobPromise).toBe("Hello, world!");
+    expect(bobMessage).toEqual("Hello, world!");
   });
   test("comm", async () => {
     const helloWorld: Choreography<Locations> = async ({ locally, comm }) => {
@@ -61,22 +63,17 @@ describe("HTTP Backend", () => {
       await locally("bob", (unwrap) => {
         expect(unwrap(msgAtBob)).toBe("Hello, world!");
       });
-      return {};
+      return [];
     };
-    await Promise.all(
-      locations.map((l) => backend.run(helloWorld, l, null, {}))
-    );
+    await Promise.all(locations.map((l) => backend.run(helloWorld, l, [])));
   });
   test("broadcast", async () => {
-    const test: Choreography<Locations, {}, null, {}> = async ({
-      locally,
-      broadcast,
-    }) => {
+    const test: Choreography<Locations> = async ({ locally, broadcast }) => {
       const localMsg = await locally("alice", () => "Hello everyone!");
       const msg = await broadcast("alice", localMsg);
       expect(msg).toBe("Hello everyone!");
-      return {};
+      return [];
     };
-    await Promise.all(locations.map((l) => backend.run(test, l, null, {})));
+    await Promise.all(locations.map((l) => backend.run(test, l, [])));
   });
 });

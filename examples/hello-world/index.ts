@@ -1,5 +1,4 @@
-import { Choreography } from "../../src";
-import { HttpBackend } from "../../src/backend/http";
+import { Choreography, HttpBackend } from "../../src";
 
 const locations = ["alice", "bob"] as const;
 type Locations = (typeof locations)[number];

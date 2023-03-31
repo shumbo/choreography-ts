@@ -11,6 +11,7 @@ import {
   Comm,
   Broadcast,
   CallChoreography,
+  Location,
 } from "../core";
 import { Queue } from "../lib/queue";
 
@@ -19,9 +20,9 @@ type Message<L> = {
   data: any;
 };
 
-type HttpConfig<L extends string> = Record<L, [string, number]>;
+type HttpConfig<L extends Location> = Record<L, [string, number]>;
 
-export class HttpBackend<L extends string> implements Backend<L> {
+export class HttpBackend<L extends Location> implements Backend<L> {
   constructor(private config: HttpConfig<L>) {}
   public async run<L1 extends L, GArgs, LArgs extends { [L2 in L]?: any }, Ret>(
     choreography: Choreography<L, Ret, GArgs, LArgs>,
@@ -32,7 +33,7 @@ export class HttpBackend<L extends string> implements Backend<L> {
     }
   ): Promise<L1 extends keyof Ret ? Ret[L1] : never> {
     const [hostname, port] = this.config[location];
-    const key = Symbol(location);
+    const key = Symbol(location.toString());
 
     const queue: Map<L, Queue> = new Map();
     for (const key in this.config) {

@@ -1,8 +1,10 @@
+export type Location = string | number | symbol;
+
 /**
  * A choreography involving locations of type `L` and returning a located value
  */
 export type Choreography<
-  L extends string,
+  L extends Location,
   Return extends {
     [L1 in L]?: any;
   } = {},
@@ -23,7 +25,7 @@ export type Choreography<
 /**
  * The dependencies of a choreography
  */
-export type Dependencies<L extends string> = {
+export type Dependencies<L extends Location> = {
   locally: Locally<L>;
   comm: Comm<L>;
   broadcast: Broadcast<L>;
@@ -33,7 +35,7 @@ export type Dependencies<L extends string> = {
 /**
  * Perform a local computation at location `L1` and return a value of type `T`
  */
-export type Locally<L extends string> = <L1 extends L, T>(
+export type Locally<L extends Location> = <L1 extends L, T>(
   location: L1,
   callback: (unwrap: Unwrap<L1>) => T
 ) => Promise<Located<T, L1>>;
@@ -41,7 +43,7 @@ export type Locally<L extends string> = <L1 extends L, T>(
 /**
  * Send a value of type `T` from location `L1` to location `L2`
  */
-export type Comm<L extends string> = <L1 extends L, L2 extends L, T>(
+export type Comm<L extends Location> = <L1 extends L, L2 extends L, T>(
   sender: L1,
   receiver: L2,
   value: Located<T, L1>
@@ -50,12 +52,12 @@ export type Comm<L extends string> = <L1 extends L, L2 extends L, T>(
 /**
  * Broadcast a value of type `T` from location `L1` to all other locations
  */
-export type Broadcast<L extends string> = <L1 extends L, T>(
+export type Broadcast<L extends Location> = <L1 extends L, T>(
   sender: L1,
   value: Located<T, L1>
 ) => Promise<T>;
 
-export type CallChoreography<L extends string> = <
+export type CallChoreography<L extends Location> = <
   LL extends L,
   Return extends {
     [L1 in L]?: any;
@@ -74,9 +76,9 @@ export type CallChoreography<L extends string> = <
   [L1 in keyof Return]: L1 extends string ? Located<Return[L1], L1> : never;
 }>;
 
-export type Unwrap<L1 extends string> = <T>(located: Located<T, L1>) => T;
+export type Unwrap<L1 extends Location> = <T>(located: Located<T, L1>) => T;
 
-export interface Backend<L extends string> {
+export interface Backend<L extends Location> {
   run: <
     L1 extends L,
     GArgs,
@@ -96,7 +98,7 @@ export interface Backend<L extends string> {
   ) => Promise<L1 extends keyof Ret ? Ret[L1] : never>;
 }
 
-export class Located<T, L1 extends string> {
+export class Located<T, L1 extends Location> {
   constructor(value: T, key: Symbol) {
     this.value = value;
     this.key = key;

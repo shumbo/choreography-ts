@@ -16,10 +16,10 @@ export type Choreography<
   deps: Dependencies<L>,
   globalArgs: GArgs,
   locatedArgs: {
-    [L1 in keyof LArgs]: L1 extends string ? Located<LArgs[L1], L1> : never;
+    [L1 in keyof LArgs]: Located<LArgs[L1], L1>;
   }
 ) => Promise<{
-  [L1 in keyof Return]: L1 extends string ? Located<Return[L1], L1> : never;
+  [L1 in keyof Return]: Located<Return[L1], L1>;
 }>;
 
 /**
@@ -70,10 +70,10 @@ export type CallChoreography<L extends Location> = <
   choreography: Choreography<LL, Return, GArgs, LArgs>,
   args: GArgs,
   locatedArgs: {
-    [L1 in keyof LArgs]: L1 extends string ? Located<LArgs[L1], L1> : never;
+    [L1 in keyof LArgs]: Located<LArgs[L1], L1>;
   }
 ) => Promise<{
-  [L1 in keyof Return]: L1 extends string ? Located<Return[L1], L1> : never;
+  [L1 in keyof Return]: Located<Return[L1], L1>;
 }>;
 
 export type Unwrap<L1 extends Location> = <T>(located: Located<T, L1>) => T;
@@ -93,9 +93,9 @@ export interface Backend<L extends Location> {
     location: L1,
     args: GArgs,
     locatedArgs: {
-      [P in L1]: P extends keyof LArgs ? LArgs[P] : never;
+      [P in keyof LArgs]: LArgs[P];
     }
-  ) => Promise<L1 extends keyof Ret ? Ret[L1] : never>;
+  ) => Promise<L1 extends keyof Ret ? Ret[L1] : void>;
 }
 
 export class Located<T, L1 extends Location> {

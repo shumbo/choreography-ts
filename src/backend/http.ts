@@ -129,17 +129,17 @@ export class HttpBackend<L extends Location> implements Backend<L> {
     const call: CallChoreography<L> = async <
       LL extends L,
       Ret extends {
-        [L1 in L]: any;
+        [L1 in LL]: any;
       },
       GArgs,
       LArgs extends {
-        [L1 in L]?: any;
+        [L1 in LL]: any;
       }
     >(
       c: Choreography<LL, Ret, GArgs, LArgs>,
       args: GArgs,
       l: {
-        [L1 in keyof LArgs]: L1 extends string ? Located<LArgs[L1], L1> : never;
+        [L1 in keyof LArgs]: Located<LArgs[L1], L1>;
       }
     ) => {
       return await c({ locally, comm, broadcast, call }, args, l);

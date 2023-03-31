@@ -10,6 +10,9 @@ import {
   Unwrap,
   Comm,
   Broadcast,
+  Call,
+  Location,
+  LocatedElements,
 } from "../core";
 import { Queue } from "../lib/queue";
 
@@ -18,16 +21,21 @@ type Message<L> = {
   data: any;
 };
 
-type HttpConfig<L extends string> = Record<L, [string, number]>;
+type HttpConfig<L extends Location> = Record<L, [string, number]>;
 
-export class HttpBackend<L extends string> implements Backend<L> {
+export class HttpBackend<L extends Location> implements Backend<L> {
   constructor(private config: HttpConfig<L>) {}
-  public async run<L1 extends L>(
-    choreography: Choreography<L, void>,
-    location: L1
-  ) {
+  public async run<
+    L1 extends L,
+    Args extends Located<any, L>[],
+    Return extends Located<any, L>[]
+  >(
+    choreography: Choreography<L, Args, Return>,
+    location: L1,
+    args: LocatedElements<L, L1, Args>
+  ): Promise<LocatedElements<L, L1, Return>> {
     const [hostname, port] = this.config[location];
-    const key = Symbol(location);
+    const key = Symbol(location.toString());
 
     const queue: Map<L, Queue> = new Map();
     for (const key in this.config) {
@@ -43,7 +51,6 @@ export class HttpBackend<L extends string> implements Backend<L> {
     });
     const server = await startApplication(app, port, hostname);
 
-    // make dependencies
     const locally: Locally<L> = async <L2 extends L, T>(
       loc: L2,
       callback: (unwrap: Unwrap<L2>) => T
@@ -120,9 +127,27 @@ export class HttpBackend<L extends string> implements Backend<L> {
       }
     };
 
-    await choreography({ locally, comm, broadcast, call: undefined as any });
+    const call: Call<L> = async <
+      LL extends L,
+      Args extends Located<any, LL>[],
+      Return extends Located<any, LL>[]
+    >(
+      c: Choreography<LL, Args, Return>,
+      a: Args
+    ) => {
+      return await c({ locally, comm, broadcast, call }, a);
+    };
+
+    const ret = await choreography(
+      { locally, comm, broadcast, call },
+      args.map((x) => new Located(x, key)) as any
+    );
 
     server.close();
+
+    return ret.map((x) =>
+      x instanceof Located ? x.getValue(key) : undefined
+    ) as any;
   }
 }
 

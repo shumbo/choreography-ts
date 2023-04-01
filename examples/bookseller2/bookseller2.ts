@@ -1,10 +1,10 @@
 import { Choreography, HttpBackend, Located } from "../../src";
 
 const locations = ["buyer1", "buyer2", "seller"] as const;
-type Location = (typeof locations)[number];
+export type Locations = (typeof locations)[number];
 
 type MakeDecision = Choreography<
-  Location,
+  Locations,
   [Located<number, "buyer1">],
   [Located<boolean, "buyer1">]
 >;
@@ -20,7 +20,7 @@ const deliveryDateTable = new Map<string, Date>([
   ["HoTT", new Date("2023-05-01")],
 ]);
 
-const oneBuyer: MakeDecision = async ({ locally }, [price]) => {
+export const oneBuyer: MakeDecision = async ({ locally }, [price]) => {
   const decision = await locally(
     "buyer1",
     (unwrap) => unwrap(price) <= buyer1Budget
@@ -28,7 +28,7 @@ const oneBuyer: MakeDecision = async ({ locally }, [price]) => {
   return [decision];
 };
 
-const twoBuyers: MakeDecision = async ({ locally, comm }, [price]) => {
+export const twoBuyers: MakeDecision = async ({ locally, comm }, [price]) => {
   const remaining_ = await locally(
     "buyer1",
     (unwrap) => unwrap(price) - buyer1Budget
@@ -42,14 +42,16 @@ const twoBuyers: MakeDecision = async ({ locally, comm }, [price]) => {
   return [decision];
 };
 
-const bookseller: (
+export const bookseller: (
   makeDecision: MakeDecision
-) => Choreography<Location, [], [Located<Date | null, "buyer1">]> = (
-  makeDecision
-) => {
+) => Choreography<
+  Locations,
+  [Located<string, "buyer1">],
+  [Located<Date | null, "buyer1">]
+> = (makeDecision) => {
   const c: Choreography<
-    Location,
-    [],
+    Locations,
+    [Located<string, "buyer1">],
     [Located<Date | null, "buyer1">]
   > = async ({ locally, comm, broadcast, call }) => {
     const titleAtBuyer = await locally("buyer1", () => {
@@ -89,19 +91,21 @@ const bookseller: (
 };
 
 async function main() {
-  const backend = new HttpBackend<Location>({
+  const backend = new HttpBackend<Locations>({
     buyer1: ["localhost", 3000],
     buyer2: ["localhost", 3001],
     seller: ["localhost", 3002],
   });
   console.log("--- PROTOCOL WITH ONE BUYER ---");
   await Promise.all(
-    locations.map((l) => backend.run(bookseller(oneBuyer), l, []))
+    locations.map((l) => backend.run(bookseller(oneBuyer), l, ["HoTT"]))
   );
   console.log("--- PROTOCOL WITH TWO BUYERS ---");
   await Promise.all(
-    locations.map((l) => backend.run(bookseller(twoBuyers), l, []))
+    locations.map((l) => backend.run(bookseller(twoBuyers), l, ["HoTT"]))
   );
 }
 
-main();
+if (require.main === module) {
+  main();
+}

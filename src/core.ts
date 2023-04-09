@@ -117,11 +117,10 @@ export type LocatedElements<L extends Location, L1 extends L, A> = A extends [
  */
 export interface Backend<L extends Location> {
   /**
-   * Execute a choreography at a given location
-   * @param choreography - a choreography to execute
+   * End-point project a choreography at a given location
+   * @param choreography - a choreography to project
    * @param location - a location to execute the choreography at
-   * @param args - the arguments of the choreography. Pass `undefined` for arguments that are not located at `location`
-   * @returns - the return values of the choreography. Elements of the array are `undefined` if the corresponding return value is not located at `location`
+   * @returns - a local program as a function
    */
   epp<
     L1 extends L,

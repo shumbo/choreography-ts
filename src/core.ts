@@ -38,7 +38,6 @@ export class Located<T, L1 extends Location> {
 
 export class Colocated<T, L extends Location> {
   constructor(locations: L[], value: T, key: Symbol) {
-    this.locations = new Set(locations);
     this.value = value;
     this.key = key;
   }
@@ -48,7 +47,6 @@ export class Colocated<T, L extends Location> {
     }
     return this.value;
   }
-  private locations: Set<L>;
   private value: T;
   private key: Symbol;
   private phantom?: (x: L) => void;
@@ -77,7 +75,9 @@ export type Locally<L extends Location> = <L1 extends L, T>(
   callback: (unwrap: Unwrap<L1>) => T
 ) => Promise<Located<T, L1>>;
 
-export type Unwrap<L1 extends Location> = <T>(located: Located<T, L1>) => T;
+export type Unwrap<L1 extends Location> = <T>(
+  located: Located<T, L1> | Colocated<T, L1>
+) => T;
 
 /**
  * Send a value of type `T` from location `L1` to location `L2`

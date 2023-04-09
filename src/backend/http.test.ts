@@ -82,7 +82,7 @@ describe("HTTP Backend", () => {
       });
       return [];
     };
-    await Promise.all(locations.map((l) => backend.run(test, l, [])));
+    await Promise.all(locations.map((l) => backend.epp(test, l)([])));
   });
   test("broadcast", async () => {
     const test: Choreography<Locations> = async ({ locally, broadcast }) => {
@@ -130,7 +130,7 @@ describe("HTTP Backend", () => {
       });
       return [];
     };
-    await Promise.all(locations.map((l) => backend.run(test, l, [])));
+    await Promise.all(locations.map((l) => backend.epp(test, l)([])));
   });
   test("colocally, peel narrower type", async () => {
     const test: Choreography<Locations> = async ({
@@ -146,7 +146,7 @@ describe("HTTP Backend", () => {
       });
       return [];
     };
-    await Promise.all(locations.map((l) => backend.run(test, l, [])));
+    await Promise.all(locations.map((l) => backend.epp(test, l)([])));
   });
   test("colocally changes context", async () => {
     const test: Choreography<Locations> = async ({
@@ -161,7 +161,7 @@ describe("HTTP Backend", () => {
       });
       return [];
     };
-    const p = backend.run(test, "alice", []);
+    const p = backend.epp(test, "alice")([]);
     await expect(p).rejects.toThrow();
   });
 });

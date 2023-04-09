@@ -27,7 +27,10 @@ const test: Choreography<Locations> = async ({
 };
 
 backend
-  .run(test, "alice", [])
+  .epp(
+    test,
+    "alice"
+  )([])
   .then(() => {
     console.log("success");
   })

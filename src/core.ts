@@ -36,7 +36,7 @@ export class Located<T, L1 extends Location> {
   private phantom?: L1;
 }
 
-export class Colocated<L extends Location, T> {
+export class Colocated<T, L extends Location> {
   constructor(locations: L[], value: T, key: Symbol) {
     this.locations = new Set(locations);
     this.value = value;
@@ -96,7 +96,7 @@ export type Colocally<L extends Location> = <
   callback: (deps: Dependencies<LL> & { peel: Peel<LL> }) => Promise<Return>
 ) => Promise<Return>;
 
-export type Peel<LL extends Location> = <T>(colocated: Colocated<LL, T>) => T;
+export type Peel<LL extends Location> = <T>(colocated: Colocated<T, LL>) => T;
 
 export type Multicast<L extends Location> = <
   L1 extends L,
@@ -106,7 +106,7 @@ export type Multicast<L extends Location> = <
   sender: L1,
   receivers: LL[],
   value: Located<T, L1>
-) => Promise<Colocated<LL | L1, T>>;
+) => Promise<Colocated<T, LL | L1>>;
 
 /**
  * Broadcast a value of type `T` from location `L1` to all other locations

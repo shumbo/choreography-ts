@@ -26,12 +26,8 @@ const choreography: Choreography<Location, [], []> = async ({
   call,
 }) => {
   const msgAtAlice = await locally("alice", () => "message from alice");
-  const c = moveAndPrint<Location, "alice", "bob">("alice", "bob");
-  const [msgAtBob] = await call<
-    "alice" | "bob",
-    [Located<string, "alice">],
-    [Located<string, "bob">]
-  >(c, [msgAtAlice]);
+  const c = moveAndPrint("alice", "bob");
+  const [msgAtBob] = await call(c, [msgAtAlice]);
   await call(moveAndPrint("bob", "carol"), [msgAtBob]);
   return [];
 };

@@ -20,7 +20,7 @@ async function main(location: string) {
     alice: ["localhost", 3000],
     bob: ["localhost", 3001],
   });
-  backend.run(helloWorld, location as any, []);
+  backend.epp(helloWorld, location as any)([]);
 }
 
 main(process.argv[2]!);

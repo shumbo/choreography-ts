@@ -19,7 +19,7 @@ describe("HTTP Backend", () => {
       };
       return c;
     };
-    await Promise.all(locations.map((l) => backend.run(f(p), l, [])));
+    await Promise.all(locations.map((l) => backend.epp(f(p), l)([])));
   });
   test("local arguments", async () => {
     const p = "Alice's Secret Message";
@@ -34,12 +34,12 @@ describe("HTTP Backend", () => {
     };
     if (false) {
       // @ts-expect-error
-      await backend.run(c, "alice", null, 1); // wrong type
+      await backend.epp(c, "alice", null)(1); // wrong type
     }
     await Promise.all([
-      backend.run(c, "alice", [p]),
-      backend.run(c, "bob", [undefined]),
-      backend.run(c, "carol", [undefined]),
+      backend.epp(c, "alice")([p]),
+      backend.epp(c, "bob")([undefined]),
+      backend.epp(c, "carol")([undefined]),
     ]);
   });
   test("local return values", async () => {
@@ -51,8 +51,8 @@ describe("HTTP Backend", () => {
       const b = await comm("alice", "bob", a);
       return [b];
     };
-    const alicePromise = backend.run(c, "alice", []);
-    const [bobMessage] = await backend.run(c, "bob", []);
+    const alicePromise = backend.epp(c, "alice")([]);
+    const [bobMessage] = await backend.epp(c, "bob")([]);
     await alicePromise;
     expect(bobMessage).toEqual("Hello, world!");
   });
@@ -65,7 +65,7 @@ describe("HTTP Backend", () => {
       });
       return [];
     };
-    await Promise.all(locations.map((l) => backend.run(helloWorld, l, [])));
+    await Promise.all(locations.map((l) => backend.epp(helloWorld, l)([])));
   });
   test("broadcast", async () => {
     const test: Choreography<Locations> = async ({ locally, broadcast }) => {
@@ -74,6 +74,6 @@ describe("HTTP Backend", () => {
       expect(msg).toBe("Hello everyone!");
       return [];
     };
-    await Promise.all(locations.map((l) => backend.run(test, l, [])));
+    await Promise.all(locations.map((l) => backend.epp(test, l)([])));
   });
 });

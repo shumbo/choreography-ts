@@ -11,18 +11,18 @@ describe("bookseller2", () => {
   it("cannot buy HoTT with one buyer", async () => {
     const choreography = bookseller(oneBuyer);
     const [[dateForHoTT]] = await Promise.all([
-      backend.run(choreography, "buyer1", ["HoTT"]),
-      backend.run(choreography, "buyer2", [undefined]),
-      backend.run(choreography, "seller", [undefined]),
+      backend.epp(choreography, "buyer1")(["HoTT"]),
+      backend.epp(choreography, "buyer2")([undefined]),
+      backend.epp(choreography, "seller")([undefined]),
     ]);
     expect(dateForHoTT).toBeFalsy();
   });
   it("can buy HoTT with two buyers", async () => {
     const choreography = bookseller(twoBuyers);
     const [[dateForHoTT]] = await Promise.all([
-      backend.run(choreography, "buyer1", ["HoTT"]),
-      backend.run(choreography, "buyer2", [undefined]),
-      backend.run(choreography, "seller", [undefined]),
+      backend.epp(choreography, "buyer1")(["HoTT"]),
+      backend.epp(choreography, "buyer2")([undefined]),
+      backend.epp(choreography, "seller")([undefined]),
     ]);
     expect(dateForHoTT).toBeTruthy();
   });

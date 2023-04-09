@@ -98,11 +98,11 @@ async function main() {
   });
   console.log("--- PROTOCOL WITH ONE BUYER ---");
   await Promise.all(
-    locations.map((l) => backend.run(bookseller(oneBuyer), l, ["HoTT"]))
+    locations.map((l) => backend.epp(bookseller(oneBuyer), l)(["HoTT"]))
   );
   console.log("--- PROTOCOL WITH TWO BUYERS ---");
   await Promise.all(
-    locations.map((l) => backend.run(bookseller(twoBuyers), l, ["HoTT"]))
+    locations.map((l) => backend.epp(bookseller(twoBuyers), l)(["HoTT"]))
   );
 }
 

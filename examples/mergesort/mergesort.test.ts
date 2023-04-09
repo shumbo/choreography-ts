@@ -10,9 +10,9 @@ describe("mergesort", () => {
     });
     const mergesort = sort("primary", "worker1", "worker2");
     const [[sorted]] = await Promise.all([
-      backend.run(mergesort, "primary", [[9, 7, 5, 1, 0, 8, 3, 4, 2, 6]]),
-      backend.run(mergesort, "worker1", [undefined]),
-      backend.run(mergesort, "worker2", [undefined]),
+      backend.epp(mergesort, "primary")([[9, 7, 5, 1, 0, 8, 3, 4, 2, 6]]),
+      backend.epp(mergesort, "worker1")([undefined]),
+      backend.epp(mergesort, "worker2")([undefined]),
     ]);
     expect(sorted).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
   });

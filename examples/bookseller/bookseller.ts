@@ -69,14 +69,14 @@ async function main() {
   });
   console.log("--- Buying TAPL ---");
   const [[dateForTAPL]] = await Promise.all([
-    backend.run(bookseller, "buyer", ["TAPL"]),
-    backend.run(bookseller, "seller", [undefined]),
+    backend.epp(bookseller, "buyer")(["TAPL"]),
+    backend.epp(bookseller, "seller")([undefined]),
   ]);
   console.log("Delivery date:", dateForTAPL);
   console.log("--- Buying HoTT ---");
   const [[dateForHoTT]] = await Promise.all([
-    backend.run(bookseller, "buyer", ["HoTT"]),
-    backend.run(bookseller, "seller", [undefined]),
+    backend.epp(bookseller, "buyer")(["HoTT"]),
+    backend.epp(bookseller, "seller")([undefined]),
   ]);
   console.log("Delivery date:", dateForHoTT);
 }

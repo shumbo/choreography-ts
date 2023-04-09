@@ -173,12 +173,12 @@ export class HttpBackend<L extends Location> implements Backend<L> {
               }
             }
             await Promise.all(promises);
-            return new Colocated<T, LL | L1>(locations, v, key);
+            return new Colocated<T, LL | L1>(v, key);
             // @ts-ignore
           } else if (receivers.includes(location)) {
             // if not sender, wait for value to be sent
             const message = await queue.get(sender)!.pop();
-            return new Colocated<T, LL | L1>(locations, message, key);
+            return new Colocated<T, LL | L1>(message, key);
           }
           return undefined as any;
         };

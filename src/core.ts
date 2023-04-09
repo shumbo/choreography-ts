@@ -37,7 +37,7 @@ export class Located<T, L1 extends Location> {
 }
 
 export class Colocated<T, L extends Location> {
-  constructor(locations: L[], value: T, key: Symbol) {
+  constructor(value: T, key: Symbol) {
     this.value = value;
     this.key = key;
   }

@@ -36,12 +36,32 @@ export class Located<T, L1 extends Location> {
   private phantom?: L1;
 }
 
+export class Colocated<L extends Location, T> {
+  constructor(locations: L[], value: T, key: Symbol) {
+    this.locations = new Set(locations);
+    this.value = value;
+    this.key = key;
+  }
+  public getValue(key: Symbol) {
+    if (this.key !== key) {
+      throw new Error("Invalid key");
+    }
+    return this.value;
+  }
+  private locations: Set<L>;
+  private value: T;
+  private key: Symbol;
+  private phantom?: (x: L) => void;
+}
+
 /**
  * The dependencies of a choreography
  */
 export type Dependencies<L extends Location> = {
   locally: Locally<L>;
   comm: Comm<L>;
+  colocally: Colocally<L>;
+  multicast: Multicast<L>;
   broadcast: Broadcast<L>;
   call: Call<L>;
 };
@@ -67,6 +87,26 @@ export type Comm<L extends Location> = <L1 extends L, L2 extends L, T>(
   receiver: L2,
   value: Located<T, L1>
 ) => Promise<Located<T, L2>>;
+
+export type Colocally<L extends Location> = <
+  LL extends L,
+  Return extends Located<any, LL>[]
+>(
+  locations: LL[],
+  callback: (deps: Dependencies<LL> & { peel: Peel<LL> }) => Promise<Return>
+) => Promise<Return>;
+
+export type Peel<LL extends Location> = <T>(colocated: Colocated<LL, T>) => T;
+
+export type Multicast<L extends Location> = <
+  L1 extends L,
+  const LL extends L,
+  T
+>(
+  sender: L1,
+  receivers: LL[],
+  value: Located<T, L1>
+) => Promise<Colocated<LL | L1, T>>;
 
 /**
  * Broadcast a value of type `T` from location `L1` to all other locations

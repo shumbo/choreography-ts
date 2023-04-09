@@ -53,35 +53,49 @@ export const bookseller: (
     Locations,
     [Located<string, "buyer1">],
     [Located<Date | null, "buyer1">]
-  > = async ({ locally, comm, broadcast, call }, [titleAtBuyer]) => {
+  > = async ({ locally, comm, multicast, colocally, call }, [titleAtBuyer]) => {
     const titleAtSeller = await comm("buyer1", "seller", titleAtBuyer);
     const priceAtSeller = await locally("seller", (unwrap) => {
       return priceTable.get(unwrap(titleAtSeller)) ?? 0;
     });
     const priceAtBuyer = await comm("seller", "buyer1", priceAtSeller);
     const [decisionAtBuyer] = await call(makeDecision, [priceAtBuyer]);
-    const decision = await broadcast("buyer1", decisionAtBuyer);
-    if (decision) {
-      const deliveryDateAtSeller = await locally("seller", (unwrap) => {
-        return deliveryDateTable.get(unwrap(titleAtSeller))!;
-      });
-      const deliveryDateAtBuyer = await comm(
-        "seller",
-        "buyer1",
-        deliveryDateAtSeller
-      );
-      await locally("buyer1", (unwrap) => {
-        console.log(
-          `Your book will be delivered on ${unwrap(deliveryDateAtBuyer)}`
+
+    const decision = await multicast("buyer1", ["seller"], decisionAtBuyer);
+    const [deliveryDateAtBuyer] = await colocally<
+      "buyer1" | "seller",
+      [Located<Date | null, "buyer1">]
+    >(["buyer1", "seller"], async ({ locally, comm, peel }) => {
+      const sharedDecision = peel(decision);
+      if (sharedDecision) {
+        const deliveryDateAtSeller = await locally(
+          "seller",
+          (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))!
         );
-      });
-      return [deliveryDateAtBuyer];
-    } else {
-      await locally("buyer1", () => {
-        console.log("You don't have enough money to buy this book");
-      });
-      return [await locally("buyer1", () => null)];
-    }
+        const deliveryDateAtBuyer = await comm(
+          "seller",
+          "buyer1",
+          deliveryDateAtSeller
+        );
+        locally("buyer1", (unwrap) => {
+          console.log(
+            `Your book will be delivered on ${unwrap(deliveryDateAtBuyer)}`
+          );
+        });
+        return [deliveryDateAtBuyer];
+      } else {
+        await locally("buyer1", () => {
+          console.log("You don't have enough money to buy this book");
+        });
+        return [await locally("buyer1", () => null)];
+      }
+    });
+    await locally("buyer2", () => {
+      console.log(
+        "I have no idea what happened to the book purchase, but that's ok"
+      );
+    });
+    return [deliveryDateAtBuyer];
   };
   return c;
 };

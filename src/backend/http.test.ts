@@ -76,4 +76,20 @@ describe("HTTP Backend", () => {
     };
     await Promise.all(locations.map((l) => backend.epp(test, l)([])));
   });
+  test("colocally changes context", async () => {
+    const test: Choreography<Locations> = async ({
+      locally,
+      broadcast,
+      colocally,
+    }) => {
+      const msgAtCarol = await locally("carol", () => "I'm Carol");
+      await colocally(["alice", "bob"], async () => {
+        const msgAtEveryone = await broadcast("carol", msgAtCarol);
+        return [];
+      });
+      return [];
+    };
+    const p = backend.run(test, "alice", []);
+    await expect(p).rejects.toThrow();
+  });
 });

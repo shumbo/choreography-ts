@@ -53,11 +53,7 @@ export const bookseller: (
     Locations,
     [Located<string, "buyer1">],
     [Located<Date | null, "buyer1">]
-  > = async ({ locally, comm, broadcast, call }) => {
-    const titleAtBuyer = await locally("buyer1", () => {
-      return "HoTT";
-    });
-    console.log({ titleAtBuyer });
+  > = async ({ locally, comm, broadcast, call }, [titleAtBuyer]) => {
     const titleAtSeller = await comm("buyer1", "seller", titleAtBuyer);
     const priceAtSeller = await locally("seller", (unwrap) => {
       return priceTable.get(unwrap(titleAtSeller)) ?? 0;

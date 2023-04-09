@@ -42,7 +42,7 @@ async function main() {
     bob: ["localhost", 3001],
     carol: ["localhost", 3002],
   });
-  await Promise.all(locations.map((l) => backend.run(choreography, l, [])));
+  await Promise.all(locations.map((l) => backend.epp(choreography, l)([])));
 }
 
 main();

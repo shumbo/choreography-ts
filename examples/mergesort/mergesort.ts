@@ -112,9 +112,9 @@ async function main() {
   });
   const mergesort = sort("primary", "worker1", "worker2");
   const [[sorted]] = await Promise.all([
-    backend.run(mergesort, "primary", [[1, 4, 6, 2, 3, 5, 7, 8, 9, 10]]),
-    backend.run(mergesort, "worker1", [undefined]),
-    backend.run(mergesort, "worker2", [undefined]),
+    backend.epp(mergesort, "primary")([[1, 4, 6, 2, 3, 5, 7, 8, 9, 10]]),
+    backend.epp(mergesort, "worker1")([undefined]),
+    backend.epp(mergesort, "worker2")([undefined]),
   ]);
   console.log(sorted);
 }

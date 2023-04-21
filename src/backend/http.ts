@@ -215,6 +215,9 @@ export class HttpBackend<L extends Location> implements Backend<L> {
           }
         };
 
+        const peel: Peel<L> = <LL extends L, T>(cv: Colocated<T, LL>) =>
+          cv.getValue(key);
+
         const call: Call<L> = async <
           LL extends L,
           Args extends Located<any, LL>[],
@@ -231,6 +234,7 @@ export class HttpBackend<L extends Location> implements Backend<L> {
               call: call,
               multicast: multicast,
               colocally: colocally,
+              peel: peel,
             }),
             a
           );
@@ -244,6 +248,7 @@ export class HttpBackend<L extends Location> implements Backend<L> {
             call: call,
             multicast: multicast,
             colocally: colocally,
+            peel: peel,
           }),
           args.map((x) => new Located(x, key)) as any
         );

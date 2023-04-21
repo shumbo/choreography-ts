@@ -62,6 +62,7 @@ export type Dependencies<L extends Location> = {
   multicast: Multicast<L>;
   broadcast: Broadcast<L>;
   call: Call<L>;
+  peel: Peel<L>;
 };
 
 /**
@@ -93,10 +94,12 @@ export type Colocally<L extends Location> = <
   Return extends Located<any, LL>[]
 >(
   locations: LL[],
-  callback: (deps: Dependencies<LL> & { peel: Peel<LL> }) => Promise<Return>
+  callback: (deps: Dependencies<LL>) => Promise<Return>
 ) => Promise<Return>;
 
-export type Peel<LL extends Location> = <T>(colocated: Colocated<T, LL>) => T;
+export type Peel<L extends Location> = <LL extends L, T>(
+  colocated: Colocated<T, LL>
+) => T;
 
 export type Multicast<L extends Location> = <
   L1 extends L,

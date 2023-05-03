@@ -91,10 +91,12 @@ export type Comm<L extends Location> = <L1 extends L, L2 extends L, T>(
 
 export type Colocally<L extends Location> = <
   LL extends L,
+  Args extends Located<any, LL>[],
   Return extends Located<any, LL>[]
 >(
   locations: LL[],
-  callback: (deps: Dependencies<LL>) => Promise<Return>
+  choreography: Choreography<LL, Args, Return>,
+  args: Args
 ) => Promise<Return>;
 
 export type Peel<L extends Location> = <LL extends L, T>(

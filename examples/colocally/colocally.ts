@@ -16,10 +16,14 @@ const test: Choreography<Locations> = async ({
 }) => {
   const msgAtCarol = await locally("carol", () => "I'm Carol");
   try {
-    await colocally(["alice", "bob"], async () => {
-      const msgAtEveryone = await broadcast("carol", msgAtCarol);
-      return [];
-    });
+    await colocally(
+      ["alice", "bob"],
+      async () => {
+        const msgAtEveryone = await broadcast("carol", msgAtCarol);
+        return [];
+      },
+      []
+    );
   } catch (e) {
     console.warn(e);
   }

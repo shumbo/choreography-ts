@@ -102,32 +102,48 @@ describe("HTTP Backend", () => {
       const msg = await locally("alice", () => "Hello, world!");
       // alice shares the message with bob but not carol
       const msgAtSelectedTwo = await multicast("alice", ["bob"], msg);
-      await colocally(["alice", "bob"], async ({ peel }) => {
-        // alice and bob can read the message
-        expect(peel(msgAtSelectedTwo)).toBe("Hello, world!");
-        return [];
-      });
-      await colocally(["alice"], async ({ peel }) => {
-        // colocated values can be read by any subset of the locations
-        expect(peel(msgAtSelectedTwo)).toBe("Hello, world!");
-        return [];
-      });
-      await colocally(["carol"], async ({ peel }) => {
-        // carol cannot peel the colocated value `msgAtSelectedTwo`
-        if (false) {
-          // @ts-expect-error
-          peel(msgAtSelectedTwo);
-        }
-        return [];
-      });
-      await colocally(["bob", "carol"], async ({ peel }) => {
-        // bob can read, but because carol will also attempt to read, this is a type error
-        if (false) {
-          // @ts-expect-error
-          expect(peel(msgAtSelectedTwo));
-        }
-        return [];
-      });
+      await colocally(
+        ["alice", "bob"],
+        async ({ peel }) => {
+          // alice and bob can read the message
+          expect(peel(msgAtSelectedTwo)).toBe("Hello, world!");
+          return [];
+        },
+        []
+      );
+      await colocally(
+        ["alice"],
+        async ({ peel }) => {
+          // colocated values can be read by any subset of the locations
+          expect(peel(msgAtSelectedTwo)).toBe("Hello, world!");
+          return [];
+        },
+        []
+      );
+      await colocally(
+        ["carol"],
+        async ({ peel }) => {
+          // carol cannot peel the colocated value `msgAtSelectedTwo`
+          if (false) {
+            // @ts-expect-error
+            peel(msgAtSelectedTwo);
+          }
+          return [];
+        },
+        []
+      );
+      await colocally(
+        ["bob", "carol"],
+        async ({ peel }) => {
+          // bob can read, but because carol will also attempt to read, this is a type error
+          if (false) {
+            // @ts-expect-error
+            expect(peel(msgAtSelectedTwo));
+          }
+          return [];
+        },
+        []
+      );
       return [];
     };
     await Promise.all(locations.map((l) => backend.epp(test, l)([])));
@@ -140,10 +156,14 @@ describe("HTTP Backend", () => {
     }) => {
       const msg = await locally("alice", () => "hello, world");
       const colocatedMsg = await multicast("alice", ["bob", "carol"], msg);
-      await colocally(["bob", "carol"], async ({ peel }) => {
-        expect(peel(colocatedMsg)).toBe("hello, world");
-        return [];
-      });
+      await colocally(
+        ["bob", "carol"],
+        async ({ peel }) => {
+          expect(peel(colocatedMsg)).toBe("hello, world");
+          return [];
+        },
+        []
+      );
       return [];
     };
     await Promise.all(locations.map((l) => backend.epp(test, l)([])));
@@ -155,10 +175,14 @@ describe("HTTP Backend", () => {
       colocally,
     }) => {
       const msgAtCarol = await locally("carol", () => "I'm Carol");
-      await colocally(["alice", "bob"], async () => {
-        const msgAtEveryone = await broadcast("carol", msgAtCarol);
-        return [];
-      });
+      await colocally(
+        ["alice", "bob"],
+        async () => {
+          const msgAtEveryone = await broadcast("carol", msgAtCarol);
+          return [];
+        },
+        []
+      );
       return [];
     };
     const p = backend.epp(test, "alice")([]);

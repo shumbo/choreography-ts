@@ -109,17 +109,17 @@ export class HttpBackend<L extends Location> implements Backend<L> {
 
         const colocally: Colocally<L> = async <
           LL extends L,
+          Args extends Located<any, LL>[],
           Return extends Located<any, LL>[]
         >(
           locations: LL[],
-          callback: (
-            deps: Dependencies<LL> & { peel: Peel<LL> }
-          ) => Promise<Return>
+          choreography: Choreography<LL, Args, Return>,
+          args: Args
         ) => {
           return ctxManager.withContext(new Set(locations), async () => {
             // @ts-ignore
             if (locations.includes(location)) {
-              const ret = await callback(
+              const ret = await choreography(
                 wrapMethods((m) => ctxManager.checkContext(m), {
                   locally: locally,
                   comm: comm,
@@ -128,7 +128,8 @@ export class HttpBackend<L extends Location> implements Backend<L> {
                   broadcast: broadcast,
                   call: call,
                   peel: (v) => v.getValue(key),
-                })
+                }),
+                args
               );
               return ret;
             }

@@ -32,12 +32,12 @@ function handleRequest(request: Request, state: State): Response {
 }
 
 /**
- * S is a set of locations involved in the replication strategy, and the client cannot be in the list
+ * S is a list of states at involved locations
  */
-type ReplicationStrategy<T extends Located<any, ServerLocations>[]> =
+type ReplicationStrategy<S extends Located<State, ServerLocations>[]> =
   Choreography<
     ServerLocations,
-    [Located<Request, "primary">, ...T],
+    [Located<Request, "primary">, ...S],
     [Located<Response, "primary">]
   >;
 
@@ -88,12 +88,12 @@ const primaryBackupReplicationStrategy: ReplicationStrategy<
   return [responseAtPrimary];
 };
 
-function kvs<T extends Located<any, ServerLocations>[]>(
-  replicationStrategy: ReplicationStrategy<T>
+function kvs<S extends Located<State, ServerLocations>[]>(
+  replicationStrategy: ReplicationStrategy<S>
 ) {
   const kvs_: Choreography<
     Locations,
-    [Located<Request, "client">, ...T],
+    [Located<Request, "client">, ...S],
     [Located<Response, "client">]
   > = async ({ comm, colocally }, [requestAtClient, ...states]) => {
     const requestAtPrimary = await comm("client", "primary", requestAtClient);

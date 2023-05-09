@@ -56,6 +56,18 @@ describe("HTTP Backend", () => {
     await alicePromise;
     expect(bobMessage).toEqual("Hello, world!");
   });
+  test("async locally", async () => {
+    const c: Choreography<Locations> = async ({ locally }) => {
+      const msg = await locally("alice", () => {
+        return Promise.resolve(5);
+      });
+      await locally("alice", (unwrap) => {
+        expect(unwrap(msg)).toBe(5);
+      });
+      return [];
+    };
+    await Promise.all(locations.map((l) => backend.epp(c, l)([])));
+  });
   test("comm", async () => {
     const helloWorld: Choreography<Locations> = async ({ locally, comm }) => {
       const msg = await locally("alice", () => "Hello, world!");

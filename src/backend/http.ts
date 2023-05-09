@@ -64,17 +64,21 @@ export class HttpBackend<L extends Location> implements Backend<L> {
       try {
         const locally: Locally<L> = async <L2 extends L, T>(
           loc: L2,
-          callback: (unwrap: Unwrap<L2>) => T
+          callback: (unwrap: Unwrap<L2>) => T | Promise<T>
         ) => {
           // TODO: Why?
           // @ts-ignore
           if (loc !== location) {
             return undefined as any;
           }
-          return new Located(
-            callback((located) => located.getValue(key)),
-            key
-          );
+          const retVal = callback((located) => located.getValue(key));
+          let v: T;
+          if (retVal instanceof Promise) {
+            v = await retVal;
+          } else {
+            v = retVal;
+          }
+          return new Located(v, key);
         };
 
         const comm: Comm<L> = async <L1 extends L, L2 extends L, T>(

@@ -73,7 +73,7 @@ export type Dependencies<L extends Location> = {
  */
 export type Locally<L extends Location> = <L1 extends L, T>(
   location: L1,
-  callback: (unwrap: Unwrap<L1>) => T
+  callback: (unwrap: Unwrap<L1>) => T | Promise<T>
 ) => Promise<Located<T, L1>>;
 
 export type Unwrap<L1 extends Location> = <T>(

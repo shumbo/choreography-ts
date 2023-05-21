@@ -1,3 +1,3 @@
 import { Choreography, Located } from "./core";
-import { HttpBackend } from "./backend";
-export { Choreography, Located, HttpBackend };
+import { GenericBackend, HttpBackend } from "./backend";
+export { Choreography, Located, HttpBackend, GenericBackend };

@@ -16,19 +16,52 @@ import {
 } from "../core";
 import { setEqual } from "../lib/set-equal";
 
-export interface GenericChannel<L extends Location> {
-  send(sender: L, receiver: L, data: any): Promise<void>;
-  receive(sender: L, receiver: L): Promise<any>;
-}
-
+/**
+ * `GenericBackend` is a generic implementation of the `Backend` interface.
+ * It assumes fully-connected communication between all locations.
+ * It is intended to be used as a base class for other backends.
+ * Because the same instance can be used for multiple choreographies, the backend instance must be stateless.
+ *
+ * @typeParam L the type of locations
+ * @typeParam T the type of the backend instance
+ */
 export abstract class GenericBackend<L extends Location, T>
   implements Backend<L>
 {
+  /**
+   * `setup` is called once before the choreography is executed.
+   * It should return an instance of the backend which stores all the state needed to execute the choreography.
+   * @param location the name of the location to perform the choreography at
+   * @returns a promise that resolves the backend instance
+   */
   abstract setup(location: L): Promise<T>;
+  /**
+   * `teardown` is called once after the choreography is executed.
+   * It should clean up any resources used by the backend instance.
+   * @param instance the backend instance returned by `setup`
+   * @returns a promise that resolves when the backend instance is cleaned up
+   */
   abstract teardown(instance: T): Promise<void>;
+  /**
+   * `send` is called to send a message from one location to another.
+   * @param instance the backend instance returned by `setup`
+   * @param sender the name of the location sending the message
+   * @param receiver the name of the location receiving the message
+   * @param data the message to send
+   */
   abstract send(instance: T, sender: L, receiver: L, data: any): Promise<void>;
+  /**
+   * `receive` is called to receive a message from another location.
+   * @param instance the backend instance returned by `setup`
+   * @param sender the name of the location sending the message
+   * @param receiver the name of the location receiving the message
+   */
   abstract receive(instance: T, sender: L, receiver: L): Promise<any>;
 
+  /**
+   * Initialize a new `GenericBackend` with a set of locations.
+   * @param locations the set of locations
+   */
   constructor(private locations: L[]) {}
 
   public epp<

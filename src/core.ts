@@ -73,7 +73,7 @@ export type Dependencies<L extends Location> = {
  */
 export type Locally<L extends Location> = <L1 extends L, T>(
   location: L1,
-  callback: (unwrap: Unwrap<L1>) => T
+  callback: (unwrap: Unwrap<L1>) => T | Promise<T>
 ) => Promise<Located<T, L1>>;
 
 export type Unwrap<L1 extends Location> = <T>(
@@ -91,10 +91,12 @@ export type Comm<L extends Location> = <L1 extends L, L2 extends L, T>(
 
 export type Colocally<L extends Location> = <
   LL extends L,
+  Args extends Located<any, LL>[],
   Return extends Located<any, LL>[]
 >(
   locations: LL[],
-  callback: (deps: Dependencies<LL>) => Promise<Return>
+  choreography: Choreography<LL, Args, Return>,
+  args: Args
 ) => Promise<Return>;
 
 export type Peel<L extends Location> = <LL extends L, T>(

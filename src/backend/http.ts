@@ -64,17 +64,21 @@ export class HttpBackend<L extends Location> implements Backend<L> {
       try {
         const locally: Locally<L> = async <L2 extends L, T>(
           loc: L2,
-          callback: (unwrap: Unwrap<L2>) => T
+          callback: (unwrap: Unwrap<L2>) => T | Promise<T>
         ) => {
           // TODO: Why?
           // @ts-ignore
           if (loc !== location) {
             return undefined as any;
           }
-          return new Located(
-            callback((located) => located.getValue(key)),
-            key
-          );
+          const retVal = callback((located) => located.getValue(key));
+          let v: T;
+          if (retVal instanceof Promise) {
+            v = await retVal;
+          } else {
+            v = retVal;
+          }
+          return new Located(v, key);
         };
 
         const comm: Comm<L> = async <L1 extends L, L2 extends L, T>(
@@ -109,17 +113,17 @@ export class HttpBackend<L extends Location> implements Backend<L> {
 
         const colocally: Colocally<L> = async <
           LL extends L,
+          Args extends Located<any, LL>[],
           Return extends Located<any, LL>[]
         >(
           locations: LL[],
-          callback: (
-            deps: Dependencies<LL> & { peel: Peel<LL> }
-          ) => Promise<Return>
+          choreography: Choreography<LL, Args, Return>,
+          args: Args
         ) => {
           return ctxManager.withContext(new Set(locations), async () => {
             // @ts-ignore
             if (locations.includes(location)) {
-              const ret = await callback(
+              const ret = await choreography(
                 wrapMethods((m) => ctxManager.checkContext(m), {
                   locally: locally,
                   comm: comm,
@@ -128,7 +132,8 @@ export class HttpBackend<L extends Location> implements Backend<L> {
                   broadcast: broadcast,
                   call: call,
                   peel: (v) => v.getValue(key),
-                })
+                }),
+                args
               );
               return ret;
             }

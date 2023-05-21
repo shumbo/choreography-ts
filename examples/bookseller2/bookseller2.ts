@@ -87,7 +87,8 @@ export const bookseller: (
           });
           return [await locally("buyer1", () => null)];
         }
-      }
+      },
+      []
     );
     await locally("buyer2", () => {
       console.log(

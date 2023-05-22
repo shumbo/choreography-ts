@@ -1,0 +1,33 @@
+{
+  "name": "@choreography-ts/backend-express",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "tsc --project tsconfig.build.json",
+    "test": "jest --silent",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@choreography-ts/core": "workspace:*",
+    "@types/express": "^4.17.17",
+    "@types/jest": "^29.5.1",
+    "@types/node-fetch": "2.x",
+    "jest": "^29.5.0",
+    "rimraf": "^5.0.1",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@adobe/node-fetch-retry": "^2.2.0",
+    "express": "^4.18.2"
+  },
+  "peerDependencies": {
+    "@choreography-ts/core": "workspace:*"
+  }
+}

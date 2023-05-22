@@ -9,9 +9,7 @@
     "clean": "rimraf dist",
     "build": "tsc --project tsconfig.build.json",
     "test": "jest",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "lint": "eslint . --ext .ts"
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",

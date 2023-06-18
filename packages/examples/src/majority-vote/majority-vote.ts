@@ -1,9 +1,58 @@
-import { ExpressBackend } from "@choreography-ts/backend-express";
 import { Choreography, Located } from "@choreography-ts/core";
+import { ExpressBackend } from "@choreography-ts/backend-express";
+import process from "process";
 
 export type L = "judge" | "voter1" | "voter2" | "voter3";
 
 type Vote = "yes" | "no";
+
+function reduceWhile<T, U>(
+  promises: Promise<T>[],
+  reducer: (
+    accumulator: U,
+    value: T,
+    acceptedCount: number,
+    rejectedCount: number
+  ) => [boolean, U],
+  initialValue: U
+): Promise<U> {
+  let accumulator: U = initialValue;
+  let acceptedCount = 0;
+  let rejectedCount = 0;
+  return new Promise<U>((resolve, reject) => {
+    function checkCondition() {
+      if (acceptedCount + rejectedCount === promises.length) {
+        reject(accumulator);
+      }
+    }
+    function handlePromiseResult(value: T) {
+      const [cont, updatedValue] = reducer(
+        accumulator,
+        value,
+        acceptedCount,
+        rejectedCount
+      );
+      accumulator = updatedValue;
+      if (!cont) {
+        resolve(accumulator);
+      }
+    }
+    promises.forEach((promise) => {
+      promise
+        .then((value) => {
+          acceptedCount += 1;
+          handlePromiseResult(value);
+        })
+        .catch(() => {
+          rejectedCount += 1;
+        })
+        .finally(() => {
+          checkCondition();
+        });
+    });
+    checkCondition();
+  });
+}
 
 function doVote<Voter extends L>(voter: Voter) {
   const c: Choreography<L, [], [Located<Vote, "judge">]> = async ({
@@ -11,7 +60,9 @@ function doVote<Voter extends L>(voter: Voter) {
     locally,
   }) => {
     const vote = await locally(voter, () => {
-      return Math.random() > 0.5 ? "yes" : "no";
+      const v = Math.random() > 0.5 ? "yes" : "no";
+      console.log(`${voter} voted ${v}`);
+      return v;
     });
     const voteAtJudge = await comm(voter, "judge", vote);
     return [voteAtJudge];
@@ -27,23 +78,40 @@ export const majorityVote: Choreography<
   const pendingVote1 = call(doVote("voter1"), []);
   const pendingVote2 = call(doVote("voter2"), []);
   const pendingVote3 = call(doVote("voter3"), []);
-  const [[vote1], [vote2], [vote3]] = await Promise.all([
-    pendingVote1,
-    pendingVote2,
-    pendingVote3,
-  ]);
-  const isMajority = await locally("judge", (unwrap) => {
-    const votes = [unwrap(vote1), unwrap(vote2), unwrap(vote3)];
-    const yesVotes = votes.filter((v) => v === "yes");
-    const noVotes = votes.filter((v) => v === "no");
-    console.log(`yes: ${yesVotes.length}, no: ${noVotes.length}`);
-    if (yesVotes.length > noVotes.length) {
-      console.log("majority: yes");
-      return true;
-    } else {
-      console.log("majority: no");
-      return false;
-    }
+
+  const isMajority = await locally("judge", async (unwrap) => {
+    const yesCount = await reduceWhile<[Located<Vote, "judge">], number>(
+      [pendingVote1, pendingVote2, pendingVote3],
+      (accumulator, value, acceptedCount, rejectedCount) => {
+        const [locatedVote] = value;
+        const vote = unwrap(locatedVote);
+        if (vote === "yes") {
+          // if voted yes
+          // we increment the accumulator
+          const newAccumulator = accumulator + 1;
+          // if the accumulator is greater than or equal to 2
+          if (newAccumulator >= 2) {
+            // majority is reached. no need to continue and return the new accumulator
+            return [false, newAccumulator];
+          } else {
+            // majority is not reached. continue and return the new accumulator
+            return [true, newAccumulator];
+          }
+        } else {
+          const possibleMoreYes = 3 - acceptedCount - rejectedCount;
+          if (accumulator + possibleMoreYes >= 2) {
+            // if it is possible to reach majority with the remaining votes, continue
+            return [true, accumulator];
+          } else {
+            // if it is not possible to reach majority with the remaining votes, stop
+            return [false, accumulator];
+          }
+        }
+      },
+      0
+    );
+    console.log(`yesCount: ${yesCount}`);
+    return yesCount >= 2;
   });
   return [isMajority];
 };
@@ -68,6 +136,6 @@ async function main() {
   console.log("is majority?", isMajority);
 }
 
-if (require.main === module) {
+if (import.meta.url.endsWith(process.argv[1]!)) {
   main();
 }

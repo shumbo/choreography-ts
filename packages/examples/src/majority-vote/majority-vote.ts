@@ -19,10 +19,10 @@ function reduceWhile<T, U>(
   let accumulator: U = initialValue;
   let acceptedCount = 0;
   let rejectedCount = 0;
-  return new Promise<U>((resolve, reject) => {
+  return new Promise<U>((resolve) => {
     function checkCondition() {
       if (acceptedCount + rejectedCount === promises.length) {
-        reject(accumulator);
+        resolve(accumulator);
       }
     }
     function handlePromiseResult(value: T) {
@@ -136,6 +136,6 @@ async function main() {
   console.log("is majority?", isMajority);
 }
 
-if (import.meta.url.endsWith(process.argv[1]!)) {
+if (require.name === "main") {
   main();
 }

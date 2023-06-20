@@ -136,6 +136,6 @@ async function main() {
   console.log("is majority?", isMajority);
 }
 
-if (require.name === "main") {
+if (require.main === module) {
   main();
 }

@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"path": "packages/core"
+		},
+		{
+			"path": "packages/backend-express"
+		},
+		{
+			"path": "packages/examples"
+		}
+	],
+	"settings": {
+		"search.exclude": {
+			"dist/**": true
+		}
+	}
+}

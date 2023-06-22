@@ -11,7 +11,7 @@ export class Tag {
   }
   public call(): Tag {
     this.v[this.lastIndex()]++;
-    const child = new Tag(this.v);
+    const child = new Tag([...this.v]);
     child.v.push(0);
     return child;
   }

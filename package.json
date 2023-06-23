@@ -9,7 +9,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "turbo run typecheck",
-    "check": "npm-run-all --serial lint format:check test"
+    "check": "npm-run-all --serial lint format:check"
   },
   "keywords": [],
   "author": "",

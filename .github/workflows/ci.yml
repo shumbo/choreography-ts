@@ -41,3 +41,6 @@ jobs:
 
       - name: Run check
         run: pnpm check
+
+      - name: Run test
+        run: pnpm test

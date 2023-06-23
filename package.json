@@ -1,7 +1,7 @@
 {
   "name": "choreography-ts",
   "version": "1.0.0",
-  "description": "",
+  "description": "Choreographic Programming in TypeScript",
   "main": "index.js",
   "scripts": {
     "test": "turbo run test --concurrency 1",
@@ -29,5 +29,8 @@
     "turbo": "^1.9.8",
     "typescript": "^5.0.4"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "volta": {
+    "node": "18.16.1"
+  }
 }

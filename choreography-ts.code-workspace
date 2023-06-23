@@ -13,6 +13,11 @@
 	"settings": {
 		"search.exclude": {
 			"dist/**": true
-		}
+		},
+		"cSpell.words": [
+			"choreographies",
+			"Colocally",
+			"Colocated"
+		]
 	}
 }

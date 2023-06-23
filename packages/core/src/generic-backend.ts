@@ -15,6 +15,7 @@ import {
   Unwrap,
 } from "./core.js";
 import { setEqual } from "./lib/set-equal.js";
+import { Tag } from "./lib/tag.js";
 
 /**
  * `GenericBackend` is a generic implementation of the `Backend` interface.
@@ -49,14 +50,20 @@ export abstract class GenericBackend<L extends Location, T>
    * @param receiver the name of the location receiving the message
    * @param data the message to send
    */
-  abstract send(instance: T, sender: L, receiver: L, data: any): Promise<void>;
+  abstract send(
+    instance: T,
+    sender: L,
+    receiver: L,
+    tag: Tag,
+    data: any
+  ): Promise<void>;
   /**
    * `receive` is called to receive a message from another location.
    * @param instance the backend instance returned by `setup`
    * @param sender the name of the location sending the message
    * @param receiver the name of the location receiving the message
    */
-  abstract receive(instance: T, sender: L, receiver: L): Promise<any>;
+  abstract receive(instance: T, sender: L, receiver: L, tag: Tag): Promise<any>;
 
   /**
    * Initialize a new `GenericBackend` with a set of locations.
@@ -77,6 +84,7 @@ export abstract class GenericBackend<L extends Location, T>
     return async (args) => {
       const instance = await this.setup(location);
 
+      const tag = new Tag();
       const key = Symbol(location.toString());
       const ctxManager = new ContextManager<L>(this.locations);
 
@@ -99,158 +107,178 @@ export abstract class GenericBackend<L extends Location, T>
           return new Located(v, key);
         };
 
-        const comm: Comm<L> = async <L1 extends L, L2 extends L, T>(
-          sender: L1,
-          receiver: L2,
-          value: Located<T, L1>
-        ) => {
-          // @ts-ignore
-          if (sender === receiver) {
-            // if sender and receiver are the same, just return the value
-            return value;
-          }
-          // @ts-ignore
-          if (location === sender) {
-            // if sender, send value to receiver
-            await this.send(instance, sender, receiver, value.getValue(key));
-            return undefined as any;
-          }
-          // @ts-ignore
-          if (location === receiver) {
-            // if receiver, wait for value from sender and return
-            const message: T = await this.receive(instance, sender, receiver);
-            return new Located<T, L2>(message, key);
-          }
-          return undefined as any;
-        };
-
-        const colocally: Colocally<L> = async <
-          LL extends L,
-          Args extends Located<any, LL>[],
-          Return extends Located<any, LL>[]
-        >(
-          locations: LL[],
-          choreography: Choreography<LL, Args, Return>,
-          args: Args
-        ) => {
-          return ctxManager.withContext(new Set(locations), async () => {
+        const comm: (t: Tag) => Comm<L> =
+          (t: Tag) =>
+          async <L1 extends L, L2 extends L, T>(
+            sender: L1,
+            receiver: L2,
+            value: Located<T, L1>
+          ) => {
+            t.comm();
             // @ts-ignore
-            if (locations.includes(location)) {
-              const ret = await choreography(
-                wrapMethods((m) => ctxManager.checkContext(m), {
-                  locally: locally,
-                  comm: comm,
-                  colocally: colocally,
-                  multicast: multicast,
-                  broadcast: broadcast,
-                  call: call,
-                  peel: (v) => v.getValue(key),
-                }),
-                args
+            if (sender === receiver) {
+              // if sender and receiver are the same, just return the value
+              return value;
+            }
+            // @ts-ignore
+            if (location === sender) {
+              // if sender, send value to receiver
+              await this.send(
+                instance,
+                sender,
+                receiver,
+                t,
+                value.getValue(key)
               );
-              return ret;
+              return undefined as any;
             }
-            // any index of returned iterator may be accessed while the value will not be used.
-            // return a generator that returns undefined for each index
-            return {
-              *[Symbol.iterator]() {
-                for (;;) {
-                  yield undefined;
-                }
-              },
-            } as any;
-          });
-        };
-
-        const multicast: Multicast<L> = async <
-          L1 extends L,
-          const LL extends L,
-          T
-        >(
-          sender: L1,
-          receivers: LL[],
-          value: Located<T, L1>
-        ) => {
-          const locations: (LL | L1)[] = [sender, ...receivers];
-          // @ts-ignore
-          if (location === sender) {
-            // if sender, send value to all receivers
-            const promises: Promise<any>[] = [];
-            const v = value.getValue(key);
-            for (const receiver of receivers) {
-              // @ts-ignore
-              if (receiver !== sender) {
-                promises.push(this.send(instance, sender, receiver, v));
-              }
-            }
-            await Promise.all(promises);
-            return new Colocated<T, LL | L1>(v, key);
             // @ts-ignore
-          } else if (receivers.includes(location)) {
-            // if not sender, wait for value to be sent
-            const message = await this.receive(instance, sender, location);
-            return new Colocated<T, LL | L1>(message, key);
-          }
-          return undefined as any;
-        };
-
-        const broadcast: Broadcast<L> = async <L1 extends L, T>(
-          sender: L1,
-          value: Located<T, L1>
-        ) => {
-          // @ts-ignore
-          if (location === sender) {
-            // if sender, broadcast value to all other locations
-            const promises: Promise<any>[] = [];
-            const v = value.getValue(key);
-            const locations = ctxManager.getLocationsInContext();
-            for (const receiver of locations) {
-              // @ts-ignore
-              if (receiver !== sender) {
-                promises.push(this.send(instance, sender, receiver, v));
-              }
+            if (location === receiver) {
+              // if receiver, wait for value from sender and return
+              const message: T = await this.receive(
+                instance,
+                sender,
+                receiver,
+                t
+              );
+              return new Located<T, L2>(message, key);
             }
-            await Promise.all(promises);
-            return v;
-          } else {
-            // if not sender, wait for value to arrive
-            const data = await this.receive(instance, sender, location);
-            return data;
-          }
-        };
+            return undefined as any;
+          };
+
+        const colocally: (t: Tag) => Colocally<L> =
+          (t: Tag) =>
+          async <
+            LL extends L,
+            Args extends Located<any, LL>[],
+            Return extends Located<any, LL>[]
+          >(
+            locations: LL[],
+            choreography: Choreography<LL, Args, Return>,
+            args: Args
+          ) => {
+            const childTag = t.call();
+            return ctxManager.withContext(new Set(locations), async () => {
+              // @ts-ignore
+              if (locations.includes(location)) {
+                const ret = await choreography(
+                  wrapMethods((m) => ctxManager.checkContext(m), {
+                    locally: locally,
+                    comm: comm(childTag),
+                    colocally: colocally(childTag),
+                    multicast: multicast(childTag),
+                    broadcast: broadcast(childTag),
+                    call: call(childTag),
+                    peel: (v) => v.getValue(key),
+                  }),
+                  args
+                );
+                return ret;
+              }
+              // any index of returned iterator may be accessed while the value will not be used.
+              // return a generator that returns undefined for each index
+              return {
+                *[Symbol.iterator]() {
+                  for (;;) {
+                    yield undefined;
+                  }
+                },
+              } as any;
+            });
+          };
+
+        const multicast: (t: Tag) => Multicast<L> =
+          (t: Tag) =>
+          async <L1 extends L, const LL extends L, T>(
+            sender: L1,
+            receivers: LL[],
+            value: Located<T, L1>
+          ) => {
+            t.comm();
+            const locations: (LL | L1)[] = [sender, ...receivers];
+            // @ts-ignore
+            if (location === sender) {
+              // if sender, send value to all receivers
+              const promises: Promise<any>[] = [];
+              const v = value.getValue(key);
+              for (const receiver of receivers) {
+                // @ts-ignore
+                if (receiver !== sender) {
+                  promises.push(this.send(instance, sender, receiver, t, v));
+                }
+              }
+              await Promise.all(promises);
+              return new Colocated<T, LL | L1>(v, key);
+              // @ts-ignore
+            } else if (receivers.includes(location)) {
+              // if not sender, wait for value to be sent
+              const message = await this.receive(instance, sender, location, t);
+              return new Colocated<T, LL | L1>(message, key);
+            }
+            return undefined as any;
+          };
+
+        const broadcast: (t: Tag) => Broadcast<L> =
+          (t: Tag) =>
+          async <L1 extends L, T>(sender: L1, value: Located<T, L1>) => {
+            t.comm();
+            // @ts-ignore
+            if (location === sender) {
+              // if sender, broadcast value to all other locations
+              const promises: Promise<any>[] = [];
+              const v = value.getValue(key);
+              const locations = ctxManager.getLocationsInContext();
+              for (const receiver of locations) {
+                // @ts-ignore
+                if (receiver !== sender) {
+                  promises.push(this.send(instance, sender, receiver, t, v));
+                }
+              }
+              await Promise.all(promises);
+              return v;
+            } else {
+              // if not sender, wait for value to arrive
+              const data = await this.receive(instance, sender, location, t);
+              return data;
+            }
+          };
 
         const peel: Peel<L> = <LL extends L, T>(cv: Colocated<T, LL>) =>
           cv.getValue(key);
 
-        const call: Call<L> = async <
-          LL extends L,
-          Args extends Located<any, LL>[],
-          Return extends Located<any, LL>[]
-        >(
-          c: Choreography<LL, Args, Return>,
-          a: Args
-        ) => {
-          return await c(
-            wrapMethods((m) => ctxManager.checkContext(m), {
-              locally: locally,
-              comm: comm,
-              broadcast: broadcast,
-              call: call,
-              multicast: multicast,
-              colocally: colocally,
-              peel: peel,
-            }),
-            a
-          );
-        };
+        const call: (t: Tag) => Call<L> =
+          (t: Tag) =>
+          async <
+            LL extends L,
+            Args extends Located<any, LL>[],
+            Return extends Located<any, LL>[]
+          >(
+            c: Choreography<LL, Args, Return>,
+            a: Args
+          ) => {
+            const childTag = t.call();
+            return await c(
+              wrapMethods((m) => ctxManager.checkContext(m), {
+                locally: locally,
+                comm: comm(childTag),
+                broadcast: broadcast(childTag),
+                call: call(childTag),
+                multicast: multicast(childTag),
+                colocally: colocally(childTag),
+                peel: peel,
+              }),
+              a
+            );
+          };
+
         const ret = await choreography(
           wrapMethods((m) => ctxManager.checkContext(m), {
             locally: locally,
-            comm: comm,
-            broadcast: broadcast,
-            call: call,
-            multicast: multicast,
-            colocally: colocally,
+            comm: comm(tag),
+            broadcast: broadcast(tag),
+            call: call(tag),
+            multicast: multicast(tag),
+            colocally: colocally(tag),
             peel: peel,
           }),
           args.map((x) => new Located(x, key)) as any

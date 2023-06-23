@@ -1,21 +1,32 @@
 import fetch from "@adobe/node-fetch-retry";
 import express from "express";
 import { Server } from "http";
-import { Location, Queue, GenericBackend } from "@choreography-ts/core";
+import {
+  Location,
+  GenericBackend,
+  Tag,
+  DefaultDict,
+  IVar,
+} from "@choreography-ts/core";
 
 type HttpServerInstance<L> = {
   location: L;
   app: express.Application;
   server: Server;
-  inbox: Map<L, Queue>;
+  inbox: DefaultDict<string, IVar>;
 };
 
-type Message<L> = {
+type Message<L extends Location> = {
   from: L;
+  tag: string;
   data: any;
 };
 
 type HttpConfig<L extends Location> = Record<L, [string, number]>;
+
+function key(location: string, tagString: string): string {
+  return `${location}:${tagString}`;
+}
 
 export class ExpressBackend<L extends Location> extends GenericBackend<
   L,
@@ -26,16 +37,13 @@ export class ExpressBackend<L extends Location> extends GenericBackend<
   }
 
   public async setup(location: L): Promise<HttpServerInstance<L>> {
-    const inbox = new Map<L, Queue>();
-    for (const key in this.config) {
-      inbox.set(key as L, new Queue());
-    }
+    const inbox = new DefaultDict<string, IVar>(() => new IVar());
     const [hostname, port] = this.config[location];
     const app = express();
     app.use(express.json());
     app.post("/", (req, res) => {
       const msg: Message<L> = req.body;
-      inbox.get(msg.from)!.push(msg.data);
+      inbox.get(key(msg.from, msg.tag)).write(msg.data);
       res.status(200).send("OK");
     });
     const server = await new Promise<Server>((resolve) => {
@@ -63,10 +71,11 @@ export class ExpressBackend<L extends Location> extends GenericBackend<
     _: HttpServerInstance<L>,
     sender: L,
     receiver: L,
+    tag: Tag,
     data: any
   ): Promise<void> {
     const [hostname, port] = this.config[receiver];
-    const msg: Message<L> = { from: sender, data: data };
+    const msg: Message<L> = { from: sender, tag: tag.toString(), data: data };
     await fetch(`http://${hostname}:${port}`, {
       method: "POST",
       body: JSON.stringify(msg),
@@ -77,8 +86,12 @@ export class ExpressBackend<L extends Location> extends GenericBackend<
   public async receive(
     instance: HttpServerInstance<L>,
     sender: L,
-    _receiver: L
+    _receiver: L,
+    tag: Tag
   ): Promise<any> {
-    return await instance.inbox.get(sender)!.pop();
+    const k = key(sender, tag.toString());
+    const v = await instance.inbox.get(k).read();
+    instance.inbox.delete(k);
+    return v;
   }
 }

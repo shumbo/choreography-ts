@@ -7,7 +7,7 @@ import {
 } from "@choreography-ts/core";
 import mitt from "mitt";
 
-type LocalBackendInstance<L extends Location> = {
+export type LocalBackendInstance<L extends Location> = {
   location: L;
   inbox: DefaultDict<string, IVar>;
 };
@@ -24,25 +24,24 @@ function key(location: string, tag: string): string {
   return `${location}:${tag}`;
 }
 
-const m = mitt<{ [l: Location]: Message<Location> }>();
-
 export class LocalBackend<L extends Location> extends GenericBackend<
   L,
   LocalBackendInstance<L>
 > {
+  private readonly m = mitt<{ [l: Location]: Message<Location> }>();
   constructor(config: LocalBackendConfig<L>) {
     super(Object.keys(config) as L[]);
   }
   async setup(location: L): Promise<LocalBackendInstance<L>> {
     const inbox = new DefaultDict<string, IVar>(() => new IVar());
-    m.on(location, (msg) => {
+    this.m.on(location, (msg) => {
       inbox.get(key(msg.from, msg.tag)).write(msg.data);
     });
     return { location, inbox };
   }
   async teardown(instance: LocalBackendInstance<L>): Promise<void> {
     // noop
-    m.off(instance.location);
+    this.m.off(instance.location);
     return;
   }
   async send(
@@ -53,7 +52,7 @@ export class LocalBackend<L extends Location> extends GenericBackend<
     data: any
   ): Promise<void> {
     const msg: Message<L> = { from: sender, tag: tag.toString(), data: data };
-    m.emit(receiver, msg);
+    this.m.emit(receiver, msg);
   }
   async receive(
     instance: LocalBackendInstance<L>,

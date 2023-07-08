@@ -4,6 +4,7 @@
   "description": "Choreographic Programming in TypeScript",
   "main": "index.js",
   "scripts": {
+    "build": "turbo run build",
     "test": "turbo run test --concurrency 1",
     "lint": "eslint . --ext .ts,.js,.cjs",
     "format": "prettier --write .",

@@ -55,32 +55,28 @@ export const diffieHellman = <A extends Location, B extends Location>(
     // The `arg` specifies whether `a` should wait to initiate key exchange
 
     // Wait for alice to start key exchange (if desired)
-    await locally(a, (unwrap: any) => {
+    await locally(a, async (unwrap: any) => {
       console.log("Press enter to begin key exchange...");
       // Check for key input on stdin in node: https://stackoverflow.com/a/72906729
-      let status: boolean = !unwrap(arg);
-      if (!status) {
-        // If waiting is desired
-        process.stdin
-          .setRawMode(true)
-          .setEncoding("utf8")
-          .resume()
-          .on("data", (key: string) => {
-            if (key.charCodeAt(0) == 0xd) {
-              process.stdin.setRawMode(false).pause();
-              status = true;
-            } else if (key.charCodeAt(0) == 0x3) {
-              process.exit(); // Ctrl-c
-            }
-          });
-      }
+      let wait: boolean = unwrap(arg);
       return new Promise<void>((resolve) => {
-        let id = setInterval(() => {
-          if (status) {
-            clearInterval(id); // Clear the interval checking
-            resolve(); // Begin key exchange
-          }
-        });
+        if (wait) {
+          // If waiting is desired
+          process.stdin
+            .setRawMode(true)
+            .setEncoding("utf8")
+            .resume()
+            .on("data", (key: string) => {
+              if (key.charCodeAt(0) == 0xd) {
+                process.stdin.setRawMode(false).pause();
+                resolve();
+              } else if (key.charCodeAt(0) == 0x3) {
+                process.exit(); // Ctrl-c
+              }
+            });
+        } else {
+          resolve();
+        }
       });
     });
     await locally(b, () =>

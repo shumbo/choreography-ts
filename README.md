@@ -6,7 +6,7 @@ Choreographic Programming in TypeScript
 
 ### Requirements
 
-You will need [Node.js](https://nodejs.org/en) (v18+) and [pnpm](https://pnpm.io/) installed.
+You will need [Node.js](https://nodejs.org/en) (v18+) and [pnpm](https://pnpm.io/) (v8) installed.
 
 ### Setup
 

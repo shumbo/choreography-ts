@@ -55,10 +55,10 @@ export const diffieHellman = <A extends Location, B extends Location>(
     // The `arg` specifies whether `a` should wait to initiate key exchange
 
     // Wait for alice to start key exchange (if desired)
-    await locally(a, async (unwrap: (arg: Located<boolean, A>) => boolean) => {
+    await locally(a, async (unwrap) => {
       console.log("Press enter to begin key exchange...");
       // Check for key input on stdin in node: https://stackoverflow.com/a/72906729
-      let wait: boolean = unwrap(arg);
+      let wait = unwrap(arg);
       return new Promise<void>((resolve) => {
         if (wait) {
           // If waiting is desired
@@ -87,14 +87,12 @@ export const diffieHellman = <A extends Location, B extends Location>(
     const pa = await locally(a, () => {
       const x = randInRange(200, 1000); // Random number in range [200, 1000]
       const primeGen = primeNums();
-      let prime: number = primeGen.next().value as number;
+      let prime = primeGen.next().value as number;
       for (let i = 0; i < x; i++) prime = primeGen.next().value as number;
       return prime;
     });
     const pb = await comm(a, b, pa);
-    const ga = await locally(a, (unwrap: (arg: Located<number, A>) => number) =>
-      randInRange(10, unwrap(pa))
-    );
+    const ga = await locally(a, (unwrap) => randInRange(10, unwrap(pa)));
     const gb = await comm(a, b, ga);
 
     // Alice and bob pick secrets
@@ -104,34 +102,26 @@ export const diffieHellman = <A extends Location, B extends Location>(
     // Alice and bob compute and exchange numbers
     const a_ = await locally(
       a,
-      (unwrap: (arg: Located<number, A>) => number) =>
-        unwrap(ga) ^ unwrap(sa) % unwrap(pa)
+      (unwrap) => unwrap(ga) ^ unwrap(sa) % unwrap(pa)
     );
     const b_ = await locally(
       b,
-      (unwrap: (arg: Located<number, B>) => number) =>
-        unwrap(gb) ^ unwrap(sb) % unwrap(pb)
+      (unwrap) => unwrap(gb) ^ unwrap(sb) % unwrap(pb)
     );
     const a__ = await comm(a, b, a_); // Send a_ to b
     const b__ = await comm(b, a, b_); // Send b_ to a
 
     // Compute shared key
-    const s1 = await locally(
-      a,
-      (unwrap: (arg: Located<number, A>) => number) => {
-        const s = unwrap(b__) ^ unwrap(sa) % unwrap(pa);
-        console.log("Alice's shared key:", s);
-        return s;
-      }
-    );
-    const s2 = await locally(
-      b,
-      (unwrap: (arg: Located<number, B>) => number) => {
-        const s = unwrap(a__) ^ unwrap(sb) % unwrap(pb);
-        console.log("Bob's shared key:", s);
-        return s;
-      }
-    );
+    const s1 = await locally(a, (unwrap) => {
+      const s = unwrap(b__) ^ unwrap(sa) % unwrap(pa);
+      console.log("Alice's shared key:", s);
+      return s;
+    });
+    const s2 = await locally(b, (unwrap) => {
+      const s = unwrap(a__) ^ unwrap(sb) % unwrap(pb);
+      console.log("Bob's shared key:", s);
+      return s;
+    });
     return [s1, s2];
   };
   return choreo;

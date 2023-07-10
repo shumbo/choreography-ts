@@ -1,5 +1,8 @@
 # choreography-ts
 
+![GitHub Actions](https://github.com/shumbo/choreography-ts/actions/workflows/ci.yml/badge.svg)
+[![codecov](https://codecov.io/gh/shumbo/choreography-ts/branch/main/graph/badge.svg?token=iUj1DlhbpJ)](https://codecov.io/gh/shumbo/choreography-ts)
+
 Choreographic Programming in TypeScript
 
 ## Development

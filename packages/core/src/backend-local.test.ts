@@ -1,4 +1,4 @@
-import { Choreography, Located } from "@choreography-ts/core";
+import { Choreography, Located } from ".";
 import { LocalBackend } from "./backend-local.js";
 
 const locations = ["alice", "bob", "carol"] as const;

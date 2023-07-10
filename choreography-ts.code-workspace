@@ -8,9 +8,6 @@
 		},
 		{
 			"path": "packages/examples"
-		},
-		{
-			"path": "packages/backend-local"
 		}
 	],
 	"settings": {

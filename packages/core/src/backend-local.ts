@@ -1,10 +1,4 @@
-import {
-  DefaultDict,
-  GenericBackend,
-  IVar,
-  Location,
-  Tag,
-} from "@choreography-ts/core";
+import { DefaultDict, GenericBackend, IVar, Location, Tag } from ".";
 import mitt from "mitt";
 
 export type LocalBackendInstance<L extends Location> = {

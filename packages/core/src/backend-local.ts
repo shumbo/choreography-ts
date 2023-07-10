@@ -34,7 +34,6 @@ export class LocalBackend<L extends Location> extends GenericBackend<
     return { location, inbox };
   }
   async teardown(instance: LocalBackendInstance<L>): Promise<void> {
-    // noop
     this.m.off(instance.location);
     return;
   }

@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest --silent",
+    "coverage": "jest --silent --coverage",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],

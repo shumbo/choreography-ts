@@ -7,7 +7,7 @@ module.exports = {
     "prettier",
   ],
   parser: "@typescript-eslint/parser",
-  plugins: ["@typescript-eslint"],
+  plugins: ["@typescript-eslint", "eslint-plugin-choreography-lint"],
   rules: {
     "@typescript-eslint/no-unused-vars": [
       "warn",
@@ -17,6 +17,7 @@ module.exports = {
         caughtErrorsIgnorePattern: "^_",
       },
     ],
+    "eslint-plugin-choreography-lint/no-renaming-operator": "error"
   },
   root: true,
 };

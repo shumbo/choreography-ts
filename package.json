@@ -23,6 +23,7 @@
     "@typescript-eslint/parser": "^5.59.6",
     "eslint": "^8.41.0",
     "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-choreography-lint": "file:packages/choreography-lint",
     "jest": "^29.5.0",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.8.7",
@@ -30,7 +31,6 @@
     "turbo": "^1.9.8",
     "typescript": "^5.0.4"
   },
-  "dependencies": {},
   "volta": {
     "node": "18.16.1"
   }

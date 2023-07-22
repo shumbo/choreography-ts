@@ -134,10 +134,10 @@ importers:
       '@choreography-ts/core':
         specifier: workspace:*
         version: link:../core
+    devDependencies:
       '@choreography-ts/eslint-plugin-choreography-ts':
         specifier: workspace:*
         version: link:../eslint-plugin-choreography-ts
-    devDependencies:
       '@types/jest':
         specifier: ^29.5.1
         version: 29.5.1

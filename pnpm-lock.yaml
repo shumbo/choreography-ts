@@ -135,8 +135,8 @@ importers:
         specifier: workspace:*
         version: link:../core
       '@choreography-ts/eslint-plugin-choreography-ts':
-        specifier: file:../eslint-plugin-choreography-ts
-        version: file:packages/eslint-plugin-choreography-ts(eslint@8.44.0)(typescript@5.0.4)
+        specifier: workspace:*
+        version: link:../eslint-plugin-choreography-ts
     devDependencies:
       '@types/jest':
         specifier: ^29.5.1
@@ -4815,16 +4815,3 @@ packages:
   /yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
-
-  file:packages/eslint-plugin-choreography-ts(eslint@8.44.0)(typescript@5.0.4):
-    resolution: {directory: packages/eslint-plugin-choreography-ts, type: directory}
-    id: file:packages/eslint-plugin-choreography-ts
-    name: '@choreography-ts/eslint-plugin-choreography-ts'
-    dependencies:
-      '@typescript-eslint/utils': 6.1.0(eslint@8.44.0)(typescript@5.0.4)
-      eslint: 8.44.0
-    transitivePeerDependencies:
-      - eslint
-      - supports-color
-      - typescript
-    dev: false

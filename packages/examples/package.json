@@ -14,7 +14,7 @@
   "dependencies": {
     "@choreography-ts/backend-express": "workspace:*",
     "@choreography-ts/core": "workspace:*",
-    "@choreography-ts/eslint-plugin-choreography-ts": "file:../eslint-plugin-choreography-ts"
+    "@choreography-ts/eslint-plugin-choreography-ts": "workspace:*"
   },
   "devDependencies": {
     "@types/jest": "^29.5.1",

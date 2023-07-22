@@ -12,11 +12,10 @@ module.exports = {
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "plugin:choreography-lint/base", // Activate the custom rules
     "prettier",
   ],
   parser: "@typescript-eslint/parser",
-  plugins: ["@typescript-eslint", "choreography-lint"],
+  plugins: ["@typescript-eslint"],
   rules: {
     "@typescript-eslint/no-unused-vars": [
       "warn",
@@ -25,8 +24,7 @@ module.exports = {
         varsIgnorePattern: "^_",
         caughtErrorsIgnorePattern: "^_",
       },
-    ],
-    "@typescript-eslint/no-var-requires": "off" // Don't error on using CommonJS imports
+    ]
   },
   root: true,
 };

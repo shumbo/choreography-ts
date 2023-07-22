@@ -1,14 +1,13 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "./",
+    "rootDir": "./src",
     "outDir": "dist",
     // Kept on getting error that module `@typescript-eslint/rule-tester` was not found
     // The following fixed this when building
     // But VSCode still can't find the module for some reason...
     "moduleResolution": "NodeNext" // https://github.com/typescript-eslint/typescript-eslint/issues/7284
   },
-  // file.ts and react.tsx are needed for testing with type information
-  "include": ["src/**/*", "file.ts", "react.tsx"],
+  "include": ["src/**/*"],
   "exclude": ["tests/**/*.test.ts"]
 }

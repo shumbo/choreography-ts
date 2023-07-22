@@ -3,10 +3,12 @@
 import { RuleTester } from "@typescript-eslint/rule-tester";
 import noRenameRule from "../src/no-renaming-operator";
 
+// Sop freaking annoying to fix this issue: https://typescript-eslint.io/linting/troubleshooting/#i-get-errors-telling-me-eslint-was-configured-to-run--however-that-tsconfig-does-not--none-of-those-tsconfigs-include-this-file
 const ruleTester = new RuleTester({
   parser: "@typescript-eslint/parser",
   parserOptions: {
     project: "tsconfig.json",
+    tsconfigRootDir: __dirname + "/fixtures" // This directiory and its files needed to test with type information
   },
 });
 

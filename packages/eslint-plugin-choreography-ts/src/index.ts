@@ -14,4 +14,4 @@ const rules: TSESLint.Linter.Plugin = {
     "no-renaming-operator": noRenameRule,
   },
 };
-export default rules;
+export = rules;

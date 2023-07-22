@@ -1,13 +1,13 @@
 // Testing: https://typescript-eslint.io/packages/rule-tester
 // Three files needed: ../file.ts, ../react.tsx, ../tsconfig.json
-import { RuleTester } from '@typescript-eslint/rule-tester'
-import noRenameRule from '../src/no-renaming-operator'
+import { RuleTester } from "@typescript-eslint/rule-tester";
+import noRenameRule from "../src/no-renaming-operator";
 
 const ruleTester = new RuleTester({
-  parser: '@typescript-eslint/parser',
+  parser: "@typescript-eslint/parser",
   parserOptions: {
-    project: "tsconfig.json"
-  }
+    project: "tsconfig.json",
+  },
 });
 
 ruleTester.run("no-renaming-operator", noRenameRule, {
@@ -35,10 +35,9 @@ ruleTester.run("no-renaming-operator", noRenameRule, {
               };`,
       errors: [
         {
-          messageId: "invalid"
-        }
-      ]
-
+          messageId: "invalid",
+        },
+      ],
     },
     {
       name: "invalid test case 2",
@@ -50,9 +49,9 @@ ruleTester.run("no-renaming-operator", noRenameRule, {
             };`,
       errors: [
         {
-          messageId: "rename"
-        }
-      ]
+          messageId: "rename",
+        },
+      ],
     },
   ],
 });

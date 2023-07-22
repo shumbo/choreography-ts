@@ -6,7 +6,7 @@ module.exports = {
     // https://eslint.org/docs/latest/use/configure/language-options
     es6: true,
     browser: true,
-    commonjs: true
+    commonjs: true,
   },
   ignorePatterns: ["packages/*/dist"],
   extends: [
@@ -24,7 +24,7 @@ module.exports = {
         varsIgnorePattern: "^_",
         caughtErrorsIgnorePattern: "^_",
       },
-    ]
+    ],
   },
   root: true,
 };

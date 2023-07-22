@@ -8,7 +8,7 @@ const ruleTester = new RuleTester({
   parser: "@typescript-eslint/parser",
   parserOptions: {
     project: "tsconfig.json",
-    tsconfigRootDir: __dirname + "/fixtures" // This directiory and its files needed to test with type information
+    tsconfigRootDir: __dirname + "/fixtures", // This directiory and its files needed to test with type information
   },
 });
 

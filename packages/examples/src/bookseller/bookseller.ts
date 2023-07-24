@@ -40,6 +40,7 @@ export const bookseller: Choreography<
     // if the buyer decides to buy the book, seller looks up the delivery date
     const deliveryDateAtSeller = await locally(
       "seller",
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))!
     );
     // send the delivery date back to the buyer

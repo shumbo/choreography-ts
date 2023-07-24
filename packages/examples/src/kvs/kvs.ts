@@ -42,7 +42,7 @@ type ReplicationStrategy<S extends Located<State, ServerLocations>[]> =
     [Located<Response, "primary">]
   >;
 
-const nullReplicationStrategy: ReplicationStrategy<
+export const nullReplicationStrategy: ReplicationStrategy<
   [Located<State, "primary">]
 > = async ({ locally }, [requestAtPrimary, primaryState]) => {
   const responseAtPrimary = await locally("primary", (unwrap) =>
@@ -51,7 +51,7 @@ const nullReplicationStrategy: ReplicationStrategy<
   return [responseAtPrimary];
 };
 
-const primaryBackupReplicationStrategy: ReplicationStrategy<
+export const primaryBackupReplicationStrategy: ReplicationStrategy<
   [Located<State, "primary">, Located<State, "backup">]
 > = async (
   { multicast, locally, colocally },
@@ -89,7 +89,7 @@ const primaryBackupReplicationStrategy: ReplicationStrategy<
   return [responseAtPrimary];
 };
 
-function kvs<S extends Located<State, ServerLocations>[]>(
+export function kvs<S extends Located<State, ServerLocations>[]>(
   replicationStrategy: ReplicationStrategy<S>
 ) {
   const kvs_: Choreography<

@@ -1,6 +1,5 @@
 import { Choreography, Located } from "@choreography-ts/core";
 import { ExpressBackend } from "@choreography-ts/backend-express";
-import process from "process";
 
 export type L = "judge" | "voter1" | "voter2" | "voter3";
 

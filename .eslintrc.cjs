@@ -1,6 +1,6 @@
 /* eslint-env node */
 module.exports = {
-  ignorePatterns: ["src", "packages/*/dist"],
+  ignorePatterns: ["packages/*/dist", "coverage"],
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",

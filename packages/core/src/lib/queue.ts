@@ -6,6 +6,7 @@ export class Queue<T = any> {
   private waiting: ((v: T) => void)[] = [];
   public push(value: T): void {
     if (this.waiting.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.waiting.shift()!(value);
     } else {
       this.queue.push(value);
@@ -13,6 +14,7 @@ export class Queue<T = any> {
   }
   public async pop(): Promise<T> {
     if (this.queue.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       return this.queue.shift()!;
     } else {
       return new Promise((resolve) => {

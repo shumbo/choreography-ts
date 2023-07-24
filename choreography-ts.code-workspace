@@ -29,6 +29,9 @@
 			"Colocally",
 			"Colocated",
 			"ivar"
-		]
+		],
+		"files.associations": {
+			"turbo.json": "jsonc"
+		}
 	}
 }

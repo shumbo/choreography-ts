@@ -14,6 +14,7 @@ const helloWorld: Choreography<Locations> = async ({ locally, comm }) => {
 };
 
 async function main(location: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (!locations.includes(location as any)) {
     throw new Error(`Invalid location: ${location}`);
   }
@@ -21,7 +22,9 @@ async function main(location: string) {
     alice: ["localhost", 3000],
     bob: ["localhost", 3001],
   });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await backend.epp(helloWorld, location as any)([]);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 main(process.argv[2]!);

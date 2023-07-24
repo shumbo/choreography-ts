@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import fetch from "@adobe/node-fetch-retry";
 import express from "express";
 import { Server } from "http";

@@ -9,7 +9,7 @@ describe("Diffie Hellman", () => {
       bob: ["localhost", 3001],
     });
     const keyExchange = diffieHellman("alice", "bob");
-    const [[s1, a], [b, s2]] = await Promise.all([
+    const [[s1, _a], [_b, s2]] = await Promise.all([
       backend.epp(keyExchange, "alice")([false]),
       backend.epp(keyExchange, "bob")([undefined]),
     ]);

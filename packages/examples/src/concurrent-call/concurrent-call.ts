@@ -22,7 +22,7 @@ export const concurrentCall: Choreography<
     await locally("bob", (unwrap) => {
       console.log(unwrap(msgAtBob));
     });
-    return [oneAtBob];
+    return [oneAtBob] as [Located<number, "bob">];
   }, []);
   const p2 = call(async ({ locally, comm }) => {
     // [3]
@@ -36,10 +36,10 @@ export const concurrentCall: Choreography<
     await locally("bob", (unwrap) => {
       console.log(unwrap(msgAtBob));
     });
-    return [twoAtBob];
+    return [twoAtBob] as [Located<number, "bob">];
   }, []);
   const [[oneAtBob], [twoAtBob]] = await Promise.all([p1, p2]);
-  return [oneAtBob!, twoAtBob!];
+  return [oneAtBob, twoAtBob];
 };
 
 async function main() {

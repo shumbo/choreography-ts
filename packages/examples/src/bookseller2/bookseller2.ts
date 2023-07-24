@@ -69,6 +69,7 @@ export const bookseller: (
         if (sharedDecision) {
           const deliveryDateAtSeller = await locally(
             "seller",
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))!
           );
           const deliveryDateAtBuyer = await comm(

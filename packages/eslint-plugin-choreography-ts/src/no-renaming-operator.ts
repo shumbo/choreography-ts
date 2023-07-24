@@ -20,7 +20,7 @@ const noRenameRule: TSESLint.RuleModule<MessageIDs, []> = {
     },
     fixable: undefined, // Not an automatically fixable problem
     messages: {
-      rename: "choreographic operatores cannot be renamed",
+      rename: "choreographic operators cannot be renamed",
       invalid: "choreographic operators must be destructured",
     },
     schema: [],

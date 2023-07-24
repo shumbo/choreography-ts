@@ -1,3 +1,5 @@
+/* eslint-disable no-constant-condition */
+
 import { Choreography, Located } from "@choreography-ts/core";
 import { ExpressBackend } from "./backend-express";
 
@@ -14,7 +16,7 @@ describe("HTTP Backend", () => {
   test("global arguments", async () => {
     const p = "GLOBAL ARGUMENT";
     const f = (q: string) => {
-      const c: Choreography<Locations, [], []> = async ({}) => {
+      const c: Choreography<Locations, [], []> = async () => {
         expect(q).toBe(p);
         return [];
       };
@@ -34,8 +36,8 @@ describe("HTTP Backend", () => {
       return [];
     };
     if (false) {
-      // @ts-expect-error
-      await backend.epp(c, "alice", null)(1); // wrong type
+      // @ts-expect-error - alice must provide a string, not a number
+      await backend.epp(c, "alice", null)(1);
     }
     await Promise.all([
       backend.epp(c, "alice")([p]),
@@ -89,8 +91,8 @@ describe("HTTP Backend", () => {
       });
       await locally("carol", (unwrap) => {
         if (false) {
-          // @ts-expect-error
-          unwrap(msgAtSelectedTwo); // cannot unwrap at carol
+          // @ts-expect-error - cannot wrap at carol
+          unwrap(msgAtSelectedTwo);
         }
       });
       return [];
@@ -136,9 +138,8 @@ describe("HTTP Backend", () => {
       await colocally(
         ["carol"],
         async ({ peel }) => {
-          // carol cannot peel the colocated value `msgAtSelectedTwo`
           if (false) {
-            // @ts-expect-error
+            // @ts-expect-error - carol cannot peel the colocated value `msgAtSelectedTwo`
             peel(msgAtSelectedTwo);
           }
           return [];
@@ -148,9 +149,8 @@ describe("HTTP Backend", () => {
       await colocally(
         ["bob", "carol"],
         async ({ peel }) => {
-          // bob can read, but because carol will also attempt to read, this is a type error
           if (false) {
-            // @ts-expect-error
+            // @ts-expect-error - bob can read, but because carol will also attempt to read, this is a type error
             expect(peel(msgAtSelectedTwo));
           }
           return [];
@@ -191,7 +191,7 @@ describe("HTTP Backend", () => {
       await colocally(
         ["alice", "bob"],
         async () => {
-          const msgAtEveryone = await broadcast("carol", msgAtCarol);
+          const _msgAtEveryone = await broadcast("carol", msgAtCarol);
           return [];
         },
         []

@@ -1,16 +1,26 @@
 {
 	"folders": [
 		{
+			"name": "root",
+			"path": "."
+		},
+		{
+			"name": "core",
 			"path": "packages/core"
 		},
 		{
+			"name": "backend-express",
 			"path": "packages/backend-express"
 		},
 		{
+			"name": "examples",
 			"path": "packages/examples"
-		}
+		},
 	],
 	"settings": {
+		"files.exclude": {
+			"packages": true
+		},
 		"search.exclude": {
 			"dist/**": true
 		},
@@ -19,6 +29,9 @@
 			"Colocally",
 			"Colocated",
 			"ivar"
-		]
+		],
+		"files.associations": {
+			"turbo.json": "jsonc"
+		}
 	}
 }

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+
 import {
   Backend,
   Broadcast,
@@ -93,7 +95,7 @@ export abstract class GenericBackend<L extends Location, T>
           loc: L2,
           callback: (unwrap: Unwrap<L2>) => T | Promise<T>
         ) => {
-          // @ts-ignore
+          // @ts-ignore - no easy way to type this
           if (loc !== location) {
             return undefined as any;
           }
@@ -195,7 +197,6 @@ export abstract class GenericBackend<L extends Location, T>
             value: Located<T, L1>
           ) => {
             t.comm();
-            const locations: (LL | L1)[] = [sender, ...receivers];
             // @ts-ignore
             if (location === sender) {
               // if sender, send value to all receivers

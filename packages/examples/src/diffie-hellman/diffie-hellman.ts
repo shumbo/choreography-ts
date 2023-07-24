@@ -10,7 +10,7 @@ import { ExpressBackend } from "@choreography-ts/backend-express";
 
 // Return all divisors of `x`
 const divisors = (x: number): number[] => {
-  let divs: number[] = [1, x];
+  const divs = [1, x];
   for (let y = 2; y <= x / 2; y++) {
     if (x % y == 0) divs.push(y);
   }
@@ -19,7 +19,7 @@ const divisors = (x: number): number[] => {
 
 // Checks if input number is prime
 const isPrime = (x: number): boolean => {
-  let divs: number[] = divisors(x);
+  const divs = divisors(x);
   if (divs.length == 2) return true;
   return false;
 };
@@ -58,7 +58,7 @@ export const diffieHellman = <A extends Location, B extends Location>(
     await locally(a, async (unwrap) => {
       console.log("Press enter to begin key exchange...");
       // Check for key input on stdin in node: https://stackoverflow.com/a/72906729
-      let wait = unwrap(arg);
+      const wait = unwrap(arg);
       return new Promise<void>((resolve) => {
         if (wait) {
           // If waiting is desired

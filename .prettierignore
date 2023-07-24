@@ -3,3 +3,4 @@ pnpm-lock.yaml
 
 packages/*/dist
 packages/*/build
+coverage

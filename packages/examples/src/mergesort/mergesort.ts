@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { Choreography, Located } from "@choreography-ts/core";
 import { ExpressBackend } from "@choreography-ts/backend-express";
 

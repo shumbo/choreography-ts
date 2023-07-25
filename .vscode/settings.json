@@ -1,3 +1,4 @@
 {
-  "cSpell.words": ["colocally", "Colocated", "TAPL"]
+  "cSpell.words": ["colocally", "Colocated", "TAPL"],
+  "eslint.options": { "overrideConfigFile": "./.eslintrc.cjs" }
 }

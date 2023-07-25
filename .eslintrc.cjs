@@ -1,6 +1,14 @@
 /* eslint-env node */
 module.exports = {
-  ignorePatterns: ["packages/*/dist", "coverage"],
+  env: {
+    node: true,
+    // https://stackoverflow.com/a/60690811
+    // https://eslint.org/docs/latest/use/configure/language-options
+    es6: true,
+    browser: true,
+    commonjs: true,
+  },
+  ignorePatterns: ["packages/*/dist"],
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",

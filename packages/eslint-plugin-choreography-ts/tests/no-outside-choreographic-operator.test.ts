@@ -22,6 +22,12 @@ ruleTester.run("no-renaming-operator", noOutsideOperatorRule, {
             return [];
           };`,
     },
+    {
+      name: "valid test case 2",
+      code: `const test2: Choreography<Locations> = async ({
+        
+      })`,
+    },
   ],
   invalid: [
     {

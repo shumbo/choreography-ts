@@ -48,6 +48,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
   ],
   invalid: [
     {
+      // check for empty argument list and proper insertion of missing nested operator
       name: "invalid test case 1",
       code: `
       const test1: Choreography<Locations> = async ({
@@ -82,27 +83,9 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       ],
     },
     {
+      // check for proper addition of missing operator
       name: "invalid test case 2",
       code: `
-      const test2: Choreography<Locations> = async ({
-        locally,
-        broadcast,
-        colocally,
-      }) => {
-        const [deliveryDateAtBuyer] = await colocally(
-          ["buyer1", "seller"],
-          async () => {
-            const sharedDecision = peel(decision);
-            if (sharedDecision) {
-              const deliveryDateAtSeller = await locally(
-                "seller",
-                (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))
-              );
-            }
-          }
-        )
-      }`,
-      output: `
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
@@ -121,11 +104,26 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
           }
         )
       }`,
+      output: `
+      const test2: Choreography<Locations> = async ({
+        locally,
+        broadcast,
+        colocally,
+      }) => {
+        const [deliveryDateAtBuyer] = await colocally(
+          ["buyer1", "seller"],
+          async ({ peel, locally }) => {
+            const sharedDecision = peel(decision);
+            if (sharedDecision) {
+              const deliveryDateAtSeller = await locally(
+                "seller",
+                (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))
+              );
+            }
+          }
+        )
+      }`,
       errors: [
-        {
-          // suggestion already covered by output
-          messageId: "error",
-        },
         {
           messageId: "error",
           suggestions: [
@@ -139,7 +137,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       }) => {
         const [deliveryDateAtBuyer] = await colocally(
           ["buyer1", "seller"],
-          async ({ locally }) => {
+          async ({ peel, locally }) => {
             const sharedDecision = peel(decision);
             if (sharedDecision) {
               const deliveryDateAtSeller = await locally(
@@ -156,6 +154,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       ],
     },
     {
+      // check for non-object parameter type in argument list and proper insertion of missing operators
       name: "invalid test case 3",
       code: `
       const test2: Choreography<Locations> = async ({
@@ -197,9 +196,11 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       }`,
       errors: [
         {
+          // error for missing `peel` operator, with suggestion output already checked above
           messageId: "error",
         },
         {
+          // suggestion for missing `locally` operator
           messageId: "error",
           suggestions: [
             {

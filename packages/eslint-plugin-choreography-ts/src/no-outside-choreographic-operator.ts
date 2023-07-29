@@ -35,10 +35,7 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
   create(context) {
     return {
       [nestedOperatorSelector]: function (node: TSESTree.CallExpression) {
-        const operator =
-          node.callee.type === AST_NODE_TYPES.Identifier
-            ? node.callee.name
-            : "";
+        const operator = (node.callee as TSESTree.Identifier).name;
         let curr: TSESTree.Node = node;
         while (
           curr.type !== AST_NODE_TYPES.ArrowFunctionExpression &&
@@ -46,48 +43,29 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
         ) {
           curr = curr.parent;
         }
-        if (curr.type === AST_NODE_TYPES.ArrowFunctionExpression) {
-          const params = curr.params;
-          const param = params[0];
-          if (param) {
-            if (param.type === AST_NODE_TYPES.ObjectPattern) {
-              let match = false;
-              let propertyRange: [number, number];
-              const properties = param.properties;
-              properties.forEach((prop) => {
-                if (prop.type === AST_NODE_TYPES.Property) {
-                  propertyRange = prop.range;
-                  if (prop.key.type === AST_NODE_TYPES.Identifier) {
-                    if (prop.key.name === operator) {
-                      match = true;
-                    }
+        const params = (curr as TSESTree.ArrowFunctionExpression).params;
+        const param = params[0];
+        if (param) {
+          if (param.type === AST_NODE_TYPES.ObjectPattern) {
+            let match = false;
+            let propertyRange: [number, number];
+            const properties = param.properties;
+            properties.forEach((prop) => {
+              if (prop.type === AST_NODE_TYPES.Property) {
+                propertyRange = prop.range;
+                if (prop.key.type === AST_NODE_TYPES.Identifier) {
+                  if (prop.key.name === operator) {
+                    // more readable without using `&&`
+                    match = true;
                   }
                 }
-              });
-              if (!match) {
-                const fix = (fixer: TSESLint.RuleFixer) => {
-                  return fixer.insertTextAfterRange(
-                    propertyRange,
-                    `, ${operator}`
-                  );
-                };
-                context.report({
-                  node: node,
-                  messageId: "error",
-                  suggest: [
-                    {
-                      messageId: "suggestion",
-                      fix: fix, // suggested fix
-                    },
-                  ],
-                  fix: fix, // main fix (can be applied with --fix)
-                });
               }
-            } else {
+            });
+            if (!match) {
               const fix = (fixer: TSESLint.RuleFixer) => {
-                return fixer.insertTextBeforeRange(
-                  param.range,
-                  `{ ${operator} }, `
+                return fixer.insertTextAfterRange(
+                  propertyRange,
+                  `, ${operator}`
                 );
               };
               context.report({
@@ -96,17 +74,18 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
                 suggest: [
                   {
                     messageId: "suggestion",
-                    fix: fix,
+                    fix: fix, // suggested fix
                   },
                 ],
-                fix: fix,
+                fix: fix, // main fix (can be applied with --fix)
               });
             }
           } else {
             const fix = (fixer: TSESLint.RuleFixer) => {
-              const sourceCode = context.getSourceCode().getText(curr);
-              const paramAdded = sourceCode.replace("()", `({ ${operator} })`);
-              return fixer.replaceText(curr, paramAdded);
+              return fixer.insertTextBeforeRange(
+                param.range,
+                `{ ${operator} }, `
+              );
             };
             context.report({
               node: node,
@@ -120,6 +99,24 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
               fix: fix,
             });
           }
+        } else {
+          const fix = (fixer: TSESLint.RuleFixer) => {
+            // replace empty parameters in source code
+            const sourceCode = context.getSourceCode().getText(curr);
+            const paramAdded = sourceCode.replace("()", `({ ${operator} })`);
+            return fixer.replaceText(curr, paramAdded);
+          };
+          context.report({
+            node: node,
+            messageId: "error",
+            suggest: [
+              {
+                messageId: "suggestion",
+                fix: fix,
+              },
+            ],
+            fix: fix,
+          });
         }
       },
     };

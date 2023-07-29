@@ -9,44 +9,173 @@ const ruleTester = new RuleTester({
   },
 });
 
-ruleTester.run("no-renaming-operator", noOutsideOperatorRule, {
+ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
   valid: [
     {
       name: "valid test case 1",
-      code: `const test: Choreography<Locations> = async ({
-            locally,
-            broadcast,
-            colocally,
-          }) => {
-            const msg = await colocally(["bob", "carol"], () => "I'm Carol");
-            return [];
-          };`,
+      code: `
+      const test: Choreography<Locations> = async ({
+        locally,
+        broadcast,
+        colocally,
+      }) => {
+        const msg = await colocally(["bob", "carol"], () => "I'm Carol");
+        return [];
+      };`,
     },
     {
       name: "valid test case 2",
-      code: `const test2: Choreography<Locations> = async ({
-        
-      })`,
+      code: `
+      const test2: Choreography<Locations> = async ({
+        locally,
+        broadcast,
+        colocally,
+      }) => {
+        const [deliveryDateAtBuyer] = await colocally(
+          ["buyer1", "seller"],
+          async ({ locally, comm, peel }) => {
+            const sharedDecision = peel(decision);
+            if (sharedDecision) {
+              const deliveryDateAtSeller = await locally(
+                "seller",
+                (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))
+              );
+            }
+          }
+        )
+      }`,
     },
   ],
   invalid: [
     {
       name: "invalid test case 1",
-      code: `const test1: Choreography<Locations> = async ({
-            locally,
-            broadcast,
-            colocally,
-          }) => {
-            const msgAtCarol = await locally("carol", () => "I'm Carol");
-            await colocally(["alice", "bob"], async () => {
-              const msgAtEveryone = await broadcast("carol", msgAtCarol);
-              return [];
-            });
-            return [];
-          };`,
+      code: `
+      const test1: Choreography<Locations> = async ({
+        locally,
+        broadcast,
+        colocally,
+      }) => {
+        const msgAtCarol = await locally("carol", () => "I'm Carol");
+        await colocally(["alice", "bob"], async () => {
+          const msgAtEveryone = await broadcast("carol", msgAtCarol);
+          return [];
+        });
+        return [];
+      };`,
+      output: `
+      const test1: Choreography<Locations> = async ({
+        locally,
+        broadcast,
+        colocally,
+      }) => {
+        const msgAtCarol = await locally("carol", () => "I'm Carol");
+        await colocally(["alice", "bob"], async ({ broadcast }) => {
+          const msgAtEveryone = await broadcast("carol", msgAtCarol);
+          return [];
+        });
+        return [];
+      };`,
       errors: [
         {
           messageId: "error",
+        },
+      ],
+    },
+    {
+      name: "invalid test case 2",
+      code: `
+      const test2: Choreography<Locations> = async ({
+        locally,
+        broadcast,
+        colocally,
+      }) => {
+        const [deliveryDateAtBuyer] = await colocally(
+          ["buyer1", "seller"],
+          async () => {
+            const sharedDecision = peel(decision);
+            if (sharedDecision) {
+              const deliveryDateAtSeller = await locally(
+                "seller",
+                (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))
+              );
+            }
+          }
+        )
+      }`,
+      output: `
+      const test2: Choreography<Locations> = async ({
+        locally,
+        broadcast,
+        colocally,
+      }) => {
+        const [deliveryDateAtBuyer] = await colocally(
+          ["buyer1", "seller"],
+          async ({ peel }) => {
+            const sharedDecision = peel(decision);
+            if (sharedDecision) {
+              const deliveryDateAtSeller = await locally(
+                "seller",
+                (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))
+              );
+            }
+          }
+        )
+      }`,
+      errors: [
+        {
+          messageId: "error",
+          suggestions: [
+            {
+              messageId: "suggestion",
+              // Correct line spacing in output
+              output: `
+      const test2: Choreography<Locations> = async ({
+        locally,
+        broadcast,
+        colocally,
+      }) => {
+        const [deliveryDateAtBuyer] = await colocally(
+          ["buyer1", "seller"],
+          async ({ peel }) => {
+            const sharedDecision = peel(decision);
+            if (sharedDecision) {
+              const deliveryDateAtSeller = await locally(
+                "seller",
+                (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))
+              );
+            }
+          }
+        )
+      }`,
+            },
+          ],
+        },
+        {
+          messageId: "error",
+          suggestions: [
+            {
+              messageId: "suggestion",
+              output: `
+      const test2: Choreography<Locations> = async ({
+        locally,
+        broadcast,
+        colocally,
+      }) => {
+        const [deliveryDateAtBuyer] = await colocally(
+          ["buyer1", "seller"],
+          async ({ locally }) => {
+            const sharedDecision = peel(decision);
+            if (sharedDecision) {
+              const deliveryDateAtSeller = await locally(
+                "seller",
+                (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))
+              );
+            }
+          }
+        )
+      }`,
+            },
+          ],
         },
       ],
     },

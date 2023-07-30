@@ -131,33 +131,16 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
               });
             }
             // otherwise if the dependencies object isn't present in the parameters
-            // but there are other parameter(s) present
+            // but there are other parameter(s) present, we should not apply fixes
+            // or suggest any in this case, since the operator and parameter use is ambiguous
           } else {
-            // fix to insert missing dependencies parameter with missing operator
-            const fix = (fixer: TSESLint.RuleFixer) => {
-              // Insert the missing dependencies before the first parameter
-              return fixer.insertTextBeforeRange(
-                param.range,
-                `{ ${operator} }, `
-              );
-            };
-            // report error with fixes
+            // report error only
             context.report({
               node: node.callee,
               messageId: "error",
               data: {
                 operator,
               },
-              suggest: [
-                {
-                  messageId: "suggestion",
-                  data: {
-                    operator,
-                  },
-                  fix,
-                },
-              ],
-              fix,
             });
           }
           // otherwise if the parameter list is empty

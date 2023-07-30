@@ -236,7 +236,6 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       }) => {
         const [deliveryDateAtBuyer] = await colocally(
           ["buyer1", "seller"],
-          // ↓ should contain 'peel'
           async ({}) => {
             const sharedDecision = peel(decision);
           }

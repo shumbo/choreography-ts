@@ -10,16 +10,12 @@ const backend = new ExpressBackend<Locations>({
   carol: ["localhost", 3002],
 });
 
-const test: Choreography<Locations> = async ({
-  locally,
-  broadcast,
-  colocally,
-}) => {
+const test: Choreography<Locations> = async ({ locally, colocally }) => {
   const msgAtCarol = await locally("carol", () => "I'm Carol");
   try {
     await colocally(
-      ["alice", "bob"],
-      async () => {
+      ["alice", "bob", "carol"],
+      async ({ broadcast }) => {
         const _msgAtEveryone = await broadcast("carol", msgAtCarol);
         return [];
       },

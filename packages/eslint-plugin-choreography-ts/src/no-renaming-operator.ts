@@ -8,6 +8,8 @@ import { AST_NODE_TYPES, TSESTree, TSESLint } from "@typescript-eslint/utils";
 
 type MessageIDs = "rename" | "invalid";
 
+const selector = `VariableDeclaration[kind = "const"] > VariableDeclarator[id.typeAnnotation.typeAnnotation.typeName.name = "Choreography"] > ArrowFunctionExpression`;
+
 const noRenameRule: TSESLint.RuleModule<MessageIDs, []> = {
   defaultOptions: [],
   meta: {
@@ -27,33 +29,26 @@ const noRenameRule: TSESLint.RuleModule<MessageIDs, []> = {
   },
   create(context) {
     return {
-      'VariableDeclaration[kind = "const"] > VariableDeclarator[id.typeAnnotation.typeAnnotation.typeName.name = "Choreography"] > ArrowFunctionExpression'(
-        node: TSESTree.ArrowFunctionExpression
-      ) {
+      [selector]: function (node: TSESTree.ArrowFunctionExpression) {
         if (node.params[0]) {
-          if (node.params[0].type === "ObjectPattern") {
-            node.params[0].properties.forEach(
-              (property: TSESTree.Property | TSESTree.RestElement) => {
-                // Check for shorthand json format: {locally, colocally, ...}, and no rest element `...rest`
-                if (
-                  property.type === AST_NODE_TYPES.Property
-                    ? property.shorthand !== true
-                    : true
-                ) {
-                  context.report({
-                    node: property,
-                    messageId: "rename",
-                  });
-                }
+          if (node.params[0].type === AST_NODE_TYPES.ObjectPattern) {
+            node.params[0].properties.forEach((property) => {
+              // Check for shorthand json format: {locally, colocally, ...}, and no rest element `...rest`
+              if (
+                property.type === AST_NODE_TYPES.Property
+                  ? property.shorthand !== true
+                  : true // should always be true if type is "RestElement"
+              ) {
+                context.report({
+                  node: property,
+                  messageId: "rename",
+                });
               }
-            );
+            });
           } else {
             context.report({
               node: node.params[0],
               messageId: "invalid",
-              /*fix(fixer) {
-                return fixer.replaceText(node, "node");
-              }*/
             });
           }
         }

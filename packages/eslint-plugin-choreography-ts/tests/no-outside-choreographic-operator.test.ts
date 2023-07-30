@@ -48,7 +48,8 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
   ],
   invalid: [
     {
-      // check for empty argument list and proper insertion of missing nested operator
+      // check for proper insertion of missing dependencies parameter with missing nested operator
+      // into empty parameters list
       name: "invalid test case 1",
       code: `
       const test1: Choreography<Locations> = async ({
@@ -83,8 +84,85 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       ],
     },
     {
-      // check for proper addition of missing operator
+      // check for proper insertion of missing dependencies parameterwith nested operator
+      // into non-empty parameters list
       name: "invalid test case 2",
+      code: `
+      const test2: Choreography<Locations> = async ({
+        locally,
+        broadcast,
+        colocally,
+      }) => {
+        const [deliveryDateAtBuyer] = await colocally(
+          ["buyer1", "seller"],
+          async (arg) => {
+            const sharedDecision = peel(decision);
+            if (sharedDecision) {
+              const deliveryDateAtSeller = await locally(
+                "seller",
+                (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))
+              );
+            }
+          }
+        )
+      }`,
+      output: `
+      const test2: Choreography<Locations> = async ({
+        locally,
+        broadcast,
+        colocally,
+      }) => {
+        const [deliveryDateAtBuyer] = await colocally(
+          ["buyer1", "seller"],
+          async ({ peel }, arg) => {
+            const sharedDecision = peel(decision);
+            if (sharedDecision) {
+              const deliveryDateAtSeller = await locally(
+                "seller",
+                (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))
+              );
+            }
+          }
+        )
+      }`,
+      errors: [
+        {
+          // error for missing `peel` operator, with suggestion output already checked above
+          messageId: "error",
+        },
+        {
+          // check suggestion for the missing `locally` operator
+          messageId: "error",
+          suggestions: [
+            {
+              messageId: "suggestion",
+              output: `
+      const test2: Choreography<Locations> = async ({
+        locally,
+        broadcast,
+        colocally,
+      }) => {
+        const [deliveryDateAtBuyer] = await colocally(
+          ["buyer1", "seller"],
+          async ({ locally }, arg) => {
+            const sharedDecision = peel(decision);
+            if (sharedDecision) {
+              const deliveryDateAtSeller = await locally(
+                "seller",
+                (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))
+              );
+            }
+          }
+        )
+      }`,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      // check for proper insertion of missing nested operator into non-empty dependencies object
+      name: "invalid test case 3",
       code: `
       const test2: Choreography<Locations> = async ({
         locally,
@@ -154,8 +232,8 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       ],
     },
     {
-      // check for non-object parameter type in argument list and proper insertion of missing operators
-      name: "invalid test case 3",
+      // check for proper insertion of missing nested operator into empty dependencies object
+      name: "invalid test case 4",
       code: `
       const test2: Choreography<Locations> = async ({
         locally,
@@ -164,14 +242,8 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       }) => {
         const [deliveryDateAtBuyer] = await colocally(
           ["buyer1", "seller"],
-          async (arg) => {
+          async ({}) => {
             const sharedDecision = peel(decision);
-            if (sharedDecision) {
-              const deliveryDateAtSeller = await locally(
-                "seller",
-                (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))
-              );
-            }
           }
         )
       }`,
@@ -183,49 +255,14 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       }) => {
         const [deliveryDateAtBuyer] = await colocally(
           ["buyer1", "seller"],
-          async ({ peel }, arg) => {
+          async ({ peel }) => {
             const sharedDecision = peel(decision);
-            if (sharedDecision) {
-              const deliveryDateAtSeller = await locally(
-                "seller",
-                (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))
-              );
-            }
           }
         )
       }`,
       errors: [
         {
-          // error for missing `peel` operator, with suggestion output already checked above
           messageId: "error",
-        },
-        {
-          // suggestion for missing `locally` operator
-          messageId: "error",
-          suggestions: [
-            {
-              messageId: "suggestion",
-              output: `
-      const test2: Choreography<Locations> = async ({
-        locally,
-        broadcast,
-        colocally,
-      }) => {
-        const [deliveryDateAtBuyer] = await colocally(
-          ["buyer1", "seller"],
-          async ({ locally }, arg) => {
-            const sharedDecision = peel(decision);
-            if (sharedDecision) {
-              const deliveryDateAtSeller = await locally(
-                "seller",
-                (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))
-              );
-            }
-          }
-        )
-      }`,
-            },
-          ],
         },
       ],
     },

@@ -27,16 +27,20 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
     fixable: "code", // automatically fixable issue
     hasSuggestions: true, // provide suggestions for fixes
     messages: {
-      error: "choreographic operator undefined in enclosing context",
-      suggestion: "add missing operator to parameter list",
+      error:
+        "Choreographic operator '{{ operator }}' undefined in enclosing context",
+      suggestion: "Add missing operator to parameter list",
     },
     schema: [],
   },
   create(context) {
     return {
       [nestedOperatorSelector]: function (node: TSESTree.CallExpression) {
+        // Get the name of the nested operator
         const operator = (node.callee as TSESTree.Identifier).name;
         let curr: TSESTree.Node = node;
+        // Iterate up through the AST until the ancestor ArrowFunctionExpression node
+        // containing the choreography's parameters is found, which is stored in `curr`
         while (
           curr.type !== AST_NODE_TYPES.ArrowFunctionExpression &&
           curr.parent
@@ -45,51 +49,98 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
         }
         const params = (curr as TSESTree.ArrowFunctionExpression).params;
         const param = params[0];
+        // if the parameter list isn't empty
         if (param) {
+          // if first parameter is a dependencies object
           if (param.type === AST_NODE_TYPES.ObjectPattern) {
-            let match = false;
-            let propertyRange: [number, number];
             const properties = param.properties;
-            properties.forEach((prop) => {
-              if (prop.type === AST_NODE_TYPES.Property) {
-                propertyRange = prop.range;
-                if (prop.key.type === AST_NODE_TYPES.Identifier) {
-                  if (prop.key.name === operator) {
-                    // more readable without using `&&`
-                    match = true;
+            // if the dependencies object isn't empty
+            if (properties.length > 0) {
+              // `match` tracks if the operator is found
+              let match = false;
+              // `propertyRange` tracks the location range of the last encountered
+              // operator in the dependencies parameter `{locally, colocally, ...}` so we
+              // know where to place the missing operator
+              let propertyRange: [number, number];
+              // find matching operator in the dependencies parameter
+              properties.forEach((prop) => {
+                if (prop.type === AST_NODE_TYPES.Property) {
+                  // Store the range of the current operator
+                  propertyRange = prop.range;
+                  if (prop.key.type === AST_NODE_TYPES.Identifier) {
+                    // This is more readable without using "&&"
+                    if (prop.key.name === operator) {
+                      match = true;
+                    }
                   }
                 }
+              });
+              // if operator not in the dependencies parameter
+              if (!match) {
+                // fix to insert missing operator into the dependencies parameter
+                const fix = (fixer: TSESLint.RuleFixer) => {
+                  // Insert the missing operator after the last present operator
+                  return fixer.insertTextAfterRange(
+                    propertyRange,
+                    `, ${operator}`
+                  );
+                };
+                // report error and fixes
+                context.report({
+                  node: node,
+                  messageId: "error",
+                  data: {
+                    operator: operator,
+                  },
+                  suggest: [
+                    {
+                      messageId: "suggestion",
+                      fix: fix, // suggested fix (appears in list of suggestions)
+                    },
+                  ],
+                  fix: fix, // autofix (can be applied with `--fix`)
+                });
               }
-            });
-            if (!match) {
-              const fix = (fixer: TSESLint.RuleFixer) => {
-                return fixer.insertTextAfterRange(
-                  propertyRange,
-                  `, ${operator}`
-                );
+              // otherwise if the dependencies object is empty
+            } else {
+              // fix to replace the empty object with one containing the missing operator
+              const fix = (fixture: TSESLint.RuleFixer) => {
+                return fixture.replaceTextRange(param.range, `{ ${operator} }`);
               };
+              // report error and fixes
               context.report({
                 node: node,
                 messageId: "error",
+                data: {
+                  operator: operator,
+                },
                 suggest: [
                   {
                     messageId: "suggestion",
-                    fix: fix, // suggested fix
+                    fix: fix,
                   },
                 ],
-                fix: fix, // main fix (can be applied with --fix)
+                fix: fix,
               });
             }
+            // otherwise if the dependencies object isn't present in the parameters
+            // but there are other parameter(s) present
           } else {
+            // fix to insert missing dependencies parameter with missing operator
             const fix = (fixer: TSESLint.RuleFixer) => {
+              // Insert the missing dependencies before the first parameter
               return fixer.insertTextBeforeRange(
                 param.range,
                 `{ ${operator} }, `
               );
             };
+            // report error with fixes
             context.report({
               node: node,
               messageId: "error",
+              data: {
+                operator: operator,
+              },
               suggest: [
                 {
                   messageId: "suggestion",
@@ -99,16 +150,23 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
               fix: fix,
             });
           }
+          // otherwise if the parameter list is empty
         } else {
+          // fix to add dependencies object to empty parameter list
           const fix = (fixer: TSESLint.RuleFixer) => {
-            // replace empty parameters in source code
+            // This replaces the empty parameters token `()` in the source code
+            // with one containing the dependencies object and the missing operator
             const sourceCode = context.getSourceCode().getText(curr);
             const paramAdded = sourceCode.replace("()", `({ ${operator} })`);
             return fixer.replaceText(curr, paramAdded);
           };
+          // report error with fixes
           context.report({
             node: node,
             messageId: "error",
+            data: {
+              operator: operator,
+            },
             suggest: [
               {
                 messageId: "suggestion",

@@ -16,6 +16,9 @@
 			"name": "examples",
 			"path": "packages/examples"
 		},
+		{
+			"path": "packages/eslint-plugin-choreography-ts"
+		}
 	],
 	"settings": {
 		"files.exclude": {

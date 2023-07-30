@@ -28,8 +28,8 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
     hasSuggestions: true, // provide suggestions for fixes
     messages: {
       error:
-        "Choreographic operator '{{ operator }}' undefined in enclosing context",
-      suggestion: "Add missing operator to parameter list",
+        "Choreographic operator '{{ operator }}' must be provided by closest enclosing context",
+      suggestion: "Add missing operator `{{ operator }}` to dependencies",
     },
     schema: [],
   },
@@ -87,18 +87,22 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
                 };
                 // report error and fixes
                 context.report({
-                  node: node,
+                  node: node.callee,
                   messageId: "error",
                   data: {
-                    operator: operator,
+                    operator,
                   },
                   suggest: [
                     {
+                      // suggestion message
                       messageId: "suggestion",
-                      fix: fix, // suggested fix (appears in list of suggestions)
+                      data: {
+                        operator,
+                      },
+                      fix, // suggested fix (appears in list of suggestions)
                     },
                   ],
-                  fix: fix, // autofix (can be applied with `--fix`)
+                  fix, // autofix (can be applied with `--fix`)
                 });
               }
               // otherwise if the dependencies object is empty
@@ -109,18 +113,21 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
               };
               // report error and fixes
               context.report({
-                node: node,
+                node: node.callee,
                 messageId: "error",
                 data: {
-                  operator: operator,
+                  operator,
                 },
                 suggest: [
                   {
                     messageId: "suggestion",
-                    fix: fix,
+                    data: {
+                      operator,
+                    },
+                    fix,
                   },
                 ],
-                fix: fix,
+                fix,
               });
             }
             // otherwise if the dependencies object isn't present in the parameters
@@ -136,18 +143,21 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
             };
             // report error with fixes
             context.report({
-              node: node,
+              node: node.callee,
               messageId: "error",
               data: {
-                operator: operator,
+                operator,
               },
               suggest: [
                 {
                   messageId: "suggestion",
-                  fix: fix,
+                  data: {
+                    operator,
+                  },
+                  fix,
                 },
               ],
-              fix: fix,
+              fix,
             });
           }
           // otherwise if the parameter list is empty
@@ -162,18 +172,21 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
           };
           // report error with fixes
           context.report({
-            node: node,
+            node: node.callee,
             messageId: "error",
             data: {
-              operator: operator,
+              operator,
             },
             suggest: [
               {
                 messageId: "suggestion",
-                fix: fix,
+                data: {
+                  operator,
+                },
+                fix,
               },
             ],
-            fix: fix,
+            fix,
           });
         }
       },

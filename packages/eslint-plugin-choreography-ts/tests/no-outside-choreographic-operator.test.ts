@@ -48,9 +48,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
   ],
   invalid: [
     {
-      // check for proper insertion of missing dependencies parameter with missing nested operator
-      // into empty parameters list
-      name: "invalid test case 1",
+      name: "test for proper insertion of missing depedencies parameter into empty parameter list",
       code: `
       const test1: Choreography<Locations> = async ({
         locally,
@@ -84,9 +82,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       ],
     },
     {
-      // check for proper insertion of missing dependencies parameterwith nested operator
-      // into non-empty parameters list
-      name: "invalid test case 2",
+      name: "test for proper insertion of missing dependencies parameter into non-empty parameter list",
       code: `
       const test2: Choreography<Locations> = async ({
         locally,
@@ -161,8 +157,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       ],
     },
     {
-      // check for proper insertion of missing nested operator into non-empty dependencies object
-      name: "invalid test case 3",
+      name: "test for proper insertion of missing nested operator into non-empty dependencies parameter",
       code: `
       const test2: Choreography<Locations> = async ({
         locally,
@@ -232,8 +227,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       ],
     },
     {
-      // check for proper insertion of missing nested operator into empty dependencies object
-      name: "invalid test case 4",
+      name: "test for proper insertion of missing nested operator into empty dependencies parameter",
       code: `
       const test2: Choreography<Locations> = async ({
         locally,
@@ -242,6 +236,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       }) => {
         const [deliveryDateAtBuyer] = await colocally(
           ["buyer1", "seller"],
+          // ↓ should contain 'peel'
           async ({}) => {
             const sharedDecision = peel(decision);
           }
@@ -260,6 +255,60 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
           }
         )
       }`,
+      errors: [
+        {
+          messageId: "error",
+        },
+      ],
+    },
+    {
+      name: "test for insertion of missing nested operator in correct nested context",
+      code: `
+      type Locations = "alice" | "bob" | "carol";
+      const _test2: Choreography<Locations> = async ({ colocally }) => {
+        await colocally(
+          ["alice", "bob", "carol"],
+          async ({ colocally }) => {
+            await colocally(
+              ["alice", "bob"],
+              // ↓ should contain 'locally'
+              async ({}) => {
+                await locally("alice", () => {
+                  console.log("Hi, I'm Alice!");
+                });
+                return [];
+              },
+              []
+            );
+            return [];
+          },
+          []
+        );
+        return [];
+      };`,
+      output: `
+      type Locations = "alice" | "bob" | "carol";
+      const _test2: Choreography<Locations> = async ({ colocally }) => {
+        await colocally(
+          ["alice", "bob", "carol"],
+          async ({ colocally }) => {
+            await colocally(
+              ["alice", "bob"],
+              // ↓ should contain 'locally'
+              async ({ locally }) => {
+                await locally("alice", () => {
+                  console.log("Hi, I'm Alice!");
+                });
+                return [];
+              },
+              []
+            );
+            return [];
+          },
+          []
+        );
+        return [];
+      };`,
       errors: [
         {
           messageId: "error",

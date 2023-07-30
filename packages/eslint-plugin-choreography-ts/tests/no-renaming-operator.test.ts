@@ -26,8 +26,7 @@ ruleTester.run("no-renaming-operator", noRenameRule, {
   ],
   invalid: [
     {
-      // check for operator object destructuring
-      name: "invalid test case 1",
+      name: "test for invalid dependencies destructuring",
       code: `const test2: Choreography<Locations> = async (operators) => {
                 await operators.locally("alice", () => {
                   console.log("Hi from Alice");
@@ -41,8 +40,7 @@ ruleTester.run("no-renaming-operator", noRenameRule, {
       ],
     },
     {
-      // check for operator renaming
-      name: "invalid test case 2",
+      name: "test for invalid dependency operator renaming",
       code: `const test: Choreography<Locations> = async ({locally: l}) => {
               await l("alice", () => {
                 console.log("Hi from Alice");
@@ -56,8 +54,7 @@ ruleTester.run("no-renaming-operator", noRenameRule, {
       ],
     },
     {
-      // check for `...rest` element
-      name: "invalid test case 3",
+      name: "test to make sure `...rest` element isn't in the dependencies parameter",
       code: `const test: Choreography<Locations> = async ({locally, ...rest}) => {
               await l("alice", () => {
                 console.log("Hi from Alice");

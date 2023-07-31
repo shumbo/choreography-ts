@@ -28,7 +28,7 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
     hasSuggestions: true, // provide suggestions for fixes
     messages: {
       error:
-        "Choreographic operator '{{ operator }}' must be provided by closest enclosing context",
+        "Choreographic operator '{{ operator }}' must be provided by closest enclosing context.",
       suggestion: "Add missing operator `{{ operator }}` to dependencies",
     },
     schema: [],

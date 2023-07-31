@@ -8,7 +8,11 @@ import { AST_NODE_TYPES, TSESTree, TSESLint } from "@typescript-eslint/utils";
 
 type MessageIDs = "rename" | "invalid";
 
-const selector = `VariableDeclaration[kind = "const"] > VariableDeclarator[id.typeAnnotation.typeAnnotation.typeName.name = "Choreography"] > ArrowFunctionExpression`;
+const operators = /^(colocally|call)$/; // operators that accept choreography arguments
+const choreographySelector = `VariableDeclaration[kind = "const"] > VariableDeclarator[id.typeAnnotation.typeAnnotation.typeName.name = "Choreography"]`;
+const operatorSelector = `${choreographySelector} CallExpression[callee.name = ${operators}]`;
+// Match top-level explicit choreography, or any operator method call that accepts a choreography argument
+const arrowFunctionSelector = `:matches(${choreographySelector} > ArrowFunctionExpression, ${operatorSelector} > ArrowFunctionExpression)`;
 
 const noRenameRule: TSESLint.RuleModule<MessageIDs, []> = {
   defaultOptions: [],
@@ -22,14 +26,16 @@ const noRenameRule: TSESLint.RuleModule<MessageIDs, []> = {
     },
     fixable: undefined, // Not an automatically fixable problem
     messages: {
-      rename: "choreographic operators cannot be renamed",
-      invalid: "choreographic operators must be destructured",
+      rename: "Choreographic operators cannot be renamed.",
+      invalid: "Choreographic operators must be destructured.",
     },
     schema: [],
   },
   create(context) {
     return {
-      [selector]: function (node: TSESTree.ArrowFunctionExpression) {
+      [arrowFunctionSelector]: function (
+        node: TSESTree.ArrowFunctionExpression
+      ) {
         if (node.params[0]) {
           if (node.params[0].type === AST_NODE_TYPES.ObjectPattern) {
             node.params[0].properties.forEach((property) => {

@@ -59,7 +59,7 @@ ruleTester.run("no-renaming-operator", noRenameRule, {
       ],
     },
     {
-      name: "test for error in choreography as an argument",
+      name: "test for error in choreography as a `colocally` argument",
       code: `
       type Locations = "alice" | "bob" | "carol";
       const _test: Choreography<Locations> = async ({ colocally }) => {
@@ -74,6 +74,26 @@ ruleTester.run("no-renaming-operator", noRenameRule, {
           },
           []
         );
+        return [];
+      };`,
+      errors: [
+        {
+          messageId: "rename",
+        },
+      ],
+    },
+    {
+      name: "test for error in choreography as a `call` argument",
+      code: `
+      type Locations = "alice" | "bob" | "carol";
+      const _test: Choreography<Locations> = async ({ call }) => {
+        await call(async ({ locally: l }) => {
+          await l("alice", () => {
+            console.log("Alice here");
+            return [];
+          });
+          return [];
+        }, []);
         return [];
       };`,
       errors: [

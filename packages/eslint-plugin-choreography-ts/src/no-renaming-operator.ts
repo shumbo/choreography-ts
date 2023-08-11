@@ -1,4 +1,5 @@
-// no-renaming-operator.js: must NOT rename choreographic operators
+// no-renaming-operator rule
+// Must NOT rename choreographic operators
 // https://github.com/shumbo/choreography-ts/issues/19
 
 // Create custom typescript rules: https://typescript-eslint.io/developers/custom-rules/

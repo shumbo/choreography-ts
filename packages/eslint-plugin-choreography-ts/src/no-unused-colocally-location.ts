@@ -5,11 +5,14 @@
 "use strict";
 import { AST_NODE_TYPES, TSESLint, TSESTree } from "@typescript-eslint/utils";
 
-type MessageIDs = "error";
+type MessageIDs = "warning";
 
 const choreographySelector = `VariableDeclaration[kind = "const"] > VariableDeclarator[id.typeAnnotation.typeAnnotation.typeName.name = "Choreography"]`;
 const colocallySelector = `${choreographySelector} CallExpression[callee.name = "colocally"]`;
 
+// Implementation: Check whether each location passed to `colocally` is present inside the body of the choreography argument
+// as an argument to any operator that accepts location parameters (locally, colocally, comm, multicast, broadcast)
+// or as a type argument
 const noUnusedColocallyLocation: TSESLint.RuleModule<MessageIDs, []> = {
   defaultOptions: [],
   meta: {
@@ -23,32 +26,35 @@ const noUnusedColocallyLocation: TSESLint.RuleModule<MessageIDs, []> = {
     fixable: undefined, // not automatically fixable
     hasSuggestions: false, // no suggested fixes available
     messages: {
-      error: "Location `{{ location }}` not used inside body.",
+      warning: "Location `{{ location }}` not used inside body.",
     },
     schema: [],
   },
   create(context) {
+    // Store locations for each `colocally` usage
+    const Locations: {
+      location: string; // name of the location
+      ancestor: TSESTree.CallExpression; // the `colocally` ancestor node
+      report: TSESLint.ReportDescriptor<MessageIDs>; // the error to report
+    }[] = [];
     return {
       [colocallySelector]: function (node: TSESTree.CallExpression) {
         const args = node.arguments;
         if (args[0]?.type === AST_NODE_TYPES.ArrayExpression) {
           if (args[1]?.type === AST_NODE_TYPES.ArrowFunctionExpression) {
-            const choreographyBodySource = context
-              .getSourceCode()
-              .getText(args[1]);
             args[0].elements.forEach((arg) => {
               if (arg?.type === AST_NODE_TYPES.Literal) {
-                if (!choreographyBodySource.match(`('|")${arg.value}('|")`)) {
-                  // Return error if the location isn't found anywhere inside double quotes ("") in
-                  // the body of the `colocally` choreography argument
-                  context.report({
+                Locations.push({
+                  location: arg.value as string,
+                  ancestor: node,
+                  report: {
                     node: arg,
-                    messageId: "error",
+                    messageId: "warning",
                     data: {
                       location: arg.value,
                     },
-                  });
-                }
+                  },
+                });
               }
             });
           }

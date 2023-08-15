@@ -7,26 +7,33 @@ import { TSESTree, TSESLint, AST_NODE_TYPES } from "@typescript-eslint/utils";
 
 type MessageIDs = "error";
 
-// A message is `unwrapped` by the recipient(s) if any of the following are true:
-// * Any following `locally` calls explicitly invoke `unwrap` with the message as an argument for the recipient(s)
-// * Any following `colocally` calls either explicitly invokes `peel` with the message or has the message as
-// an argument for the recipient(s)
-// * Any following `call` calls either explicitely invokes `peel` with the message or has the message as
-// an argument for the recipient(s)
+// A message is received depending on its type if any of the following are true:
+// For a `Colocated` ('multicast') message, if:
+// * the message is passed to `unwrap` in `locally` or `peel` in any following choreography
+// For a `Located` ('comm') message, if:
+// * the message is passed in the arguments parameter for `colocally` or `call`
+// * the message is passed to `unwrap` in `locally` in any following choreography
+// For either message type ('multicast' or 'comm'):
+// * the message is returned by the choreography
 
 // Regex for matching messaging operators
+// 'comm' for `Located` messages
+// 'multicast' for `Colocated` messages
 const messageOperators = /^(comm|multicast)$/;
+type messageTypes = "Located" | "Colocated";
 
 // Selector for top-level choreography
 const choreographySelector = `VariableDeclaration[kind = "const"] > VariableDeclarator[id.typeAnnotation.typeAnnotation.typeName.name = "Choreography"]`;
 // Selector for all operators calls that send messages and have their output saved in variables
 const messageSelector = `${choreographySelector} VariableDeclarator > AwaitExpression > CallExpression[callee.name = ${messageOperators}]`;
-// Selector for all `locally` operator calls
+// Selector for any `locally` operator
 const locallySelector = `${choreographySelector} CallExpression[callee.name = "locally"]`;
-// Selector for all `colocally` operator calls
+// Selector for any `colocally` operator usage
 const colocallySelector = `${choreographySelector} CallExpression[callee.name = "colocally"]`;
-// Selector for all `call` operator calls
+// Selector for any `call` operator usage
 const callSelector = `${choreographySelector} CallExpression[callee.name = "call"]`;
+// Selector for choreography return statements
+const returnSelector = `${choreographySelector} ArrowFunctionExpression > BlockStatement > ReturnStatement[argument.type = "ArrayExpression"]`;
 // Selector for when AST traversal finishes for the choreography function body
 const choreographyExitSelector = `${choreographySelector} > ArrowFunctionExpression:exit`;
 
@@ -47,20 +54,22 @@ const noUnusedColocatedLocation: TSESLint.RuleModule<MessageIDs, []> = {
     schema: [],
   },
   create(context) {
-    // recipientsList[0] is the recipient
-    // recipientsList[1] is the message name
-    // recipientsList[2] is the error to report
-    let recipientsList: [
-      string,
-      string,
-      TSESLint.ReportDescriptor<MessageIDs>
-    ][] = [];
+    // `recipientsList[i].recipient` is the recipient
+    // `recipientsList[i].message` is the message variable name
+    // `recipientsList[i].report` is the error to report
+    // `recipientsList[i].type` is the type of the message ("Located" or "Colocated")
+    let recipientsList: {
+      recipient: string;
+      message: string;
+      report: TSESLint.ReportDescriptor<MessageIDs>;
+      type: messageTypes;
+    }[] = [];
     return {
-      // First match the messages being sent to obtain recipient(s) and message variable names
+      // First match the messages being sent to obtain recipients and message variable names
       [messageSelector]: function (node: TSESTree.CallExpression) {
         let curr: TSESTree.Node | undefined = node;
         // Find the VariableDeclarator ancestor for the CallExpression node
-        // to obtain the message name for locating later
+        // to obtain the message variable name
         while (curr && curr.type !== AST_NODE_TYPES.VariableDeclarator) {
           curr = curr.parent;
         }
@@ -70,16 +79,15 @@ const noUnusedColocatedLocation: TSESLint.RuleModule<MessageIDs, []> = {
         if (recipients) {
           // if the recipients are given in an array (which denotes a `multicast` call)
           if (recipients.type === AST_NODE_TYPES.ArrayExpression) {
-            // for `multicast` calls
-            // Add each recipient to `recipientsList`, along with the message name
+            // add each recipient to `recipientsList`, along with the message name
             // and the error to report if the recipient doesn't unwrap the message
             recipients.elements.forEach((element) => {
               if (element?.type === AST_NODE_TYPES.Literal) {
                 const recipient = element.value as string;
-                recipientsList.push([
+                recipientsList.push({
                   recipient,
-                  msgName,
-                  {
+                  message: msgName,
+                  report: {
                     node: element,
                     messageId: "error",
                     data: {
@@ -87,19 +95,19 @@ const noUnusedColocatedLocation: TSESLint.RuleModule<MessageIDs, []> = {
                       recipient,
                     },
                   },
-                ]);
+                  type: "Colocated",
+                });
               }
             });
             // otherwise if the message is sent using a `comm` call
           } else if (recipients.type === AST_NODE_TYPES.Literal) {
-            // for `comm` calls
             // add the recipient along with the message name and the error to report
-            // to `recipientsList`]
+            // to `recipientsList`
             const recipient = recipients.value as string;
-            recipientsList.push([
+            recipientsList.push({
               recipient,
-              msgName,
-              {
+              message: msgName,
+              report: {
                 node: recipients,
                 messageId: "error",
                 data: {
@@ -107,21 +115,22 @@ const noUnusedColocatedLocation: TSESLint.RuleModule<MessageIDs, []> = {
                   recipient,
                 },
               },
-            ]);
+              type: "Located",
+            });
           }
         }
       },
-      // Match all `locally` calls and remove from `recipientsList` those recipients that have
-      // unwrapped the message
+      // Matches `locally` usages and filters out recipients from `recipientsList` as necessary
       [locallySelector]: function (node: TSESTree.CallExpression) {
         const location = node.arguments[0];
         if (location && location.type === AST_NODE_TYPES.Literal) {
-          // filter out the recipient from the `recipientsList` who has unwrapped the message
+          // filter out the recipients from the `recipientsList` that have unwrapped their message using `unwrap`
+          // which works regardless of the message type
           recipientsList = recipientsList.filter((recipient) => {
-            // if the `locally` location matches the recipient and the message name appears
-            // as an argument to the `unwrap` operator
-            if (location.value === recipient[0]) {
+            // if the `locally` location matches the recipient
+            if (location.value === recipient.recipient) {
               const arrowFunction = node.arguments[1];
+              // and if the message appears as an argument to `unwrap` in the callback parameter
               if (
                 arrowFunction &&
                 arrowFunction.type === AST_NODE_TYPES.ArrowFunctionExpression
@@ -129,89 +138,117 @@ const noUnusedColocatedLocation: TSESLint.RuleModule<MessageIDs, []> = {
                 const arrowFunctonSource = context
                   .getSourceCode()
                   .getText(arrowFunction);
-                if (arrowFunctonSource.includes(`unwrap(${recipient[1]})`)) {
-                  return false;
+                if (
+                  arrowFunctonSource.includes(`unwrap(${recipient.message})`)
+                ) {
+                  return false; // filter the recipient out of `recipientsList`
                 }
               }
             }
-            return true;
+            return true; // otherwise keep the recipient in `recipientsList`
           });
         }
       },
-      // For matching all `colocally` and `call` operator calls and then filitering out recipients
-      // that unwrap their messages
+      // Matches `colocally` usages and filters out recipients from `recipientsList` as necessary
       [colocallySelector]: function (node: TSESTree.CallExpression) {
-        const args = node.arguments;
+        const args = node.arguments; // CallExpression arguments
         recipientsList = recipientsList.filter((recipient) => {
           if (args[0]?.type === AST_NODE_TYPES.ArrayExpression) {
-            // if the recipient appears in the list of `colocally` locations
+            // If the recipient appears in the list of `colocally` locations
             if (
               args[0].elements.find(
                 (arg) =>
                   arg?.type === AST_NODE_TYPES.Literal &&
-                  arg.value === recipient[0]
+                  arg.value === recipient.recipient
               )
             ) {
-              // if the message appears in the `colocally` arguments parameter
-              if (args[2]?.type === AST_NODE_TYPES.ArrayExpression) {
+              // if the message appears as an argument to `peel` in the choreography parameter
+              if (
+                recipient.type === "Colocated" &&
+                args[1]?.type === AST_NODE_TYPES.ArrowFunctionExpression
+              ) {
+                if (
+                  context
+                    .getSourceCode()
+                    .getText(args[1])
+                    .includes(`peel(${recipient.message})`)
+                ) {
+                  return false; // filter the recipient out of `recipientsList`
+                }
+                // otherwise if the `Located` message is passed as an argument to the choreography
+              } else if (
+                recipient.type === "Located" &&
+                args[2]?.type === AST_NODE_TYPES.ArrayExpression
+              ) {
                 if (
                   args[2].elements.find(
-                    (arg) =>
-                      arg?.type === AST_NODE_TYPES.Identifier &&
-                      arg.name === recipient[1]
+                    (element) =>
+                      element?.type === AST_NODE_TYPES.Identifier &&
+                      element.name === recipient.message
                   )
                 ) {
                   return false; // filter the recipient out of `recipientsList`
-                } else {
-                  // otherwise if the message is `peeled` inside the chireography argument
-                  if (
-                    args[1]?.type === AST_NODE_TYPES.ArrowFunctionExpression
-                  ) {
-                    const colocallySource = context
-                      .getSourceCode()
-                      .getText(args[1]);
-                    if (colocallySource.includes(`peel(${recipient[1]})`)) {
-                      return false; // filter the recipient out of `recipientsList`
-                    }
-                  }
                 }
               }
             }
           }
-          return true; // otherwise keep the recipient inside `recipientsList`
+          return true; // otherwise keep the recipient in `recipientsList`
         });
       },
+      // Matches `call` operator usages and filters out recipients from `recipientsList` as necessary
       [callSelector]: function (node: TSESTree.CallExpression) {
         const args = node.arguments;
         recipientsList = recipientsList.filter((recipient) => {
-          if (args[1]?.type === AST_NODE_TYPES.ArrayExpression) {
-            // if the message name appears inside the `call` argument list
+          // If the `Colocated` message appears as an argument to `peel` in the choreography parameter
+          if (
+            recipient.type === "Colocated" &&
+            args[0]?.type === AST_NODE_TYPES.ArrowFunctionExpression
+          ) {
+            // if the message appears inside the `call` arguments parameter
             if (
-              args[1].elements.find(
-                (arg) =>
-                  arg?.type === AST_NODE_TYPES.Identifier &&
-                  arg.name === recipient[1]
-              )
+              context
+                .getSourceCode()
+                .getText(args[0])
+                .includes(`peel(${recipient.message})`)
             ) {
               return false; // filter the recipient out of `recipientsList
-            } else {
-              // otherwise if the message name is `peeled` inside the choreography argument
-              if (args[0]?.type === AST_NODE_TYPES.ArrowFunctionExpression) {
-                const callSource = context.getSourceCode().getText(args[0]);
-                if (callSource.includes(`peel(${recipient[1]})`)) {
-                  return false; // filter the recipient out of `recipientsList`
-                }
-              }
+            }
+            // otherwise if the `Located` message is passed as an argument to the choreography
+          } else if (
+            recipient.type === "Located" &&
+            args[1]?.type === AST_NODE_TYPES.ArrayExpression
+          ) {
+            if (
+              args[1].elements.find(
+                (element) =>
+                  element?.type === AST_NODE_TYPES.Identifier &&
+                  element.name === recipient.message
+              )
+            ) {
+              return false; // filter the recipient out of `recipientsList`
             }
           }
-          return true; // otherwise keep the recipient inside `recipientsList`
+          return true; // otherwise keep the recipient in `recipientsList`
         });
       },
-      // Upon exiting ArrowFunctionExpression, report errors for messages not received
+      // Matches choreography return statements to check if 'Located' messages are returned
+      [returnSelector]: function (node: TSESTree.ReturnStatement) {
+        const returned = node.argument as TSESTree.ArrayExpression;
+        recipientsList = recipientsList.filter((recipient) => {
+          // filter out recipients whose messages are returned if the message is of type "Located"
+          return !returned.elements.find(
+            (element) =>
+              recipient.type === "Located" &&
+              element?.type === AST_NODE_TYPES.Identifier &&
+              element.name === recipient.message
+          );
+        });
+      },
+      // Upon exiting the choreography, report errors for messages not received
       // by the recipients remaining in `recipientsList`
       [choreographyExitSelector]: function () {
         recipientsList.forEach((recipient) => {
-          context.report(recipient[2]);
+          context.report(recipient.report);
         });
       },
     };

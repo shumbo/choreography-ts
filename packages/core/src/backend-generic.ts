@@ -152,8 +152,8 @@ export abstract class GenericBackend<L extends Location, T>
           (t: Tag) =>
           async <
             LL extends L,
-            Args extends Located<any, LL>[],
-            Return extends Located<any, LL>[]
+            Args extends (Colocated<any, LL> | Located<any, LL>)[],
+            Return extends (Colocated<any, LL> | Located<any, LL>)[]
           >(
             locations: LL[],
             choreography: Choreography<LL, Args, Return>,
@@ -251,8 +251,8 @@ export abstract class GenericBackend<L extends Location, T>
           (t: Tag) =>
           async <
             LL extends L,
-            Args extends Located<any, LL>[],
-            Return extends Located<any, LL>[]
+            Args extends (Colocated<any, LL> | Located<any, LL>)[],
+            Return extends (Colocated<any, LL> | Located<any, LL>)[]
           >(
             c: Choreography<LL, Args, Return>,
             a: Args

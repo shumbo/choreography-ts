@@ -91,8 +91,8 @@ export type Comm<L extends Location> = <L1 extends L, L2 extends L, T>(
 
 export type Colocally<L extends Location> = <
   LL extends L,
-  Args extends Located<any, LL>[],
-  Return extends Located<any, LL>[]
+  Args extends (Colocated<any, LL> | Located<any, LL>)[],
+  Return extends (Colocated<any, LL> | Located<any, LL>)[]
 >(
   locations: LL[],
   choreography: Choreography<LL, Args, Return>,
@@ -123,8 +123,8 @@ export type Broadcast<L extends Location> = <L1 extends L, T>(
 
 export type Call<L extends Location> = <
   LL extends L,
-  Args extends Located<any, LL>[],
-  Return extends Located<any, LL>[]
+  Args extends (Colocated<any, LL> | Located<any, LL>)[],
+  Return extends (Colocated<any, LL> | Located<any, LL>)[]
 >(
   choreography: Choreography<LL, Args, Return>,
   args: Args
@@ -140,8 +140,8 @@ export type Call<L extends Location> = <
  */
 export type Choreography<
   L extends Location,
-  Args extends Located<any, L>[] = [],
-  Return extends Located<any, L>[] = []
+  Args extends (Colocated<any, L> | Located<any, L>)[] = [],
+  Return extends (Colocated<any, L> | Located<any, L>)[] = []
 > = (deps: Dependencies<L>, args: Args) => Promise<Return>;
 
 /**
@@ -169,8 +169,8 @@ export interface Backend<L extends Location> {
    */
   epp<
     L1 extends L,
-    Args extends Located<L, any>[],
-    Return extends Located<L, any>[]
+    Args extends (Colocated<L, any> | Located<L, any>)[],
+    Return extends (Colocated<L, any> | Located<L, any>)[]
   >(
     choreography: Choreography<L, Args, Return>,
     location: L1

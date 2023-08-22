@@ -36,7 +36,14 @@ export class Located<T, L1 extends Location> {
   protected phantom?: L1;
 }
 
-export class Colocated<T, L extends Location> {
+// The contravariant type that can be extended by the base class `ColocatedBase` where such types are desired
+type Contravariant<L> = {phantom?: (x: L) => void};
+
+// The covariant type for that can be extended by the base class `ColocatedBase` where such types are desired
+type Covariant<L> = {phantom?: L};
+
+// Base class for `Colocated` that can be extended for contravariance or covariance in parameters
+class ColocatedBase<T> {
   constructor(value: T, key: symbol) {
     this.value = value;
     this.key = key;
@@ -49,8 +56,14 @@ export class Colocated<T, L extends Location> {
   }
   protected value: T;
   protected key: symbol;
-  protected phantom?: (x: L) => void;
 }
+
+// Exported `Colocated` class and the corresponding covariant or contravariant type variations
+export class Colocated<T, L extends Location> extends ColocatedBase<T> {
+  param?: ((x: L) => void) | L;
+};
+export type ColocatedContravariant<T, L extends Location> = ColocatedBase<T> & Contravariant<L>
+export type ColocatedCovariant<T, L extends Location> = ColocatedBase<T> & Covariant<L>
 
 /**
  * The dependencies of a choreography
@@ -77,7 +90,7 @@ export type Locally<L extends Location> = <L1 extends L, T>(
 ) => Promise<Located<T, L1>>;
 
 export type Unwrap<L1 extends Location> = <T>(
-  located: Located<T, L1> | Colocated<T, L1>
+  located: Located<T, L1> | ColocatedContravariant<T, L1>
 ) => T;
 
 /**
@@ -91,8 +104,8 @@ export type Comm<L extends Location> = <L1 extends L, L2 extends L, T>(
 
 export type Colocally<L extends Location> = <
   LL extends L,
-  Args extends (Colocated<any, LL> | Located<any, LL>)[],
-  Return extends (Colocated<any, LL> | Located<any, LL>)[]
+  Args extends (ColocatedCovariant<any, LL> | Located<any, LL>)[],
+  Return extends (ColocatedCovariant<any, LL> | Located<any, LL>)[]
 >(
   locations: LL[],
   choreography: Choreography<LL, Args, Return>,
@@ -100,7 +113,7 @@ export type Colocally<L extends Location> = <
 ) => Promise<Return>;
 
 export type Peel<L extends Location> = <LL extends L, T>(
-  colocated: Colocated<T, LL>
+  colocated: ColocatedContravariant<T, LL>
 ) => T;
 
 export type Multicast<L extends Location> = <
@@ -123,8 +136,8 @@ export type Broadcast<L extends Location> = <L1 extends L, T>(
 
 export type Call<L extends Location> = <
   LL extends L,
-  Args extends (Colocated<any, LL> | Located<any, LL>)[],
-  Return extends (Colocated<any, LL> | Located<any, LL>)[]
+  Args extends (ColocatedCovariant<any, LL> | Located<any, LL>)[],
+  Return extends (ColocatedCovariant<any, LL> | Located<any, LL>)[]
 >(
   choreography: Choreography<LL, Args, Return>,
   args: Args
@@ -140,8 +153,8 @@ export type Call<L extends Location> = <
  */
 export type Choreography<
   L extends Location,
-  Args extends (Colocated<any, L> | Located<any, L>)[] = [],
-  Return extends (Colocated<any, L> | Located<any, L>)[] = []
+  Args extends (ColocatedCovariant<any, L> | Located<any, L>)[] = [],
+  Return extends (ColocatedCovariant<any, L> | Located<any, L>)[] = []
 > = (deps: Dependencies<L>, args: Args) => Promise<Return>;
 
 /**
@@ -169,8 +182,8 @@ export interface Backend<L extends Location> {
    */
   epp<
     L1 extends L,
-    Args extends (Colocated<L, any> | Located<L, any>)[],
-    Return extends (Colocated<L, any> | Located<L, any>)[]
+    Args extends (ColocatedCovariant<L, any> | Located<L, any>)[],
+    Return extends (ColocatedCovariant<L, any> | Located<L, any>)[]
   >(
     choreography: Choreography<L, Args, Return>,
     location: L1

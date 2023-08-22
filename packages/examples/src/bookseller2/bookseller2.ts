@@ -110,11 +110,12 @@ export const bookseller: (
 
   const dualResponse: Choreography<
     Locations,
-    [Colocated<string, "alice" | "bob" | "dave">, Colocated<string, "alice" | "bob" | "dave">],
-    [Colocated<string, "bob" | "alice" | "carol">, Colocated<string, "dave" | "alice" | "carol">]
+    [Colocated<string, "alice" | "bob" | "dave">, Colocated<string, "carol" | "bob" | "dave">],
+    [Colocated<string, "bob" | "alice" | "carol">, Colocated<string, "dave" | "alice" | "carol">] | []
   > = async ({ locally, peel, multicast }, [msgAlice, msgCarol]) => {
     const aliceMsg = peel(msgAlice);
     const carolMsg = peel(msgCarol);
+    await locally("bob", (unwrap) => unwrap(msgAlice)); // Contravariance works! Type <"alice" | "bob" | "dave"> is a subtype of <"bob">!
     if (aliceMsg.length > 0 && carolMsg.length > 0) {
       const responseBob = await locally("bob", () => "hi, this is bob");
       const colocatedBob = await multicast(
@@ -130,13 +131,13 @@ export const bookseller: (
       );
       return [colocatedBob, colocatedDave];
     }
-    return ["", ""];
+    return []
   };
 
   const test: Choreography<
     Locations,
     [],
-    [Colocated<string, "bob" | "alice" | "carol">, Colocated<string, "dave" | "alice" | "carol">]
+    [Colocated<string, "bob" | "alice" | "carol">, Colocated<string, "dave" | "alice" | "carol">] | []
   > = async ({ locally, multicast, colocally, comm }) => {
     const msgAtAlice = await locally("alice", () => "hi from alice");
     const locatedAlice = await comm("alice", "bob", msgAtAlice);

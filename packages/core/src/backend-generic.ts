@@ -7,6 +7,8 @@ import {
   Choreography,
   Colocally,
   Colocated,
+  ColocatedContravariant,
+  ColocatedCovariant,
   Comm,
   Locally,
   Located,
@@ -75,8 +77,8 @@ export abstract class GenericBackend<L extends Location, T>
 
   public epp<
     L1 extends L,
-    Args extends Located<any, L>[],
-    Return extends Located<any, L>[]
+    Args extends (ColocatedCovariant<any, L> | Located<any, L>)[],
+    Return extends (ColocatedCovariant<any, L> | Located<any, L>)[]
   >(
     choreography: Choreography<L, Args, Return>,
     location: L1
@@ -152,8 +154,8 @@ export abstract class GenericBackend<L extends Location, T>
           (t: Tag) =>
           async <
             LL extends L,
-            Args extends (Colocated<any, LL> | Located<any, LL>)[],
-            Return extends (Colocated<any, LL> | Located<any, LL>)[]
+            Args extends (ColocatedCovariant<any, LL> | Located<any, LL>)[],
+            Return extends (ColocatedCovariant<any, LL> | Located<any, LL>)[]
           >(
             locations: LL[],
             choreography: Choreography<LL, Args, Return>,
@@ -244,15 +246,15 @@ export abstract class GenericBackend<L extends Location, T>
             }
           };
 
-        const peel: Peel<L> = <LL extends L, T>(cv: Colocated<T, LL>) =>
+        const peel: Peel<L> = <LL extends L, T>(cv: ColocatedContravariant<T, LL>) =>
           cv.getValue(key);
 
         const call: (t: Tag) => Call<L> =
           (t: Tag) =>
           async <
             LL extends L,
-            Args extends (Colocated<any, LL> | Located<any, LL>)[],
-            Return extends (Colocated<any, LL> | Located<any, LL>)[]
+            Args extends (ColocatedCovariant<any, LL> | Located<any, LL>)[],
+            Return extends (ColocatedCovariant<any, LL> | Located<any, LL>)[]
           >(
             c: Choreography<LL, Args, Return>,
             a: Args

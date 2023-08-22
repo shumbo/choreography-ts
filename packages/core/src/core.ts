@@ -56,10 +56,16 @@ class ColocatedBase<T> {
 export class Colocated<T, L extends Location> extends ColocatedBase<T> {
   phantom?: ((x: L) => void) & L;
 }
-export class ColocatedContravariant<T, L extends Location> extends ColocatedBase<T> {
+export class ColocatedContravariant<
+  T,
+  L extends Location
+> extends ColocatedBase<T> {
   phantom?: (x: L) => void;
 }
-export class ColocatedCovariant<T, L extends Location> extends ColocatedBase<T> {
+export class ColocatedCovariant<
+  T,
+  L extends Location
+> extends ColocatedBase<T> {
   phantom?: L;
 }
 

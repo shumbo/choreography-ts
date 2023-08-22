@@ -246,8 +246,9 @@ export abstract class GenericBackend<L extends Location, T>
             }
           };
 
-        const peel: Peel<L> = <LL extends L, T>(cv: ColocatedContravariant<T, LL>) =>
-          cv.getValue(key);
+        const peel: Peel<L> = <LL extends L, T>(
+          cv: ColocatedContravariant<T, LL>
+        ) => cv.getValue(key);
 
         const call: (t: Tag) => Call<L> =
           (t: Tag) =>

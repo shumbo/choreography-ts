@@ -4,8 +4,6 @@ import { ExpressBackend } from "@choreography-ts/backend-express";
 const locations = ["buyer1", "buyer2", "seller"] as const;
 export type Locations = (typeof locations)[number];
 
-type Location<A extends string> = Located<string, A>
-
 type MakeDecision = Choreography<
   Locations,
   [Located<number, "buyer1">],

@@ -73,11 +73,11 @@ export type Dependencies<L extends Location> = {
  */
 export type Locally<L extends Location> = <L1 extends L, T>(
   location: L1,
-  callback: (unwrap: Unwrap<L1>) => T | Promise<T>
+  callback: (unwrap: Unwrap<L1>) => T | Promise<T>,
 ) => Promise<Located<T, L1>>;
 
 export type Unwrap<L1 extends Location> = <T>(
-  located: Located<T, L1> | Colocated<T, L1>
+  located: Located<T, L1> | Colocated<T, L1>,
 ) => T;
 
 /**
@@ -86,31 +86,31 @@ export type Unwrap<L1 extends Location> = <T>(
 export type Comm<L extends Location> = <L1 extends L, L2 extends L, T>(
   sender: L1,
   receiver: L2,
-  value: Located<T, L1>
+  value: Located<T, L1>,
 ) => Promise<Located<T, L2>>;
 
 export type Colocally<L extends Location> = <
   LL extends L,
   Args extends Located<any, LL>[],
-  Return extends Located<any, LL>[]
+  Return extends Located<any, LL>[],
 >(
   locations: LL[],
   choreography: Choreography<LL, Args, Return>,
-  args: Args
+  args: Args,
 ) => Promise<Return>;
 
 export type Peel<L extends Location> = <LL extends L, T>(
-  colocated: Colocated<T, LL>
+  colocated: Colocated<T, LL>,
 ) => T;
 
 export type Multicast<L extends Location> = <
   L1 extends L,
   const LL extends L,
-  T
+  T,
 >(
   sender: L1,
   receivers: LL[],
-  value: Located<T, L1>
+  value: Located<T, L1>,
 ) => Promise<Colocated<T, LL | L1>>;
 
 /**
@@ -118,16 +118,16 @@ export type Multicast<L extends Location> = <
  */
 export type Broadcast<L extends Location> = <L1 extends L, T>(
   sender: L1,
-  value: Located<T, L1>
+  value: Located<T, L1>,
 ) => Promise<T>;
 
 export type Call<L extends Location> = <
   LL extends L,
   Args extends Located<any, LL>[],
-  Return extends Located<any, LL>[]
+  Return extends Located<any, LL>[],
 >(
   choreography: Choreography<LL, Args, Return>,
-  args: Args
+  args: Args,
 ) => Promise<Return>;
 
 /**
@@ -141,7 +141,7 @@ export type Call<L extends Location> = <
 export type Choreography<
   L extends Location,
   Args extends Located<any, L>[] = [],
-  Return extends Located<any, L>[] = []
+  Return extends Located<any, L>[] = [],
 > = (deps: Dependencies<L>, args: Args) => Promise<Return>;
 
 /**
@@ -149,7 +149,7 @@ export type Choreography<
  */
 export type LocatedElements<L extends Location, L1 extends L, A> = A extends [
   Located<infer T, infer L2>,
-  ...infer TAIL
+  ...infer TAIL,
 ]
   ? L2 extends L1
     ? [T, ...LocatedElements<L, L1, TAIL>]
@@ -170,11 +170,11 @@ export interface Backend<L extends Location> {
   epp<
     L1 extends L,
     Args extends Located<L, any>[],
-    Return extends Located<L, any>[]
+    Return extends Located<L, any>[],
   >(
     choreography: Choreography<L, Args, Return>,
-    location: L1
+    location: L1,
   ): (
-    args: LocatedElements<L, L1, Args>
+    args: LocatedElements<L, L1, Args>,
   ) => Promise<LocatedElements<L, L1, Return>>;
 }

@@ -3,7 +3,7 @@ import { ExpressBackend } from "@choreography-ts/backend-express";
 
 function moveAndPrint<L extends string, L1 extends L, L2 extends L>(
   from: L1,
-  to: L2
+  to: L2,
 ) {
   const c: Choreography<
     L,

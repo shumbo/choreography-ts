@@ -11,9 +11,9 @@ function reduceWhile<T, U>(
     accumulator: U,
     value: T,
     acceptedCount: number,
-    rejectedCount: number
+    rejectedCount: number,
   ) => [boolean, U],
-  initialValue: U
+  initialValue: U,
 ): Promise<U> {
   let accumulator: U = initialValue;
   let acceptedCount = 0;
@@ -29,7 +29,7 @@ function reduceWhile<T, U>(
         accumulator,
         value,
         acceptedCount,
-        rejectedCount
+        rejectedCount,
       );
       accumulator = updatedValue;
       if (!cont) {
@@ -107,7 +107,7 @@ export const majorityVote: Choreography<
           }
         }
       },
-      0
+      0,
     );
     console.log(`yesCount: ${yesCount}`);
     return yesCount >= 2;

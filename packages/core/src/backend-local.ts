@@ -42,7 +42,7 @@ export class LocalBackend<L extends Location> extends GenericBackend<
     sender: L,
     receiver: L,
     tag: Tag,
-    data: any
+    data: any,
   ): Promise<void> {
     const msg: Message<L> = { from: sender, tag: tag.toString(), data: data };
     this.m.emit(receiver, msg);
@@ -51,7 +51,7 @@ export class LocalBackend<L extends Location> extends GenericBackend<
     instance: LocalBackendInstance<L>,
     sender: L,
     _receiver: L,
-    tag: Tag
+    tag: Tag,
   ): Promise<any> {
     const k = key(sender, tag.toString());
     const v = await instance.inbox.get(k).read();

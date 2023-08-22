@@ -74,7 +74,7 @@ export class ExpressBackend<L extends Location> extends GenericBackend<
     sender: L,
     receiver: L,
     tag: Tag,
-    data: any
+    data: any,
   ): Promise<void> {
     const [hostname, port] = this.config[receiver];
     const msg: Message<L> = { from: sender, tag: tag.toString(), data: data };
@@ -89,7 +89,7 @@ export class ExpressBackend<L extends Location> extends GenericBackend<
     instance: HttpServerInstance<L>,
     sender: L,
     _receiver: L,
-    tag: Tag
+    tag: Tag,
   ): Promise<any> {
     const k = key(sender, tag.toString());
     const v = await instance.inbox.get(k).read();

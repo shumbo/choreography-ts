@@ -28,7 +28,7 @@ describe("HTTP Backend", () => {
     const p = "Alice's Secret Message";
     const c: Choreography<Locations, [Located<string, "alice">]> = async (
       { locally },
-      [msg]
+      [msg],
     ) => {
       await locally("alice", (unwrap) => {
         expect(unwrap(msg)).toBe(p);
@@ -124,7 +124,7 @@ describe("HTTP Backend", () => {
           expect(peel(msgAtSelectedTwo)).toBe("Hello, world!");
           return [];
         },
-        []
+        [],
       );
       await colocally(
         ["alice"],
@@ -133,7 +133,7 @@ describe("HTTP Backend", () => {
           expect(peel(msgAtSelectedTwo)).toBe("Hello, world!");
           return [];
         },
-        []
+        [],
       );
       await colocally(
         ["carol"],
@@ -144,7 +144,7 @@ describe("HTTP Backend", () => {
           }
           return [];
         },
-        []
+        [],
       );
       await colocally(
         ["bob", "carol"],
@@ -155,7 +155,7 @@ describe("HTTP Backend", () => {
           }
           return [];
         },
-        []
+        [],
       );
       return [];
     };
@@ -175,7 +175,7 @@ describe("HTTP Backend", () => {
           expect(peel(colocatedMsg)).toBe("hello, world");
           return [];
         },
-        []
+        [],
       );
       return [];
     };
@@ -194,7 +194,7 @@ describe("HTTP Backend", () => {
           const _msgAtEveryone = await broadcast("carol", msgAtCarol);
           return [];
         },
-        []
+        [],
       );
       return [];
     };

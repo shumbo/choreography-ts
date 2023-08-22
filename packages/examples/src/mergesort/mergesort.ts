@@ -14,11 +14,11 @@ function divide<T>(arr: T[]): [T[], T[]] {
 export const sort = <
   A extends Location,
   B extends Location,
-  C extends Location
+  C extends Location,
 >(
   a: A,
   b: B,
-  c: C
+  c: C,
 ) => {
   const choreography: Choreography<
     Location,
@@ -48,7 +48,7 @@ export const sort = <
 const merge = <A extends Location, B extends Location, C extends Location>(
   a: A,
   b: B,
-  c: C
+  c: C,
 ) => {
   const choreography: Choreography<
     Location,
@@ -57,13 +57,13 @@ const merge = <A extends Location, B extends Location, C extends Location>(
   > = async ({ locally, broadcast, comm, call }, [lhs, rhs]) => {
     const lhsHasElementsAtB = await locally(
       b,
-      (unwrap) => !!unwrap(lhs).length
+      (unwrap) => !!unwrap(lhs).length,
     );
     const lhsHasElements = await broadcast(b, lhsHasElementsAtB);
     if (lhsHasElements) {
       const rhsHasElementsAtC = await locally(
         c,
-        (unwrap) => !!unwrap(rhs).length
+        (unwrap) => !!unwrap(rhs).length,
       );
       const rhsHasElements = await broadcast(c, rhsHasElementsAtC);
       if (rhsHasElements) {
@@ -71,7 +71,7 @@ const merge = <A extends Location, B extends Location, C extends Location>(
         const rhsHeadAtB = await comm(c, b, rhsHeadAtC);
         const takeLhsAtB = await locally(
           b,
-          (unwrap) => unwrap(lhs)[0]! < unwrap(rhsHeadAtB)
+          (unwrap) => unwrap(lhs)[0]! < unwrap(rhsHeadAtB),
         );
         const takeLhs = await broadcast(b, takeLhsAtB);
         if (takeLhs) {

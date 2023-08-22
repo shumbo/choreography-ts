@@ -34,7 +34,7 @@ const noRenameRule: TSESLint.RuleModule<MessageIDs, []> = {
   create(context) {
     return {
       [arrowFunctionSelector]: function (
-        node: TSESTree.ArrowFunctionExpression
+        node: TSESTree.ArrowFunctionExpression,
       ) {
         if (node.params[0]) {
           if (node.params[0].type === AST_NODE_TYPES.ObjectPattern) {

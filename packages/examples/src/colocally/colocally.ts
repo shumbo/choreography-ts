@@ -19,7 +19,7 @@ const test: Choreography<Locations> = async ({ locally, colocally }) => {
         const _msgAtEveryone = await broadcast("carol", msgAtCarol);
         return [];
       },
-      []
+      [],
     );
   } catch (e) {
     console.warn(e);
@@ -30,7 +30,7 @@ const test: Choreography<Locations> = async ({ locally, colocally }) => {
 backend
   .epp(
     test,
-    "alice"
+    "alice",
   )([])
   .then(() => {
     console.log("success");

@@ -57,7 +57,7 @@ export abstract class GenericBackend<L extends Location, T>
     sender: L,
     receiver: L,
     tag: Tag,
-    data: any
+    data: any,
   ): Promise<void>;
   /**
    * `receive` is called to receive a message from another location.
@@ -76,12 +76,12 @@ export abstract class GenericBackend<L extends Location, T>
   public epp<
     L1 extends L,
     Args extends Located<any, L>[],
-    Return extends Located<any, L>[]
+    Return extends Located<any, L>[],
   >(
     choreography: Choreography<L, Args, Return>,
-    location: L1
+    location: L1,
   ): (
-    args: LocatedElements<L, L1, Args>
+    args: LocatedElements<L, L1, Args>,
   ) => Promise<LocatedElements<L, L1, Return>> {
     return async (args) => {
       const instance = await this.setup(location);
@@ -93,7 +93,7 @@ export abstract class GenericBackend<L extends Location, T>
       try {
         const locally: Locally<L> = async <L2 extends L, T>(
           loc: L2,
-          callback: (unwrap: Unwrap<L2>) => T | Promise<T>
+          callback: (unwrap: Unwrap<L2>) => T | Promise<T>,
         ) => {
           // @ts-ignore - no easy way to type this
           if (loc !== location) {
@@ -114,7 +114,7 @@ export abstract class GenericBackend<L extends Location, T>
           async <L1 extends L, L2 extends L, T>(
             sender: L1,
             receiver: L2,
-            value: Located<T, L1>
+            value: Located<T, L1>,
           ) => {
             t.comm();
             // @ts-ignore
@@ -130,7 +130,7 @@ export abstract class GenericBackend<L extends Location, T>
                 sender,
                 receiver,
                 t,
-                value.getValue(key)
+                value.getValue(key),
               );
               return undefined as any;
             }
@@ -141,7 +141,7 @@ export abstract class GenericBackend<L extends Location, T>
                 instance,
                 sender,
                 receiver,
-                t
+                t,
               );
               return new Located<T, L2>(message, key);
             }
@@ -153,11 +153,11 @@ export abstract class GenericBackend<L extends Location, T>
           async <
             LL extends L,
             Args extends Located<any, LL>[],
-            Return extends Located<any, LL>[]
+            Return extends Located<any, LL>[],
           >(
             locations: LL[],
             choreography: Choreography<LL, Args, Return>,
-            args: Args
+            args: Args,
           ) => {
             const childTag = t.call();
             return ctxManager.withContext(new Set(locations), async () => {
@@ -173,7 +173,7 @@ export abstract class GenericBackend<L extends Location, T>
                     call: call(childTag),
                     peel: (v) => v.getValue(key),
                   }),
-                  args
+                  args,
                 );
                 return ret;
               }
@@ -194,7 +194,7 @@ export abstract class GenericBackend<L extends Location, T>
           async <L1 extends L, const LL extends L, T>(
             sender: L1,
             receivers: LL[],
-            value: Located<T, L1>
+            value: Located<T, L1>,
           ) => {
             t.comm();
             // @ts-ignore
@@ -252,10 +252,10 @@ export abstract class GenericBackend<L extends Location, T>
           async <
             LL extends L,
             Args extends Located<any, LL>[],
-            Return extends Located<any, LL>[]
+            Return extends Located<any, LL>[],
           >(
             c: Choreography<LL, Args, Return>,
-            a: Args
+            a: Args,
           ) => {
             const childTag = t.call();
             return await c(
@@ -268,7 +268,7 @@ export abstract class GenericBackend<L extends Location, T>
                 colocally: colocally(childTag),
                 peel: peel,
               }),
-              a
+              a,
             );
           };
 
@@ -282,10 +282,10 @@ export abstract class GenericBackend<L extends Location, T>
             colocally: colocally(tag),
             peel: peel,
           }),
-          args.map((x) => new Located(x, key)) as any
+          args.map((x) => new Located(x, key)) as any,
         );
         return ret.map((x) =>
-          x instanceof Located ? x.getValue(key) : undefined
+          x instanceof Located ? x.getValue(key) : undefined,
         ) as any;
       } finally {
         await this.teardown(instance);
@@ -301,7 +301,7 @@ class ContextManager<L extends Location> {
   }
   public async withContext<T>(
     context: Set<L>,
-    callback: () => Promise<T>
+    callback: () => Promise<T>,
   ): Promise<T> {
     const oldContext = this.context;
     this.context = context;
@@ -331,7 +331,7 @@ class ContextManager<L extends Location> {
  */
 function wrapMethods<T extends Record<string, any>>(
   wrapper: (m: any) => any,
-  methods: T
+  methods: T,
 ) {
   const copy = { ...methods };
   for (const [name, fn] of Object.entries(methods)) {

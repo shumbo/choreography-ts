@@ -251,5 +251,26 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
         },
       ],
     },
+    {
+      name: `failing test case 4: location use warnings are correctly reported for 'colocally' expressions in choreographies declared with a type alias`,
+      code: `type Locations = "alice" | "bob" | "carol";
+      type TypeAlias = Choreography<Locations, [], []>;
+      const subtleChoreo: TypeAlias = async ({ colocally }) => {
+        colocally(
+          ["alice", "bob"],
+          async ({ locally }) => {
+            await locally("alice", () => "Hi from alice");
+            return [];
+          },
+          []
+        );
+        return [];
+      };`,
+      errors: [
+        {
+          messageId: "warning",
+        },
+      ],
+    },
   ],
 });

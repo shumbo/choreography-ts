@@ -69,7 +69,29 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
       };`,
     },
     {
-      name: `passing test case 5: all locations are used as type arguments or inside other operators inside 'colocally'`,
+      name: `passing test case 5: all locations marked as used when 'call' used in 'colocally'`,
+      code: `type Locations = "alice" | "bob" | "carol";
+      const subChoreo: Choreography<Locations, [], []> = async ({ locally }) => {
+        await locally("alice", () => "Hi from alice");
+        await locally("bob", () => "Hi from bob");
+        await locally("carol", () => "Hi from carol");
+        return [];
+      };
+      const test: Choreography<Locations, [], []> = async ({ colocally }) => {
+        await colocally(
+          ["alice", "bob", "carol"],
+          async ({ locally, call }) => {
+            await locally("carol", () => "Hi from carol");
+            await call(subChoreo, []);
+            return [];
+          },
+          []
+        );
+        return [];
+      };`,
+    },
+    {
+      name: `passing test case 6: all locations are used as type arguments or inside other operators inside 'colocally'`,
       code: `type Locations = "alice" | "bob" | "carol";
       const test: Choreography<Locations, [], []> = async ({ colocally }) => {
         await colocally(
@@ -94,7 +116,7 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
       };`,
     },
     {
-      name: `passing test case 6: all locations for 'colocally' and nested 'colocally' calls are used as arguments to 'colocally' calls inside 'colocally' bodies`,
+      name: `passing test case 7: all locations for 'colocally' and nested 'colocally' calls are used as arguments to 'colocally' calls inside 'colocally' bodies`,
       code: `type Locations = "alice" | "bob" | "carol";
       const test: Choreography<Locations, [], []> = async ({ colocally }) => {
         await colocally(

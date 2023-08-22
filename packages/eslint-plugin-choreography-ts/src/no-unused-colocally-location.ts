@@ -14,11 +14,12 @@ const colocallyLocallyUseLocater = `${colocallySelector} CallExpression[callee.n
 const colocallyMulticastUseLocater = `${colocallySelector} CallExpression[callee.name = "multicast"]`;
 const colocallyCommUseLocater = `${colocallySelector} CallExpression[callee.name = "comm"]`;
 const colocallyBroadcastUseLocater = `${colocallySelector} CallExpression[callee.name = "broadcast"]`;
+const colocallyCallUseLocater = `${colocallySelector} CallExpression[callee.name = "call"]`;
 const colocallyTypeUseLocater = `${colocallySelector} TSLiteralType`;
 const choreographyAtExit = `Program > ${choreographySelector}:exit`;
 
 // Implementation: Check whether each location passed to `colocally` is present inside the body of the choreography argument
-// as an argument to any operator that accepts location parameters (locally, colocally, comm, multicast, broadcast)
+// as an argument to any operator that accepts or uses location parameters (locally, colocally, comm, multicast, broadcast, call)
 // or as a type argument
 const noUnusedColocallyLocation: TSESLint.RuleModule<MessageIDs, []> = {
   defaultOptions: [],
@@ -39,7 +40,7 @@ const noUnusedColocallyLocation: TSESLint.RuleModule<MessageIDs, []> = {
   },
   create(context) {
     // Store locations for each `colocally` usage
-    let Locations: {
+    let locations: {
       location: string; // name of the location
       report: TSESLint.ReportDescriptor<MessageIDs>; // the error to report
     }[] = [];
@@ -54,7 +55,7 @@ const noUnusedColocallyLocation: TSESLint.RuleModule<MessageIDs, []> = {
             args[0].elements.forEach((arg) => {
               if (arg?.type === AST_NODE_TYPES.Literal) {
                 // Push all locations passed to the `colocally` call
-                Locations.push({
+                locations.push({
                   location: arg.value as string,
                   report: {
                     node: arg,
@@ -70,16 +71,16 @@ const noUnusedColocallyLocation: TSESLint.RuleModule<MessageIDs, []> = {
         }
       },
       // Check whether any location is used an argument to a nested `colocally` expression
-      // and also add the locations to `Locations` for checking their use inside the nested `colocally` body
+      // and also add the locations to `locations` for checking their use inside the nested `colocally` body
       [colocallyColocallyUseLocater]: function (node: TSESTree.CallExpression) {
         const args = node.arguments;
         if (args[0]?.type === AST_NODE_TYPES.ArrayExpression) {
           args[0].elements.forEach((location) => {
             if (location?.type === AST_NODE_TYPES.Literal) {
-              Locations = Locations.filter(
+              locations = locations.filter(
                 (value) => value.location !== location.value
               ); // Remove locations seen in the nested `colocally` call from a potential parent `colocally` call
-              Locations.push({
+              locations.push({
                 location: location.value as string,
                 report: {
                   node: location,
@@ -97,7 +98,7 @@ const noUnusedColocallyLocation: TSESLint.RuleModule<MessageIDs, []> = {
       [colocallyLocallyUseLocater]: function (node: TSESTree.CallExpression) {
         const args = node.arguments;
         if (args[0]?.type === AST_NODE_TYPES.Literal) {
-          Locations = Locations.filter(
+          locations = locations.filter(
             (value) => value.location !== (args[0] as TSESTree.Literal).value
           ); // Remove locations seen in nested `locally` call
         }
@@ -107,7 +108,7 @@ const noUnusedColocallyLocation: TSESLint.RuleModule<MessageIDs, []> = {
         const args = node.arguments;
         // Check whether any location is the sender
         if (args[0]?.type === AST_NODE_TYPES.Literal) {
-          Locations = Locations.filter(
+          locations = locations.filter(
             (value) => value.location !== (args[0] as TSESTree.Literal).value
           ); // Remove locations used as the sender
         }
@@ -115,7 +116,7 @@ const noUnusedColocallyLocation: TSESLint.RuleModule<MessageIDs, []> = {
         if (args[1]?.type == AST_NODE_TYPES.ArrayExpression) {
           args[1].elements.forEach((receiver) => {
             if (receiver?.type === AST_NODE_TYPES.Literal) {
-              Locations = Locations.filter(
+              locations = locations.filter(
                 (value) => value.location !== receiver.value
               ); // Remove locations used as a receiver
             }
@@ -124,20 +125,24 @@ const noUnusedColocallyLocation: TSESLint.RuleModule<MessageIDs, []> = {
       },
       // Check whether any `broadcast` is used inside the `colocally` call, which instantly designates the locations as being used
       [colocallyBroadcastUseLocater]: function () {
-        Locations = []; // Mark all locations as used
+        locations = []; // Mark all locations as used
+      },
+      // Check for any use of `call`, which should also mark all the locations as being used
+      [colocallyCallUseLocater]: function () {
+        locations = [];
       },
       // Check whether any location is used as an argument to a nested `comm` expression
       [colocallyCommUseLocater]: function (node: TSESTree.CallExpression) {
         const args = node.arguments;
         // Check whether any location is the sender
         if (args[0]?.type === AST_NODE_TYPES.Literal) {
-          Locations = Locations.filter(
+          locations = locations.filter(
             (value) => value.location !== (args[0] as TSESTree.Literal).value
           );
         }
         // Check whether any location is the receiver
         if (args[1]?.type === AST_NODE_TYPES.Literal) {
-          Locations = Locations.filter(
+          locations = locations.filter(
             (value) => value.location !== (args[1] as TSESTree.Literal).value
           );
         }
@@ -145,7 +150,7 @@ const noUnusedColocallyLocation: TSESLint.RuleModule<MessageIDs, []> = {
       // Check whether any location is used as a type argument in the inner choreography
       [colocallyTypeUseLocater]: function (node: TSESTree.TSLiteralType) {
         if (node.literal.type === AST_NODE_TYPES.Literal) {
-          Locations = Locations.filter(
+          locations = locations.filter(
             (value) =>
               value.location !== (node.literal as TSESTree.Literal).value
           );
@@ -154,7 +159,7 @@ const noUnusedColocallyLocation: TSESLint.RuleModule<MessageIDs, []> = {
       // Report errors for unused location arguments once any top-level choreography node is exited in the AST traversal
       // and remove the locations from the list
       [choreographyAtExit]: function () {
-        Locations = Locations.filter((location) => {
+        locations = locations.filter((location) => {
           context.report(location.report);
           return true;
         });

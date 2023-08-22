@@ -36,12 +36,6 @@ export class Located<T, L1 extends Location> {
   protected phantom?: L1;
 }
 
-// The contravariant type that can be extended by the base class `ColocatedBase` where such types are desired
-type Contravariant<L> = {phantom?: (x: L) => void};
-
-// The covariant type for that can be extended by the base class `ColocatedBase` where such types are desired
-type Covariant<L> = {phantom?: L};
-
 // Base class for `Colocated` that can be extended for contravariance or covariance in parameters
 class ColocatedBase<T> {
   constructor(value: T, key: symbol) {
@@ -60,10 +54,14 @@ class ColocatedBase<T> {
 
 // Exported `Colocated` class and the corresponding covariant or contravariant type variations
 export class Colocated<T, L extends Location> extends ColocatedBase<T> {
-  param?: ((x: L) => void) | L;
-};
-export type ColocatedContravariant<T, L extends Location> = ColocatedBase<T> & Contravariant<L>
-export type ColocatedCovariant<T, L extends Location> = ColocatedBase<T> & Covariant<L>
+  phantom?: ((x: L) => void) & L;
+}
+export class ColocatedContravariant<T, L extends Location> extends ColocatedBase<T> {
+  phantom?: (x: L) => void;
+}
+export class ColocatedCovariant<T, L extends Location> extends ColocatedBase<T> {
+  phantom?: L;
+}
 
 /**
  * The dependencies of a choreography

@@ -165,7 +165,7 @@ export type Choreography<
  * A utility to filter out the values not located at `L1` from an array of located values
  */
 export type LocatedElements<L extends Location, L1 extends L, A> = A extends [
-  Located<infer T, infer L2>,
+  ColocatedCovariant<infer T, infer L2> | Located<infer T, infer L2>,
   ...infer TAIL
 ]
   ? L2 extends L1

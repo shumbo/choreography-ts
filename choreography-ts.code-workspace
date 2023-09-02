@@ -18,6 +18,9 @@
 		},
 		{
 			"path": "packages/eslint-plugin-choreography-ts"
+		},
+		{
+			"path": "packages/transport-local"
 		}
 	],
 	"settings": {

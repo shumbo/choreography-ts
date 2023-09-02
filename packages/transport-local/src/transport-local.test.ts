@@ -1,5 +1,4 @@
-import { Choreography, Located } from ".";
-import { Projector } from "./core";
+import { Choreography, Located, Projector } from "@choreography-ts/core";
 import { LocalTransport } from "./transport-local.js";
 
 const locations = ["alice", "bob", "carol"] as const;

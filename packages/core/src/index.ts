@@ -14,9 +14,8 @@ export type {
   Subscription,
   Parcel,
 } from "./core.js";
-export { Located, Colocated, Transport } from "./core.js";
+export { Located, Colocated, Transport, Projector } from "./core.js";
 export { GenericBackend } from "./backend-generic.js";
-export { LocalBackend } from "./backend-local.js";
 export { Queue } from "./lib/queue.js";
 export { Tag } from "./lib/tag.js";
 export { DefaultDict } from "./lib/default-dict.js";

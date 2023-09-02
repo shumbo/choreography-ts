@@ -1,5 +1,10 @@
 import mitt, { Emitter } from "mitt";
-import { Location, Parcel, Subscription, Transport } from ".";
+import {
+  Location,
+  Parcel,
+  Subscription,
+  Transport,
+} from "@choreography-ts/core";
 
 export type LocalTransportChannel<L extends Location> = Emitter<{
   [L: Location]: Parcel<L>;

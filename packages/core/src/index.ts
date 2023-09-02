@@ -11,8 +11,10 @@ export type {
   Choreography,
   LocatedElements,
   Backend,
+  Subscription,
+  Parcel,
 } from "./core.js";
-export { Located, Colocated } from "./core.js";
+export { Located, Colocated, Transport } from "./core.js";
 export { GenericBackend } from "./backend-generic.js";
 export { LocalBackend } from "./backend-local.js";
 export { Queue } from "./lib/queue.js";

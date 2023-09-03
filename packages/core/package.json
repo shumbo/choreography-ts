@@ -25,5 +25,8 @@
   },
   "peerDependencies": {
     "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "mitt": "^3.0.1"
   }
 }

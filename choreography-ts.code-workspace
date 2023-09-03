@@ -20,13 +20,7 @@
 			"path": "packages/eslint-plugin-choreography-ts"
 		},
 		{
-			"path": "packages/transport-local"
-		},
-		{
 			"path": "packages/transport-express"
-		},
-		{
-			"path": "packages/transport-test-suite"
 		}
 	],
 	"settings": {

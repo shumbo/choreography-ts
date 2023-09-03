@@ -20,3 +20,4 @@ export { Queue } from "./lib/queue.js";
 export { Tag } from "./lib/tag.js";
 export { DefaultDict } from "./lib/default-dict.js";
 export { IVar } from "./lib/ivar.js";
+export { TransportTestSuite } from "./lib/transport-test-suite.js";

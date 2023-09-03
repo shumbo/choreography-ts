@@ -218,7 +218,7 @@ export abstract class Transport<L extends Location, L1 extends L> {
 export class Projector<
   L extends Location,
   L1 extends L,
-  T extends Transport<L, L1>
+  T extends Transport<L, L1> // FIXME(shumbo): For some reason, T can be an instance with a different target
 > {
   private inbox: DefaultDict<string, IVar>;
   private subscription: Subscription | null;

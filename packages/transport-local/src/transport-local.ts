@@ -6,16 +6,25 @@ import {
   Transport,
 } from "@choreography-ts/core";
 
-export type LocalTransportChannel<L extends Location> = Emitter<{
-  [L: Location]: Parcel<L>;
-}>;
+export type LocalTransportChannel<L extends Location> = {
+  emitter: Emitter<{
+    [L: Location]: Parcel<L>;
+  }>;
+  locations: readonly L[];
+};
 
-export class LocalTransport<L extends Location> extends Transport<L> {
-  static createChannel<L extends Location>(): LocalTransportChannel<L> {
-    return mitt();
+export class LocalTransport<L extends Location, L1 extends L> extends Transport<
+  L,
+  L1
+> {
+  static createChannel<L extends Location>(
+    locations: readonly L[]
+  ): LocalTransportChannel<L> {
+    return { emitter: mitt(), locations };
   }
   constructor(
     private locs: readonly L[],
+    private target: L1,
     private channel: LocalTransportChannel<L>
   ) {
     super();
@@ -24,17 +33,17 @@ export class LocalTransport<L extends Location> extends Transport<L> {
     return this.locs;
   }
   public async teardown(): Promise<void> {
-    this.channel.all.clear();
+    this.channel.emitter.all.clear();
   }
   public send(parcel: Parcel<L>): Promise<void> {
-    this.channel.emit(parcel.to, parcel);
+    this.channel.emitter.emit(parcel.to, parcel);
     return Promise.resolve();
   }
-  public subscribe(target: L, cb: (p: Parcel<L>) => void): Subscription {
-    this.channel.on(target, cb);
+  public subscribe(cb: (p: Parcel<L>) => void): Subscription {
+    this.channel.emitter.on(this.target, cb);
     return {
       remove: () => {
-        this.channel.off(target, cb);
+        this.channel.emitter.off(this.target, cb);
       },
     };
   }

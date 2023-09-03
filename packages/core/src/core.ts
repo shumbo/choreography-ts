@@ -192,27 +192,39 @@ export type Parcel<L extends Location> = {
   data: any;
 };
 
+export function parcelFromJSON<L extends Location>(json: string): Parcel<L> {
+  const obj = JSON.parse(json);
+  const parcel: Parcel<L> = {
+    from: obj.from,
+    to: obj.to,
+    tag: new Tag(JSON.parse(obj.tag)),
+    data: obj.data,
+  };
+  return parcel;
+}
+
 /**
  * A transport is responsible for sending parcels from one location to another
  * @typeParam L - A set of possible locations
  */
-export abstract class Transport<L extends Location> {
+export abstract class Transport<L extends Location, L1 extends L> {
   abstract get locations(): readonly L[];
   public abstract teardown(): Promise<void>;
   public abstract send(parcel: Parcel<L>): Promise<void>;
-  public abstract subscribe(at: L, cb: (p: Parcel<L>) => void): Subscription;
+  public abstract subscribe(cb: (p: Parcel<L>) => void): Subscription;
+  private phantom?: L1;
 }
 
 export class Projector<
   L extends Location,
-  T extends Transport<L>,
-  L1 extends L
+  L1 extends L,
+  T extends Transport<L, L1>
 > {
   private inbox: DefaultDict<string, IVar>;
   private subscription: Subscription | null;
   constructor(private transport: T, private target: L1) {
     this.inbox = new DefaultDict<string, IVar<Parcel<L>>>(() => new IVar());
-    this.subscription = this.transport.subscribe(this.target, (parcel) => {
+    this.subscription = this.transport.subscribe((parcel) => {
       const key = this.key(parcel.from, parcel.to, parcel.tag);
       this.inbox.get(key).write(parcel);
     });

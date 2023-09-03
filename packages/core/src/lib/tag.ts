@@ -18,4 +18,7 @@ export class Tag {
   public toString(): string {
     return this.v.join(":");
   }
+  public toJSON(): string {
+    return JSON.stringify(this.v);
+  }
 }

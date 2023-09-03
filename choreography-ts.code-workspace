@@ -21,6 +21,9 @@
 		},
 		{
 			"path": "packages/transport-local"
+		},
+		{
+			"path": "packages/transport-express"
 		}
 	],
 	"settings": {

@@ -1,12 +1,17 @@
 import { Choreography, Located, Projector } from "@choreography-ts/core";
-import { LocalTransport } from "./transport-local.js";
+import { ExpressTransport, HttpConfig } from "./transport-express.js";
 
 const locations = ["alice", "bob", "carol"] as const;
 type Locations = (typeof locations)[number];
 
+const config: HttpConfig<Locations> = {
+  alice: ["127.0.0.1", 3010],
+  bob: ["127.0.0.1", 3011],
+  carol: ["127.0.0.1", 3012],
+};
+
 describe("Local Transport", () => {
   test("hello, world", async () => {
-    const channel = LocalTransport.createChannel(locations);
     const c: Choreography<Locations, [], [Located<string, "bob">]> = async ({
       locally,
       comm,
@@ -19,14 +24,16 @@ describe("Local Transport", () => {
       return [msgAtBob];
     };
     const alice = async () => {
-      const transport = new LocalTransport(locations, "alice", channel);
+      const transport = await ExpressTransport.create(config, "alice");
       const projector = new Projector(transport, "alice");
       await projector.epp(c)([]);
+      await transport.teardown();
     };
     const bob = async () => {
-      const transport = new LocalTransport(locations, "bob", channel);
+      const transport = await ExpressTransport.create(config, "bob");
       const projector = new Projector(transport, "bob");
       const [msgAtBob] = await projector.epp(c)([]);
+      await transport.teardown();
       return msgAtBob;
     };
     const [, msgAtBob] = await Promise.all([alice(), bob()]);

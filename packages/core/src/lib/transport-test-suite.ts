@@ -156,5 +156,50 @@ export namespace TransportTestSuite {
       ]);
       expect(count).toEqual(4);
     });
+    test("colocally", async () => {
+      let count = 0;
+      const test: Choreography<Locations, [], []> = async ({ colocally }) => {
+        await colocally(
+          ["alice", "bob"],
+          async ({ locally, broadcast }) => {
+            const bAtAlice = await locally("alice", () => "SECRET");
+            const b = await broadcast("alice", bAtAlice);
+            expect(b).toBe("SECRET");
+            count += 1;
+            return [];
+          },
+          []
+        );
+        return [];
+      };
+      await Promise.all([
+        pa.epp(test)([]),
+        pb.epp(test)([]),
+        pc.epp(test)([]),
+        pd.epp(test)([]),
+      ]);
+      expect(count).toEqual(2);
+    });
+
+    test("colocally changes context", async () => {
+      const test: Choreography<Locations> = async ({
+        locally,
+        broadcast,
+        colocally,
+      }) => {
+        const msgAtCarol = await locally("carol", () => "I'm Carol");
+        await colocally(
+          ["alice", "bob"],
+          async () => {
+            const _msgAtEveryone = await broadcast("carol", msgAtCarol);
+            return [];
+          },
+          []
+        );
+        return [];
+      };
+      const p = pa.epp(test)([]);
+      await expect(p).rejects.toThrow();
+    });
   }
 }

@@ -221,6 +221,34 @@ importers:
         specifier: ^5.0.4
         version: 5.0.4
 
+  packages/transport-test-suite:
+    dependencies:
+      '@choreography-ts/core':
+        specifier: workspace:*
+        version: link:../core
+      '@choreography-ts/transport-express':
+        specifier: workspace:*
+        version: link:../transport-express
+      '@choreography-ts/transport-local':
+        specifier: workspace:*
+        version: link:../transport-local
+    devDependencies:
+      '@types/jest':
+        specifier: ^29.5.1
+        version: 29.5.1
+      jest:
+        specifier: ^29.5.0
+        version: 29.5.0(@types/node@20.2.3)(ts-node@10.9.1)
+      rimraf:
+        specifier: ^5.0.1
+        version: 5.0.1
+      ts-jest:
+        specifier: ^29.1.0
+        version: 29.1.0(@babel/core@7.21.3)(jest@29.5.0)(typescript@5.0.4)
+      typescript:
+        specifier: ^5.0.4
+        version: 5.0.4
+
 packages:
 
   /@aashutoshrathi/word-wrap@1.2.6:

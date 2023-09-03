@@ -215,14 +215,10 @@ export abstract class Transport<L extends Location, L1 extends L> {
   private phantom?: L1;
 }
 
-export class Projector<
-  L extends Location,
-  L1 extends L,
-  T extends Transport<L, L1> // FIXME(shumbo): For some reason, T can be an instance with a different target
-> {
+export class Projector<L extends Location, L1 extends L> {
   private inbox: DefaultDict<string, IVar>;
   private subscription: Subscription | null;
-  constructor(private transport: T, private target: L1) {
+  constructor(private transport: Transport<L, L1>, private target: L1) {
     this.inbox = new DefaultDict<string, IVar<Parcel<L>>>(() => new IVar());
     this.subscription = this.transport.subscribe((parcel) => {
       const key = this.key(parcel.from, parcel.to, parcel.tag);
@@ -250,11 +246,7 @@ export class Projector<
     this.inbox.delete(key);
     return parcel.data;
   }
-  epp<
-    L1 extends L,
-    Args extends Located<L, any>[],
-    Return extends Located<L, any>[]
-  >(
+  epp<Args extends Located<any, L>[], Return extends Located<any, L>[]>(
     choreography: Choreography<L, Args, Return>
   ): (
     args: LocatedElements<L, L1, Args>

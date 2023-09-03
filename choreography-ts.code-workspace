@@ -24,6 +24,9 @@
 		},
 		{
 			"path": "packages/transport-express"
+		},
+		{
+			"path": "packages/transport-test-suite"
 		}
 	],
 	"settings": {

@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Choreographic Programming in TypeScript",
   "main": "index.js",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "build": "turbo run build",
     "test": "turbo run test --concurrency 1",

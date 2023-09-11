@@ -1,4 +1,5 @@
 import { Choreography, Located, Projector, Transport } from "..";
+import { beforeAll, afterAll, test, expect } from "bun:test";
 
 export namespace TransportTestSuite {
   export const locations = ["alice", "bob", "carol", "dave"] as const;

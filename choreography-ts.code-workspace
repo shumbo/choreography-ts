@@ -9,10 +9,6 @@
 			"path": "packages/core"
 		},
 		{
-			"name": "backend-express",
-			"path": "packages/backend-express"
-		},
-		{
 			"name": "examples",
 			"path": "packages/examples"
 		},

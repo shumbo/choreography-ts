@@ -18,9 +18,9 @@ export class ExpressTransport<
   L extends Location,
   L1 extends L
 > extends Transport<L, L1> {
-  public static async create<L extends Location>(
+  public static async create<L extends Location, L1 extends L>(
     config: HttpConfig<L>,
-    target: L
+    target: L1
   ) {
     const queue: Queue<Parcel<L>> = new Queue();
 
@@ -40,7 +40,7 @@ export class ExpressTransport<
       });
       app.on("error", console.error);
     });
-    return new ExpressTransport(config, server, queue);
+    return new ExpressTransport<L, L1>(config, server, queue);
   }
 
   private constructor(

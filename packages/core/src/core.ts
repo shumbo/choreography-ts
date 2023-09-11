@@ -28,7 +28,6 @@ export class Located<T, L1 extends Location> {
   }
   /**
    * The internal function to get the normal value.
-   * Use `unwrap` if not defining a custom backend.
    * @internal
    * @param key
    * @returns
@@ -218,7 +217,7 @@ export abstract class Transport<L extends Location, L1 extends L> {
 export class Projector<L extends Location, L1 extends L> {
   private inbox: DefaultDict<string, IVar>;
   private subscription: Subscription | null;
-  constructor(private transport: Transport<L, L1>, private target: L1) {
+  constructor(public transport: Transport<L, L1>, private target: L1) {
     this.inbox = new DefaultDict<string, IVar<Parcel<L>>>(() => new IVar());
     this.subscription = this.transport.subscribe((parcel) => {
       const key = this.key(parcel.from, parcel.to, parcel.tag);
@@ -599,27 +598,4 @@ export class Runner {
       ) as any;
     };
   }
-}
-
-/**
- * An interface for a backend
- * @typeParam L - A set of possible locations
- */
-export interface Backend<L extends Location> {
-  /**
-   * End-point project a choreography at a given location
-   * @param choreography - a choreography to project
-   * @param location - a location to execute the choreography at
-   * @returns - a local program as a function
-   */
-  epp<
-    L1 extends L,
-    Args extends Located<L, any>[],
-    Return extends Located<L, any>[]
-  >(
-    choreography: Choreography<L, Args, Return>,
-    location: L1
-  ): (
-    args: LocatedElements<L, L1, Args>
-  ) => Promise<LocatedElements<L, L1, Return>>;
 }

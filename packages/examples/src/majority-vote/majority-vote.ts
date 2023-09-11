@@ -1,5 +1,8 @@
-import { Choreography, Located } from "@choreography-ts/core";
-import { ExpressBackend } from "@choreography-ts/backend-express";
+import { Choreography, Located, Projector } from "@choreography-ts/core";
+import {
+  HttpConfig,
+  ExpressTransport,
+} from "@choreography-ts/transport-express";
 
 export type L = "judge" | "voter1" | "voter2" | "voter3";
 
@@ -116,23 +119,46 @@ export const majorityVote: Choreography<
 };
 
 async function main() {
-  const backend = new ExpressBackend<L>({
+  const config: HttpConfig<L> = {
     judge: ["localhost", 3000],
     voter1: ["localhost", 3001],
     voter2: ["localhost", 3002],
     voter3: ["localhost", 3003],
-  });
-  const judge = backend.epp(majorityVote, "judge");
-  const voter1 = backend.epp(majorityVote, "voter1");
-  const voter2 = backend.epp(majorityVote, "voter2");
-  const voter3 = backend.epp(majorityVote, "voter3");
+  };
+
+  const [judgeTransport, voter1Transport, voter2Transport, voter3Transport] =
+    await Promise.all([
+      ExpressTransport.create(config, "judge"),
+      ExpressTransport.create(config, "voter1"),
+      ExpressTransport.create(config, "voter2"),
+      ExpressTransport.create(config, "voter3"),
+    ]);
+
+  const judgeProjector = new Projector(judgeTransport, "judge");
+  const voter1Projector = new Projector(voter1Transport, "voter1");
+  const voter2Projector = new Projector(voter2Transport, "voter2");
+  const voter3Projector = new Projector(voter3Transport, "voter3");
+
+  const judge = judgeProjector.epp(majorityVote);
+  const voter1 = voter1Projector.epp(majorityVote);
+  const voter2 = voter2Projector.epp(majorityVote);
+  const voter3 = voter3Projector.epp(majorityVote);
+
   const [[isMajority]] = await Promise.all([
     judge([]),
     voter1([]),
     voter2([]),
     voter3([]),
   ]);
+
   console.log("is majority?", isMajority);
+
+  await Promise.all([
+    judgeProjector.transport.teardown(),
+    voter1Projector.transport.teardown(),
+    voter2Projector.transport.teardown(),
+    voter3Projector.transport.teardown(),
+  ]);
 }
 
 if (require.main === module) {

@@ -202,6 +202,26 @@ export function parcelFromJSON<L extends Location>(json: string): Parcel<L> {
   return parcel;
 }
 
+export interface LogManager {
+  write<T>(lid: string, data: T): Promise<void>;
+  read<T>(lid: string): Promise<{ ok: true; value: T } | { ok: false }>;
+}
+
+/**
+ * This is a dummy log manager that does not actually log anything.
+ * It is used when no log manager is provided.
+ */
+class NotLogManager implements LogManager {
+  public async write<T>(_lid: string, _data: T): Promise<void> {
+    return;
+  }
+  public async read<T>(
+    _lid: string
+  ): Promise<{ ok: true; value: T } | { ok: false }> {
+    return { ok: false };
+  }
+}
+
 /**
  * A transport is responsible for sending parcels from one location to another
  * @typeParam L - A set of possible locations
@@ -248,28 +268,41 @@ export class Projector<L extends Location, L1 extends L> {
   epp<Args extends Located<any, L>[], Return extends Located<any, L>[]>(
     choreography: Choreography<L, Args, Return>
   ): (
-    args: LocatedElements<L, L1, Args>
+    args: LocatedElements<L, L1, Args>,
+    options?: { logManager?: LogManager }
   ) => Promise<LocatedElements<L, L1, Return>> {
-    return async (args) => {
+    return async (args, options) => {
+      const logManager = options?.logManager ?? new NotLogManager();
+
       const tag = new Tag();
       const key = Symbol(this.target.toString());
       const ctxManager = new ContextManager<L>(this.transport.locations);
-      const locally: Locally<L> = async <L2 extends L, T>(
-        loc: L2,
-        callback: (unwrap: Unwrap<L2>) => T | Promise<T>
-      ) => {
-        // @ts-ignore - no easy way to type this
-        if (loc !== this.target) {
-          return undefined as any;
-        }
-        const retVal = callback((located) => located.getValue(key));
-        let v: T;
-        if (retVal instanceof Promise) {
-          v = await retVal;
-        } else {
-          v = retVal;
-        }
-        return new Located(v, key);
+      const locally: (t: Tag) => Locally<L> = (tag) => {
+        return async <L2 extends L, T>(
+          loc: L2,
+          callback: (unwrap: Unwrap<L2>) => T | Promise<T>
+        ) => {
+          tag.comm();
+
+          // @ts-ignore - no easy way to type this
+          if (loc !== this.target) {
+            return undefined as any;
+          }
+
+          const log = await logManager.read(tag.toJSON());
+          if (log.ok) {
+            return new Located(log.value, key);
+          }
+          const retVal = callback((located) => located.getValue(key));
+          let v: T;
+          if (retVal instanceof Promise) {
+            v = await retVal;
+          } else {
+            v = retVal;
+          }
+          await logManager.write(tag.toJSON(), v);
+          return new Located(v, key);
+        };
       };
 
       const comm: (t: Tag) => Comm<L> =
@@ -280,6 +313,12 @@ export class Projector<L extends Location, L1 extends L> {
           value: Located<T, L1>
         ) => {
           t.comm();
+
+          const log = await logManager.read(t.toJSON());
+          if (log.ok) {
+            return new Located(log.value, key);
+          }
+
           // @ts-ignore
           if (sender === receiver) {
             // if sender and receiver are the same, just return the value
@@ -294,12 +333,14 @@ export class Projector<L extends Location, L1 extends L> {
               tag: t,
               data: value.getValue(key),
             });
+            await logManager.write(t.toJSON(), value.getValue(key));
             return undefined as any;
           }
           // @ts-ignore
           if (this.target === receiver) {
             // if receiver, wait for value from sender and return
             const message: T = await this.receiveTag(sender, receiver, t);
+            await logManager.write(t.toJSON(), message);
             return new Located<T, L2>(message, key);
           }
           return undefined as any;
@@ -322,7 +363,7 @@ export class Projector<L extends Location, L1 extends L> {
             if (locations.includes(this.target)) {
               const ret = await choreography(
                 wrapMethods((m) => ctxManager.checkContext(m), {
-                  locally: locally,
+                  locally: locally(childTag),
                   comm: comm(childTag),
                   colocally: colocally(childTag),
                   multicast: multicast(childTag),
@@ -354,6 +395,7 @@ export class Projector<L extends Location, L1 extends L> {
           value: Located<T, L1>
         ) => {
           t.comm();
+
           // @ts-ignore
           if (this.target === sender) {
             // if sender, send value to all receivers
@@ -362,15 +404,30 @@ export class Projector<L extends Location, L1 extends L> {
             for (const receiver of receivers) {
               // @ts-ignore
               if (receiver !== sender) {
-                promises.push(this.sendTag(sender, receiver, t, v));
+                promises.push(
+                  (async () => {
+                    const lid = t.toJSON() + ":" + receiver;
+                    const log = await logManager.read(lid);
+                    if (log.ok) {
+                      return;
+                    }
+                    await this.sendTag(sender, receiver, t, v);
+                    await logManager.write(lid, v);
+                  })()
+                );
               }
             }
             await Promise.all(promises);
             return new Colocated<T, LL | L1>(v, key);
             // @ts-ignore
           } else if (receivers.includes(this.target)) {
+            const log = await logManager.read<T>(t.toJSON());
+            if (log.ok) {
+              return new Colocated<T, LL | L1>(log.value, key);
+            }
             // if not sender, wait for value to be sent
-            const message = await this.receiveTag(sender, this.target, t);
+            const message: T = await this.receiveTag(sender, this.target, t);
+            await logManager.write(t.toJSON(), message);
             return new Colocated<T, LL | L1>(message, key);
           }
           return undefined as any;
@@ -389,14 +446,29 @@ export class Projector<L extends Location, L1 extends L> {
             for (const receiver of locations) {
               // @ts-ignore
               if (receiver !== sender) {
-                promises.push(this.sendTag(sender, receiver, t, v));
+                promises.push(
+                  (async () => {
+                    const lid = t.toJSON() + ":" + receiver;
+                    const log = await logManager.read(lid);
+                    if (log.ok) {
+                      return;
+                    }
+                    await this.sendTag(sender, receiver, t, v);
+                    await logManager.write(lid, v);
+                  })()
+                );
               }
             }
             await Promise.all(promises);
             return v;
           } else {
+            const log = await logManager.read<T>(t.toJSON());
+            if (log.ok) {
+              log.value;
+            }
             // if not sender, wait for value to arrive
             const data = await this.receiveTag(sender, this.target, t);
+            await logManager.write(t.toJSON(), data);
             return data;
           }
         };
@@ -417,7 +489,7 @@ export class Projector<L extends Location, L1 extends L> {
           const childTag = t.call();
           return await c(
             wrapMethods((m) => ctxManager.checkContext(m), {
-              locally: locally,
+              locally: locally(childTag),
               comm: comm(childTag),
               broadcast: broadcast(childTag),
               call: call(childTag),
@@ -431,7 +503,7 @@ export class Projector<L extends Location, L1 extends L> {
 
       const ret = await choreography(
         wrapMethods((m) => ctxManager.checkContext(m), {
-          locally: locally,
+          locally: locally(tag),
           comm: comm(tag),
           broadcast: broadcast(tag),
           call: call(tag),

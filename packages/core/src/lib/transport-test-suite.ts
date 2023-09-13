@@ -1,4 +1,5 @@
 import { Choreography, Located, Projector, Transport } from "..";
+import { InMemoryLogManager } from "../in-memory-log-manager";
 
 export namespace TransportTestSuite {
   export const locations = ["alice", "bob", "carol", "dave"] as const;
@@ -200,6 +201,37 @@ export namespace TransportTestSuite {
       };
       const p = pa.epp(test)([]);
       await expect(p).rejects.toThrow();
+    });
+
+    // This test is not complete and each transport should implement their own test case for fault tolerance.
+    test("crash", async () => {
+      let crashed = false;
+      const test: Choreography<
+        Locations,
+        [],
+        [Located<number, "alice">]
+      > = async ({ locally, comm }) => {
+        const a1 = await locally("alice", () => {
+          return 100;
+        });
+        const b1 = await comm("alice", "bob", a1);
+        const b2 = await locally("bob", (unwrap) => {
+          if (!crashed) {
+            crashed = true;
+            throw new Error("why!?");
+          }
+          return unwrap(b1) + 1;
+        });
+        const a2 = await comm("bob", "alice", b2);
+        return [a2];
+      };
+      const [la, lb] = [new InMemoryLogManager(), new InMemoryLogManager()];
+      const alice = pa.epp(test)([], { logManager: la });
+      let bob = pb.epp(test)([], { logManager: lb });
+      await expect(bob).rejects.toThrow("why!?");
+      bob = pb.epp(test)([], { logManager: lb });
+      await expect(bob).resolves.not.toThrow();
+      await expect(alice).resolves.not.toThrow();
     });
   }
 }

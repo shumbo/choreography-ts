@@ -202,8 +202,21 @@ export function parcelFromJSON<L extends Location>(json: string): Parcel<L> {
   return parcel;
 }
 
+/**
+ * A log manager is responsible for saving and loading logged values from a persistent storage for fault tolerance.
+ */
 export interface LogManager {
+  /**
+   * Write a value to the log
+   * @param lid the identifier of the log entry
+   * @param data data to be written
+   */
   write<T>(lid: string, data: T): Promise<void>;
+  /**
+   * Read a value from the log
+   * @param lid the identifier of the log entry
+   * @returns a promise that resolves the object with the `ok` field, which is `true` if the log entry exists, and `false` otherwise.
+   */
   read<T>(lid: string): Promise<{ ok: true; value: T } | { ok: false }>;
 }
 

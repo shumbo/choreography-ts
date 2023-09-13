@@ -16,4 +16,10 @@ describe("Tag", () => {
     expect(s2.startsWith(s1)).toBe(true);
     expect(s1).not.toEqual(s2);
   });
+  it("serialization", () => {
+    const t = new Tag();
+    const s = t.toJSON();
+    const t2 = new Tag(JSON.parse(s));
+    expect(t.toJSON()).toEqual(t2.toJSON());
+  });
 });

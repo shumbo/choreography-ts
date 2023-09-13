@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@choreography-ts/backend-express": "workspace:*",
+    "@choreography-ts/transport-express": "workspace:*",
     "@choreography-ts/core": "workspace:*"
   },
   "devDependencies": {

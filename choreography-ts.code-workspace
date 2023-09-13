@@ -9,15 +9,14 @@
 			"path": "packages/core"
 		},
 		{
-			"name": "backend-express",
-			"path": "packages/backend-express"
-		},
-		{
 			"name": "examples",
 			"path": "packages/examples"
 		},
 		{
 			"path": "packages/eslint-plugin-choreography-ts"
+		},
+		{
+			"path": "packages/transport-express"
 		}
 	],
 	"settings": {

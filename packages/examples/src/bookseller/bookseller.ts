@@ -1,5 +1,8 @@
-import { Choreography, Located } from "@choreography-ts/core";
-import { ExpressBackend } from "@choreography-ts/backend-express";
+import { Choreography, Located, Projector } from "@choreography-ts/core";
+import {
+  ExpressTransport,
+  HttpConfig,
+} from "@choreography-ts/transport-express";
 
 export type Locations = "buyer" | "seller";
 
@@ -65,20 +68,26 @@ export const bookseller: Choreography<
 };
 
 async function main() {
-  const backend = new ExpressBackend<Locations>({
-    seller: ["localhost", 3000],
+  const config: HttpConfig<Locations> = {
+    seller: ["127.0.0.1", 3000],
     buyer: ["localhost", 3001],
-  });
-  console.log("--- Buying TAPL ---");
+  };
+  const [sellerTransport, buyerTransport] = await Promise.all([
+    ExpressTransport.create(config, "seller"),
+    ExpressTransport.create(config, "buyer"),
+  ]);
+  const sellerProjector = new Projector(sellerTransport, "seller");
+  const buyerProjector = new Projector(buyerTransport, "buyer");
+
   const [[dateForTAPL]] = await Promise.all([
-    backend.epp(bookseller, "buyer")(["TAPL"]),
-    backend.epp(bookseller, "seller")([undefined]),
+    buyerProjector.epp(bookseller)(["TAPL"]),
+    sellerProjector.epp(bookseller)([undefined]),
   ]);
   console.log("Delivery date:", dateForTAPL);
   console.log("--- Buying HoTT ---");
   const [[dateForHoTT]] = await Promise.all([
-    backend.epp(bookseller, "buyer")(["HoTT"]),
-    backend.epp(bookseller, "seller")([undefined]),
+    buyerProjector.epp(bookseller)(["HoTT"]),
+    sellerProjector.epp(bookseller)([undefined]),
   ]);
   console.log("Delivery date:", dateForHoTT);
 }

@@ -1,5 +1,8 @@
-import { Choreography, Located } from "@choreography-ts/core";
-import { ExpressBackend } from "@choreography-ts/backend-express";
+import { Choreography, Located, Projector } from "@choreography-ts/core";
+import {
+  HttpConfig,
+  ExpressTransport,
+} from "@choreography-ts/transport-express";
 
 const serverLocations = ["primary", "backup"] as const;
 type ServerLocations = (typeof serverLocations)[number];
@@ -110,18 +113,27 @@ export function kvs<S extends Located<State, ServerLocations>[]>(
 }
 
 async function main() {
-  const backend = new ExpressBackend<Locations>({
+  const config: HttpConfig<Locations> = {
     client: ["localhost", 3000],
     primary: ["localhost", 3001],
     backup: ["localhost", 3002],
-  });
+  };
+  const [clientTransport, primaryTransport, backupTransport] =
+    await Promise.all([
+      ExpressTransport.create(config, "client"),
+      ExpressTransport.create(config, "primary"),
+      ExpressTransport.create(config, "backup"),
+    ]);
+  const clientProjector = new Projector(clientTransport, "client");
+  const primaryProjector = new Projector(primaryTransport, "primary");
+  const backupProjector = new Projector(backupTransport, "backup");
 
   const primaryState: State = new Map<string, string>();
   const backupState: State = new Map<string, string>();
 
-  const client = backend.epp(kvs(primaryBackupReplicationStrategy), "client");
-  const primary = backend.epp(kvs(primaryBackupReplicationStrategy), "primary");
-  const backup = backend.epp(kvs(primaryBackupReplicationStrategy), "backup");
+  const client = clientProjector.epp(kvs(primaryBackupReplicationStrategy));
+  const primary = primaryProjector.epp(kvs(primaryBackupReplicationStrategy));
+  const backup = backupProjector.epp(kvs(primaryBackupReplicationStrategy));
 
   await Promise.all([
     client([
@@ -138,6 +150,11 @@ async function main() {
     backup([undefined, undefined, backupState]),
   ]);
   console.log({ response });
+  await Promise.all([
+    clientProjector.transport.teardown(),
+    primaryProjector.transport.teardown(),
+    backupProjector.transport.teardown(),
+  ]);
 }
 
 if (require.main === module) {

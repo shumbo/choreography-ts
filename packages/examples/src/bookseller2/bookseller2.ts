@@ -116,7 +116,7 @@ async function main() {
       ExpressTransport.create(config, "seller"),
       ExpressTransport.create(config, "buyer1"),
       ExpressTransport.create(config, "buyer2"),
-    ]
+    ],
   );
   const sellerProjector = new Projector(sellerTransport, "seller");
   const buyer1Projector = new Projector(buyer1Transport, "buyer1");

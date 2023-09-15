@@ -6,7 +6,7 @@
  */
 export function wrapMethods<T extends Record<string, any>>(
   wrapper: (m: any) => any,
-  methods: T
+  methods: T,
 ) {
   const copy = { ...methods };
   for (const [name, fn] of Object.entries(methods)) {

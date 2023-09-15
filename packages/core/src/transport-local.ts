@@ -13,14 +13,14 @@ export class LocalTransport<L extends Location, L1 extends L> extends Transport<
   L1
 > {
   static createChannel<L extends Location>(
-    locations: readonly L[]
+    locations: readonly L[],
   ): LocalTransportChannel<L> {
     return { emitter: mitt(), locations };
   }
   constructor(
     private locs: readonly L[],
     private target: L1,
-    private channel: LocalTransportChannel<L>
+    private channel: LocalTransportChannel<L>,
   ) {
     super();
   }

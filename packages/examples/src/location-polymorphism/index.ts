@@ -55,8 +55,8 @@ async function main() {
 
   await Promise.all(
     [aliceProjector, bobProjector, carolProjector].map((p) =>
-      p.epp(choreography)([])
-    )
+      p.epp(choreography)([]),
+    ),
   );
   await Promise.all([
     aliceProjector.transport.teardown(),

@@ -16,11 +16,11 @@ export type HttpConfig<L extends Location> = Record<L, [string, number]>;
 
 export class ExpressTransport<
   L extends Location,
-  L1 extends L
+  L1 extends L,
 > extends Transport<L, L1> {
   public static async create<L extends Location, L1 extends L>(
     config: HttpConfig<L>,
-    target: L1
+    target: L1,
   ) {
     const queue: Queue<Parcel<L>> = new Queue();
 
@@ -46,7 +46,7 @@ export class ExpressTransport<
   private constructor(
     private config: HttpConfig<L>,
     private server: Server,
-    private queue: Queue<Parcel<L>>
+    private queue: Queue<Parcel<L>>,
   ) {
     super();
   }

@@ -3,6 +3,7 @@ import { Choreography } from "@choreography-ts/core";
 const locations = ["alice", "bob", "carol"] as const;
 type Locations = (typeof locations)[number];
 
+// eslint-disable-next-line
 const test: Choreography<Locations> = async ({ locally, colocally }) => {
   const msgAtCarol = await locally("carol", () => "I'm Carol");
   try {

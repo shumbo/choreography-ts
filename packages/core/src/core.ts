@@ -168,7 +168,7 @@ export type LocatedElements<L extends Location, L1 extends L, A> = A extends [
  */
 export type AllElements<A> = A extends [
   Located<infer T, infer _>,
-  ...infer TAIL
+  ...infer TAIL,
 ]
   ? [T, ...AllElements<TAIL>]
   : [];
@@ -229,7 +229,7 @@ class NotLogManager implements LogManager {
     return;
   }
   public async read<T>(
-    _lid: string
+    _lid: string,
   ): Promise<{ ok: true; value: T } | { ok: false }> {
     return { ok: false };
   }
@@ -250,7 +250,10 @@ export abstract class Transport<L extends Location, L1 extends L> {
 export class Projector<L extends Location, L1 extends L> {
   private inbox: DefaultDict<string, IVar>;
   private subscription: Subscription | null;
-  constructor(public transport: Transport<L, L1>, private target: L1) {
+  constructor(
+    public transport: Transport<L, L1>,
+    private target: L1,
+  ) {
     this.inbox = new DefaultDict<string, IVar<Parcel<L>>>(() => new IVar());
     this.subscription = this.transport.subscribe((parcel) => {
       const key = this.key(parcel.from, parcel.to, parcel.tag);
@@ -279,10 +282,10 @@ export class Projector<L extends Location, L1 extends L> {
     return parcel.data;
   }
   epp<Args extends Located<any, L>[], Return extends Located<any, L>[]>(
-    choreography: Choreography<L, Args, Return>
+    choreography: Choreography<L, Args, Return>,
   ): (
     args: LocatedElements<L, L1, Args>,
-    options?: { logManager?: LogManager }
+    options?: { logManager?: LogManager },
   ) => Promise<LocatedElements<L, L1, Return>> {
     return async (args, options) => {
       const logManager = options?.logManager ?? new NotLogManager();
@@ -293,7 +296,7 @@ export class Projector<L extends Location, L1 extends L> {
       const locally: (t: Tag) => Locally<L> = (tag) => {
         return async <L2 extends L, T>(
           loc: L2,
-          callback: (unwrap: Unwrap<L2>) => T | Promise<T>
+          callback: (unwrap: Unwrap<L2>) => T | Promise<T>,
         ) => {
           tag.comm();
 
@@ -323,7 +326,7 @@ export class Projector<L extends Location, L1 extends L> {
         async <L1 extends L, L2 extends L, T>(
           sender: L1,
           receiver: L2,
-          value: Located<T, L1>
+          value: Located<T, L1>,
         ) => {
           t.comm();
 
@@ -364,11 +367,11 @@ export class Projector<L extends Location, L1 extends L> {
         async <
           LL extends L,
           Args extends Located<any, LL>[],
-          Return extends Located<any, LL>[]
+          Return extends Located<any, LL>[],
         >(
           locations: LL[],
           choreography: Choreography<LL, Args, Return>,
-          args: Args
+          args: Args,
         ) => {
           const childTag = t.call();
           return ctxManager.withContext(new Set(locations), async () => {
@@ -384,7 +387,7 @@ export class Projector<L extends Location, L1 extends L> {
                   call: call(childTag),
                   peel: (v) => v.getValue(key),
                 }),
-                args
+                args,
               );
               return ret;
             }
@@ -405,7 +408,7 @@ export class Projector<L extends Location, L1 extends L> {
         async <L1 extends L, const LL extends L, T>(
           sender: L1,
           receivers: LL[],
-          value: Located<T, L1>
+          value: Located<T, L1>,
         ) => {
           t.comm();
 
@@ -426,7 +429,7 @@ export class Projector<L extends Location, L1 extends L> {
                     }
                     await this.sendTag(sender, receiver, t, v);
                     await logManager.write(lid, v);
-                  })()
+                  })(),
                 );
               }
             }
@@ -468,7 +471,7 @@ export class Projector<L extends Location, L1 extends L> {
                     }
                     await this.sendTag(sender, receiver, t, v);
                     await logManager.write(lid, v);
-                  })()
+                  })(),
                 );
               }
             }
@@ -494,10 +497,10 @@ export class Projector<L extends Location, L1 extends L> {
         async <
           LL extends L,
           Args extends Located<any, LL>[],
-          Return extends Located<any, LL>[]
+          Return extends Located<any, LL>[],
         >(
           c: Choreography<LL, Args, Return>,
-          a: Args
+          a: Args,
         ) => {
           const childTag = t.call();
           return await c(
@@ -510,7 +513,7 @@ export class Projector<L extends Location, L1 extends L> {
               colocally: colocally(childTag),
               peel: peel,
             }),
-            a
+            a,
           );
         };
 
@@ -524,10 +527,10 @@ export class Projector<L extends Location, L1 extends L> {
           colocally: colocally(tag),
           peel: peel,
         }),
-        args.map((x) => new Located(x, key)) as any
+        args.map((x) => new Located(x, key)) as any,
       );
       return ret.map((x) =>
-        x instanceof Located ? x.getValue(key) : undefined
+        x instanceof Located ? x.getValue(key) : undefined,
       ) as any;
     };
   }
@@ -549,7 +552,7 @@ export class ContextManager<L extends Location> {
    */
   public async withContext<T>(
     context: Set<L>,
-    callback: () => Promise<T>
+    callback: () => Promise<T>,
   ): Promise<T> {
     const oldContext = this.context;
     this.context = context;
@@ -575,15 +578,15 @@ export class Runner {
   public compile<
     L extends Location,
     Args extends Located<any, L>[],
-    Return extends Located<any, L>[]
+    Return extends Located<any, L>[],
   >(
-    choreography: Choreography<L, Args, Return>
+    choreography: Choreography<L, Args, Return>,
   ): (args: AllElements<Args>) => Promise<AllElements<Return>> {
     return async (args) => {
       const key = Symbol();
       const locally: Locally<L> = async <L1 extends L, T>(
         _: L1,
-        callback: (unwrap: Unwrap<L1>) => T | Promise<T>
+        callback: (unwrap: Unwrap<L1>) => T | Promise<T>,
       ) => {
         const retVal = await callback((located) => located.getValue(key));
         let v: T;
@@ -597,18 +600,18 @@ export class Runner {
       const comm: Comm<L> = async <L1 extends L, L2 extends L, T>(
         _sender: L1,
         _receiver: L2,
-        value: Located<T, L1>
+        value: Located<T, L1>,
       ) => {
         return new Located(value.getValue(key), key);
       };
       const colocally: Colocally<L> = async <
         LL extends L,
         Args extends Located<any, LL>[],
-        Return extends Located<any, LL>[]
+        Return extends Located<any, LL>[],
       >(
         _locations: LL[],
         choreography: Choreography<LL, Args, Return>,
-        args: Args
+        args: Args,
       ) => {
         const ret = await choreography(
           wrapMethods((m) => m, {
@@ -620,34 +623,34 @@ export class Runner {
             call: call,
             peel: peel,
           }),
-          args
+          args,
         );
         return ret;
       };
       const multicast: Multicast<L> = async <
         L1 extends L,
         const LL extends L,
-        T
+        T,
       >(
         _sender: L1,
         _receivers: LL[],
-        value: Located<T, L1>
+        value: Located<T, L1>,
       ) => {
         return new Colocated(value.getValue(key), key);
       };
       const broadcast: Broadcast<L> = async <L1 extends L, T>(
         _sender: L1,
-        value: Located<T, L1>
+        value: Located<T, L1>,
       ) => {
         return value.getValue(key);
       };
       const call: Call<L> = async <
         LL extends L,
         Args extends Located<any, LL>[],
-        Return extends Located<any, LL>[]
+        Return extends Located<any, LL>[],
       >(
         c: Choreography<LL, Args, Return>,
-        a: Args
+        a: Args,
       ) => {
         const ret = await c(
           wrapMethods((m) => m, {
@@ -659,7 +662,7 @@ export class Runner {
             colocally: colocally,
             peel: peel,
           }),
-          a
+          a,
         );
         return ret;
       };
@@ -676,10 +679,10 @@ export class Runner {
           colocally: colocally,
           peel: peel,
         },
-        args.map((x) => new Located(x, key)) as any
+        args.map((x) => new Located(x, key)) as any,
       );
       return ret.map((x) =>
-        x instanceof Located ? x.getValue(key) : undefined
+        x instanceof Located ? x.getValue(key) : undefined,
       ) as any;
     };
   }

@@ -1,4 +1,5 @@
 /* eslint-env node */
+
 module.exports = {
   env: {
     node: true,
@@ -19,7 +20,7 @@ module.exports = {
   ],
   parserOptions: {
     project: ["./tsconfig.json"], // Required for using rules that need type information!
-    tsConfigRootDir: __dirname,
+    tsconfigRootDir: __dirname,
   },
   parser: "@typescript-eslint/parser",
   plugins: ["@typescript-eslint", "@choreography-ts/choreography-ts"],

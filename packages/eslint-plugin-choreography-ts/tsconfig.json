@@ -9,10 +9,6 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext" // https://github.com/typescript-eslint/typescript-eslint/issues/7284
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "tests/**/*.test.ts"
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["tests/**/*.test.ts"]
 }

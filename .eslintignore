@@ -1,2 +1,5 @@
 coverage
 .eslintrc.*
+**/dist
+.eslintrc.cjs
+jest.config.ts

@@ -12,6 +12,7 @@ export type {
   LocatedElements,
   Subscription,
   Parcel,
+  parcelFromJSON,
 } from "./core.js";
 export { Located, Colocated, Transport, Projector, Runner } from "./core.js";
 export { Queue } from "./lib/queue.js";

@@ -2,11 +2,20 @@
   "name": "@choreography-ts/core",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    }
+  },
   "scripts": {
     "clean": "rimraf dist",
-    "build": "tsc --project tsconfig.build.json",
+    "build": "tsup src/index.ts --tsconfig tsconfig.build.json --format cjs,esm --dts --clean",
+    "prepublishOnly": "npm run build",
     "test": "jest",
     "coverage": "jest --silent --coverage",
     "typecheck": "tsc --noEmit"

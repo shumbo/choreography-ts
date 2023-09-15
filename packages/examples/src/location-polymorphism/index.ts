@@ -1,5 +1,8 @@
-import { Choreography, Located } from "@choreography-ts/core";
-import { ExpressBackend } from "@choreography-ts/backend-express";
+import { Choreography, Located, Projector } from "@choreography-ts/core";
+import {
+  HttpConfig,
+  ExpressTransport,
+} from "@choreography-ts/transport-express";
 
 function moveAndPrint<L extends string, L1 extends L, L2 extends L>(
   from: L1,
@@ -34,12 +37,32 @@ const choreography: Choreography<Location, [], []> = async ({
 };
 
 async function main() {
-  const backend = new ExpressBackend<Location>({
+  const config: HttpConfig<Location> = {
     alice: ["localhost", 3000],
     bob: ["localhost", 3001],
     carol: ["localhost", 3002],
-  });
-  await Promise.all(locations.map((l) => backend.epp(choreography, l)([])));
+  };
+
+  const [aliceTransport, bobTransport, carolTransport] = await Promise.all([
+    ExpressTransport.create(config, "alice"),
+    ExpressTransport.create(config, "bob"),
+    ExpressTransport.create(config, "carol"),
+  ]);
+
+  const aliceProjector = new Projector(aliceTransport, "alice");
+  const bobProjector = new Projector(bobTransport, "bob");
+  const carolProjector = new Projector(carolTransport, "carol");
+
+  await Promise.all(
+    [aliceProjector, bobProjector, carolProjector].map((p) =>
+      p.epp(choreography)([])
+    )
+  );
+  await Promise.all([
+    aliceProjector.transport.teardown(),
+    bobProjector.transport.teardown(),
+    carolProjector.transport.teardown(),
+  ]);
 }
 
 main();

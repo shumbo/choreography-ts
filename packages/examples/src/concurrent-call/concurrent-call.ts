@@ -1,5 +1,8 @@
-import { ExpressBackend } from "@choreography-ts/backend-express";
-import { Choreography, Located } from "@choreography-ts/core";
+import {
+  HttpConfig,
+  ExpressTransport,
+} from "@choreography-ts/transport-express";
+import { Choreography, Located, Projector } from "@choreography-ts/core";
 
 export type L = "alice" | "bob";
 
@@ -42,13 +45,21 @@ export const concurrentCall: Choreography<
   return [oneAtBob, twoAtBob];
 };
 
+const config: HttpConfig<L> = {
+  alice: ["localhost", 3000],
+  bob: ["localhost", 3001],
+};
+
 async function main() {
-  const backend = new ExpressBackend<L>({
-    alice: ["localhost", 3000],
-    bob: ["localhost", 3001],
-  });
-  const alice = backend.epp(concurrentCall, "alice");
-  const bob = backend.epp(concurrentCall, "bob");
+  const [aliceTransport, bobTransport] = await Promise.all([
+    ExpressTransport.create(config, "alice"),
+    ExpressTransport.create(config, "bob"),
+  ]);
+  const aliceProjector = new Projector(aliceTransport, "alice");
+  const bobProjector = new Projector(bobTransport, "bob");
+
+  const alice = aliceProjector.epp(concurrentCall);
+  const bob = bobProjector.epp(concurrentCall);
   const [_, ret] = await Promise.all([
     alice([100, 0]),
     bob([undefined, undefined]),

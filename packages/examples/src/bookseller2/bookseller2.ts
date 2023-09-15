@@ -1,5 +1,8 @@
-import { Choreography, Located } from "@choreography-ts/core";
-import { ExpressBackend } from "@choreography-ts/backend-express";
+import { Choreography, Located, Projector } from "@choreography-ts/core";
+import {
+  ExpressTransport,
+  HttpConfig,
+} from "@choreography-ts/transport-express";
 
 const locations = ["buyer1", "buyer2", "seller"] as const;
 export type Locations = (typeof locations)[number];
@@ -103,19 +106,39 @@ export const bookseller: (
 };
 
 async function main() {
-  const backend = new ExpressBackend<Locations>({
-    buyer1: ["localhost", 3000],
-    buyer2: ["localhost", 3001],
-    seller: ["localhost", 3002],
-  });
+  const config: HttpConfig<Locations> = {
+    seller: ["127.0.0.1", 3000],
+    buyer1: ["127.0.0.1", 3001],
+    buyer2: ["127.0.0.1", 3002],
+  };
+  const [sellerTransport, buyer1Transport, buyer2Transport] = await Promise.all(
+    [
+      ExpressTransport.create(config, "seller"),
+      ExpressTransport.create(config, "buyer1"),
+      ExpressTransport.create(config, "buyer2"),
+    ]
+  );
+  const sellerProjector = new Projector(sellerTransport, "seller");
+  const buyer1Projector = new Projector(buyer1Transport, "buyer1");
+  const buyer2Projector = new Projector(buyer2Transport, "buyer2");
+
   console.log("--- PROTOCOL WITH ONE BUYER ---");
-  await Promise.all(
-    locations.map((l) => backend.epp(bookseller(oneBuyer), l)(["HoTT"])),
-  );
+  await Promise.all([
+    buyer1Projector.epp(bookseller(oneBuyer))(["HoTT"]),
+    buyer2Projector.epp(bookseller(oneBuyer))([undefined]),
+    sellerProjector.epp(bookseller(oneBuyer))([undefined]),
+  ]);
   console.log("--- PROTOCOL WITH TWO BUYERS ---");
-  await Promise.all(
-    locations.map((l) => backend.epp(bookseller(twoBuyers), l)(["HoTT"])),
-  );
+  await Promise.all([
+    buyer1Projector.epp(bookseller(twoBuyers))(["TAPL"]),
+    buyer2Projector.epp(bookseller(twoBuyers))([undefined]),
+    sellerProjector.epp(bookseller(twoBuyers))([undefined]),
+  ]);
+  await Promise.all([
+    buyer1Transport.teardown(),
+    buyer2Transport.teardown(),
+    sellerTransport.teardown(),
+  ]);
 }
 
 if (require.main === module) {

@@ -1,5 +1,5 @@
 {
-  "name": "@choreography-ts/backend-express",
+  "name": "@choreography-ts/transport-express",
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
@@ -16,15 +16,18 @@
   "license": "ISC",
   "devDependencies": {
     "@choreography-ts/core": "workspace:*",
+    "@types/body-parser": "^1.19.2",
     "@types/express": "^4.17.17",
     "@types/jest": "^29.5.1",
     "@types/node-fetch": "2.x",
     "jest": "^29.5.0",
     "rimraf": "^5.0.1",
+    "ts-jest": "^29.1.0",
     "typescript": "^5.0.4"
   },
   "dependencies": {
     "@adobe/node-fetch-retry": "^2.2.0",
+    "body-parser": "^1.20.2",
     "express": "^4.18.2"
   },
   "peerDependencies": {

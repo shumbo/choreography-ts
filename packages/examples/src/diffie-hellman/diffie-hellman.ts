@@ -1,5 +1,8 @@
-import { Choreography, Located } from "@choreography-ts/core";
-import { ExpressBackend } from "@choreography-ts/backend-express";
+import { Choreography, Located, Projector } from "@choreography-ts/core";
+import {
+  HttpConfig,
+  ExpressTransport,
+} from "@choreography-ts/transport-express";
 
 // Typescript implementation of the Diffie-Hellman key exchange algorithm
 // Ported from the HasChor implementation here: https://github.com/gshen42/HasChor/blob/42ae1ef9a500dadd82f0cfe5dee3c2aa631d8f4d/examples/diffiehellman/Main.hs
@@ -131,15 +134,20 @@ export const diffieHellman = <A extends Location, B extends Location>(
 // Testing //
 /////////////
 async function main(host: string): Promise<void> {
-  const backend = new ExpressBackend<Location>({
+  const config: HttpConfig<Location> = {
     alice: ["localhost", 3000],
     bob: ["localhost", 3001],
-  });
+  };
+
   const keyExchange = diffieHellman("alice", "bob");
   if (host === "alice") {
-    await Promise.resolve(backend.epp(keyExchange, "alice")([true]));
+    const aliceTransport = await ExpressTransport.create(config, "alice");
+    const aliceProjector = new Projector(aliceTransport, "alice");
+    await aliceProjector.epp(keyExchange)([true]);
   } else {
-    await Promise.resolve(backend.epp(keyExchange, "bob")([undefined]));
+    const bobTransport = await ExpressTransport.create(config, "bob");
+    const bobProjector = new Projector(bobTransport, "bob");
+    await bobProjector.epp(keyExchange)([undefined]);
   }
 }
 

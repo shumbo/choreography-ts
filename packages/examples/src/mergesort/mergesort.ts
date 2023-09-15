@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { Choreography, Located } from "@choreography-ts/core";
-import { ExpressBackend } from "@choreography-ts/backend-express";
+import { Choreography, Located, Projector } from "@choreography-ts/core";
+import {
+  HttpConfig,
+  ExpressTransport,
+} from "@choreography-ts/transport-express";
 
 const locations = ["primary", "worker1", "worker2"];
 export type Location = (typeof locations)[number];
@@ -108,16 +111,28 @@ const merge = <A extends Location, B extends Location, C extends Location>(
 };
 
 async function main() {
-  const backend = new ExpressBackend<Location>({
+  const config: HttpConfig<Location> = {
     primary: ["localhost", 3000],
     worker1: ["localhost", 3001],
     worker2: ["localhost", 3002],
-  });
+  };
+
+  const [primaryTransport, worker1Transport, worker2Transport] =
+    await Promise.all([
+      ExpressTransport.create(config, "primary"),
+      ExpressTransport.create(config, "worker1"),
+      ExpressTransport.create(config, "worker2"),
+    ]);
+
+  const primaryProjector = new Projector(primaryTransport, "primary");
+  const worker1Projector = new Projector(worker1Transport, "worker1");
+  const worker2Projector = new Projector(worker2Transport, "worker2");
+
   const mergesort = sort("primary", "worker1", "worker2");
   const [[sorted]] = await Promise.all([
-    backend.epp(mergesort, "primary")([[1, 4, 6, 2, 3, 5, 7, 8, 9, 10]]),
-    backend.epp(mergesort, "worker1")([undefined]),
-    backend.epp(mergesort, "worker2")([undefined]),
+    primaryProjector.epp(mergesort)([[1, 4, 6, 2, 3, 5, 7, 8, 9, 10]]),
+    worker1Projector.epp(mergesort)([undefined]),
+    worker2Projector.epp(mergesort)([undefined]),
   ]);
   console.log(sorted);
 }

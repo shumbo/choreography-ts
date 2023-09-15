@@ -17,10 +17,6 @@ module.exports = {
     "plugin:@typescript-eslint/recommended",
     "prettier",
   ],
-  parserOptions: {
-    project: ["./tsconfig.base.json", "./**/tsconfig.json"], // Required for using rules that need type information!
-    tsConfigRootDir: __dirname,
-  },
   parser: "@typescript-eslint/parser",
   plugins: ["@typescript-eslint"],
   rules: {

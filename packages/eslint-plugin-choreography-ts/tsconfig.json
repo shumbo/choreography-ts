@@ -6,8 +6,13 @@
     // Kept on getting error that module `@typescript-eslint/rule-tester` was not found
     // The following fixed this when building
     // But VSCode still can't find the module for some reason...
+    "module": "NodeNext",
     "moduleResolution": "NodeNext" // https://github.com/typescript-eslint/typescript-eslint/issues/7284
   },
-  "include": ["src/**/*"],
-  "exclude": ["tests/**/*.test.ts"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "tests/**/*.test.ts"
+  ]
 }

@@ -111,23 +111,20 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
       };`,
     },
     {
-      name: `passing test case 6: all locations are used as type arguments and with other operators inside 'colocally'`,
+      name: `passing test case 6: all locations are used as type arguments and with 'locally' inside 'colocally'`,
       code: `type Locations = "alice" | "bob" | "carol";
       const test: Choreography<Locations, [], []> = async ({ colocally }) => {
         await colocally(
           ["alice", "bob", "carol"],
-          async ({ comm, call }) => {
+          async ({ call }) => {
             const subChoreo: Choreography<
-              "alice" | "bob",
+              "alice" | "bob" | "carol",
               [],
-              [Located<string, "bob">]
-            > = async ({ locally }) => {
-              const msgAtBob = await locally("bob", () => "Hi from bob");
-              return [msgAtBob];
+              []
+            > = async ({ locally, call }) => {
+              await locally("carol", () => "Hi from carol");
+              return [];
             };
-            const [msgAtBob] = await call(subChoreo, []);
-            await comm("bob", "carol", msgAtBob);
-            await comm("carol", "alice", msgAtBob);
             return [];
           },
           []

@@ -41,7 +41,7 @@ const peerJSTransportFactory: TransportTestSuite.TransportFactory =
         carol: await connect(ap, cp.id),
         dave: await connect(ap, dp.id),
       },
-      ap
+      ap,
     );
     const bt = new PeerJSTransport<TransportTestSuite.Locations, "bob">(
       {
@@ -50,7 +50,7 @@ const peerJSTransportFactory: TransportTestSuite.TransportFactory =
         carol: await connect(bp, cp.id),
         dave: await connect(bp, dp.id),
       },
-      bp
+      bp,
     );
     const ct = new PeerJSTransport<TransportTestSuite.Locations, "carol">(
       {
@@ -59,7 +59,7 @@ const peerJSTransportFactory: TransportTestSuite.TransportFactory =
         carol: await connect(cp, cp.id),
         dave: await connect(cp, dp.id),
       },
-      cp
+      cp,
     );
     const dt = new PeerJSTransport<TransportTestSuite.Locations, "dave">(
       {
@@ -68,7 +68,7 @@ const peerJSTransportFactory: TransportTestSuite.TransportFactory =
         carol: await connect(dp, cp.id),
         dave: await connect(dp, dp.id),
       },
-      dp
+      dp,
     );
     return {
       transports: [at, bt, ct, dt],

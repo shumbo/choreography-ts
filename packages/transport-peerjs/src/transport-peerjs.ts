@@ -10,9 +10,12 @@ export type PeerJsConfig<L extends Location> = Record<L, DataConnection>;
 
 export class PeerJSTransport<
   L extends Location,
-  L1 extends L
+  L1 extends L,
 > extends Transport<L, L1> {
-  constructor(private config: PeerJsConfig<L>, private peer: Peer) {
+  constructor(
+    private config: PeerJsConfig<L>,
+    private peer: Peer,
+  ) {
     super();
   }
   get locations(): readonly L[] {

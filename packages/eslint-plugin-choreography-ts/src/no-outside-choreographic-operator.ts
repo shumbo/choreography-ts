@@ -82,7 +82,7 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
                   // Insert the missing operator after the last present operator
                   return fixer.insertTextAfterRange(
                     propertyRange,
-                    `, ${operator}`
+                    `, ${operator}`,
                   );
                 };
                 // report error and fixes

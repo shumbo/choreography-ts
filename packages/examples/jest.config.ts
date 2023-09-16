@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import { JestConfigWithTsJest } from "ts-jest";
 import { JestConfigBase } from "../../jest.config.base";
 

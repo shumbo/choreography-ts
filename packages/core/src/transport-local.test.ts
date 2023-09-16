@@ -7,22 +7,22 @@ const localTransportFactory: TransportTestSuite.TransportFactory = async () => {
     new LocalTransport<TransportTestSuite.Locations, "alice">(
       TransportTestSuite.locations,
       "alice",
-      channel
+      channel,
     ),
     new LocalTransport<TransportTestSuite.Locations, "bob">(
       TransportTestSuite.locations,
       "bob",
-      channel
+      channel,
     ),
     new LocalTransport<TransportTestSuite.Locations, "carol">(
       TransportTestSuite.locations,
       "carol",
-      channel
+      channel,
     ),
     new LocalTransport<TransportTestSuite.Locations, "dave">(
       TransportTestSuite.locations,
       "dave",
-      channel
+      channel,
     ),
   ] as const;
   return {

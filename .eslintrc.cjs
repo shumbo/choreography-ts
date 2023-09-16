@@ -9,6 +9,9 @@ module.exports = {
     commonjs: true,
   },
   ignorePatterns: ["packages/*/dist"],
+  // Linting with type information: https://typescript-eslint.io/linting/typed-linting/
+  // https://typescript-eslint.io/packages/parser#project: parserOptions.project - "This setting is required if you want to use rules which require type information"
+  // Configuring monorepos properly: https://typescript-eslint.io/linting/typed-linting/monorepos
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",

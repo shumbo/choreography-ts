@@ -38,7 +38,7 @@ describe("core", () => {
       const p = "Alice's Secret Message";
       const c: Choreography<Locations, [Located<string, "alice">]> = async (
         { locally },
-        [msg]
+        [msg],
       ) => {
         await locally("alice", (unwrap) => {
           expect(unwrap(msg)).toBe(p);
@@ -71,7 +71,7 @@ describe("core", () => {
         const msgAtSelectedTwo = await multicast(
           "alice",
           ["bob", "carol"],
-          msg
+          msg,
         );
         await locally("bob", (unwrap) => {
           expect(unwrap(msgAtSelectedTwo)).toBe("Hello, world!");
@@ -112,7 +112,7 @@ describe("core", () => {
             count += 1;
             return [];
           },
-          []
+          [],
         );
         return [];
       };

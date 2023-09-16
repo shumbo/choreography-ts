@@ -49,7 +49,7 @@ export const nullReplicationStrategy: ReplicationStrategy<
   [Located<State, "primary">]
 > = async ({ locally }, [requestAtPrimary, primaryState]) => {
   const responseAtPrimary = await locally("primary", (unwrap) =>
-    handleRequest(unwrap(requestAtPrimary), unwrap(primaryState))
+    handleRequest(unwrap(requestAtPrimary), unwrap(primaryState)),
   );
   return [responseAtPrimary];
 };
@@ -58,12 +58,12 @@ export const primaryBackupReplicationStrategy: ReplicationStrategy<
   [Located<State, "primary">, Located<State, "backup">]
 > = async (
   { multicast, locally, colocally },
-  [requestAtPrimary, primaryState, backupState]
+  [requestAtPrimary, primaryState, backupState],
 ) => {
   // primary checks if the request is mutating
   const isPutAtPrimary = await locally(
     "primary",
-    (unwrap) => unwrap(requestAtPrimary).type === "PUT"
+    (unwrap) => unwrap(requestAtPrimary).type === "PUT",
   );
   // multicast the boolean to branch
   const isPut = await multicast("primary", ["backup"], isPutAtPrimary);
@@ -75,7 +75,7 @@ export const primaryBackupReplicationStrategy: ReplicationStrategy<
         const requestAtBackup = await comm(
           "primary",
           "backup",
-          requestAtPrimary
+          requestAtPrimary,
         );
         await locally("backup", (unwrap) => {
           console.log("backup request", unwrap(requestAtBackup));
@@ -84,16 +84,16 @@ export const primaryBackupReplicationStrategy: ReplicationStrategy<
       }
       return [];
     },
-    []
+    [],
   );
   const responseAtPrimary = await locally("primary", (unwrap) =>
-    handleRequest(unwrap(requestAtPrimary), unwrap(primaryState))
+    handleRequest(unwrap(requestAtPrimary), unwrap(primaryState)),
   );
   return [responseAtPrimary];
 };
 
 export function kvs<S extends Located<State, ServerLocations>[]>(
-  replicationStrategy: ReplicationStrategy<S>
+  replicationStrategy: ReplicationStrategy<S>,
 ) {
   const kvs_: Choreography<
     Locations,
@@ -104,7 +104,7 @@ export function kvs<S extends Located<State, ServerLocations>[]>(
     const [responseAtPrimary] = await colocally(
       ["primary", "backup"],
       replicationStrategy,
-      [requestAtPrimary, ...states]
+      [requestAtPrimary, ...states],
     );
     const responseAtClient = await comm("primary", "client", responseAtPrimary);
     return [responseAtClient];

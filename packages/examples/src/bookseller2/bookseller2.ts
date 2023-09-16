@@ -27,7 +27,7 @@ const deliveryDateTable = new Map<string, Date>([
 export const oneBuyer: MakeDecision = async ({ locally }, [price]) => {
   const decision = await locally(
     "buyer1",
-    (unwrap) => unwrap(price) <= buyer1Budget
+    (unwrap) => unwrap(price) <= buyer1Budget,
   );
   return [decision];
 };
@@ -35,19 +35,19 @@ export const oneBuyer: MakeDecision = async ({ locally }, [price]) => {
 export const twoBuyers: MakeDecision = async ({ locally, comm }, [price]) => {
   const remaining_ = await locally(
     "buyer1",
-    (unwrap) => unwrap(price) - buyer1Budget
+    (unwrap) => unwrap(price) - buyer1Budget,
   );
   const remaining = await comm("buyer1", "buyer2", remaining_);
   const decision_ = await locally(
     "buyer2",
-    (unwrap) => unwrap(remaining) <= buyer2Budget
+    (unwrap) => unwrap(remaining) <= buyer2Budget,
   );
   const decision = await comm("buyer2", "buyer1", decision_);
   return [decision];
 };
 
 export const bookseller: (
-  makeDecision: MakeDecision
+  makeDecision: MakeDecision,
 ) => Choreography<
   Locations,
   [Located<string, "buyer1">],
@@ -73,16 +73,16 @@ export const bookseller: (
           const deliveryDateAtSeller = await locally(
             "seller",
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))!
+            (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))!,
           );
           const deliveryDateAtBuyer = await comm(
             "seller",
             "buyer1",
-            deliveryDateAtSeller
+            deliveryDateAtSeller,
           );
           locally("buyer1", (unwrap) => {
             console.log(
-              `Your book will be delivered on ${unwrap(deliveryDateAtBuyer)}`
+              `Your book will be delivered on ${unwrap(deliveryDateAtBuyer)}`,
             );
           });
           return [deliveryDateAtBuyer];
@@ -93,11 +93,11 @@ export const bookseller: (
           return [await locally("buyer1", () => null)];
         }
       },
-      []
+      [],
     );
     await locally("buyer2", () => {
       console.log(
-        "I have no idea what happened to the book purchase, but that's ok"
+        "I have no idea what happened to the book purchase, but that's ok",
       );
     });
     return [deliveryDateAtBuyer];
@@ -116,7 +116,7 @@ async function main() {
       ExpressTransport.create(config, "seller"),
       ExpressTransport.create(config, "buyer1"),
       ExpressTransport.create(config, "buyer2"),
-    ]
+    ],
   );
   const sellerProjector = new Projector(sellerTransport, "seller");
   const buyer1Projector = new Projector(buyer1Transport, "buyer1");

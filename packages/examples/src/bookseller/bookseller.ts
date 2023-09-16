@@ -28,14 +28,14 @@ export const bookseller: Choreography<
   // seller looks up the price
   const priceAtSeller = await locally(
     "seller",
-    (unwrap) => priceTable.get(unwrap(titleAtSeller)) ?? Number("Infinity") // can't buy a book that doesn't exist
+    (unwrap) => priceTable.get(unwrap(titleAtSeller)) ?? Number("Infinity"), // can't buy a book that doesn't exist
   );
   // send the price back to the buyer
   const priceAtBuyer = await comm("seller", "buyer", priceAtSeller);
   // buyer decides whether to buy the book
   const decisionAtBuyer = await locally(
     "buyer",
-    (unwrap) => unwrap(priceAtBuyer) <= buyerBudget
+    (unwrap) => unwrap(priceAtBuyer) <= buyerBudget,
   );
   // broadcast the decision
   const decision = await broadcast("buyer", decisionAtBuyer);
@@ -44,17 +44,17 @@ export const bookseller: Choreography<
     const deliveryDateAtSeller = await locally(
       "seller",
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))!
+      (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))!,
     );
     // send the delivery date back to the buyer
     const deliveryDateAtBuyer = await comm(
       "seller",
       "buyer",
-      deliveryDateAtSeller
+      deliveryDateAtSeller,
     );
     await locally("buyer", (unwrap) => {
       console.log(
-        `Your book will be delivered on ${unwrap(deliveryDateAtBuyer)}`
+        `Your book will be delivered on ${unwrap(deliveryDateAtBuyer)}`,
       );
     });
     return [deliveryDateAtBuyer];

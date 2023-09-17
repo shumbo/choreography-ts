@@ -3,10 +3,19 @@
   "type": "commonjs",
   "version": "1.0.0",
   "description": "Custom ESLint plugin for choreographic programming",
-  "main": "dist/index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "typings": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
     "clean": "rimraf dist",
-    "build": "tsc --project tsconfig.json",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
     "test": "jest",
     "coverage": "jest --coverage",
     "typecheck": "tsc --noemit"
@@ -25,6 +34,7 @@
     "@typescript-eslint/types": "^6.1.0",
     "jest": "^29.5.0",
     "ts-jest": "^29.1.0",
+    "tsup": "^7.2.0",
     "typescript": "^5.0.4"
   },
   "dependencies": {

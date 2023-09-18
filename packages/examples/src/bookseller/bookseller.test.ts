@@ -1,13 +1,17 @@
+import { describe, beforeAll, afterAll, expect, it } from "vitest";
+import getPort from "get-port";
+
 import {
   ExpressTransport,
   HttpConfig,
 } from "@choreography-ts/transport-express";
-import { bookseller } from "./bookseller";
 import { Projector } from "@choreography-ts/core";
 
+import { bookseller } from "./bookseller";
+
 const config: HttpConfig<"buyer" | "seller"> = {
-  buyer: ["127.0.0.1", 3000],
-  seller: ["127.0.0.1", 3001],
+  buyer: ["127.0.0.1", await getPort()],
+  seller: ["127.0.0.1", await getPort()],
 };
 
 let buyerProjector: Projector<"buyer" | "seller", "buyer">;

@@ -1,3 +1,5 @@
+import { describe, test, expect } from "vitest";
+
 import { Choreography, Located, Runner } from "./core";
 
 const runner = new Runner();

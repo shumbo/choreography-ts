@@ -1,3 +1,5 @@
+import { describe, beforeAll, expect, test, afterAll } from "vitest";
+
 import { TransportTestSuite } from "./lib/transport-test-suite";
 import { LocalTransport } from "./transport-local";
 
@@ -35,5 +37,10 @@ const localTransportFactory: TransportTestSuite.TransportFactory = async () => {
 };
 
 describe("LocalTransport", () => {
-  TransportTestSuite.transportTestSuite(localTransportFactory);
+  TransportTestSuite.transportTestSuite(localTransportFactory, {
+    beforeAll,
+    expect,
+    test,
+    afterAll,
+  });
 });

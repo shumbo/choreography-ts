@@ -1,3 +1,5 @@
+import { describe, test, expect } from "vitest";
+
 import { InMemoryLogManager } from "./in-memory-log-manager";
 
 describe("InMemoryLogManager", () => {

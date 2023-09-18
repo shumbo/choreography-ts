@@ -1,4 +1,7 @@
 {
   "cSpell.words": ["colocally", "Colocated", "TAPL"],
-  "eslint.options": { "overrideConfigFile": "./.eslintrc.cjs" }
+  "eslint.options": {
+    "overrideConfigFile": "./.eslintrc.cjs"
+  },
+  "C_Cpp.intelliSenseEngineFallback": "enabled"
 }

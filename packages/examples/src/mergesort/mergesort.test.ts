@@ -1,3 +1,6 @@
+import { describe, beforeAll, afterAll, expect, it } from "vitest";
+import getPort from "get-port";
+
 import {
   HttpConfig,
   ExpressTransport,
@@ -13,9 +16,9 @@ let worker2Projector: Projector<Location, "worker2">;
 describe("mergesort", () => {
   beforeAll(async () => {
     const config: HttpConfig<Location> = {
-      primary: ["localhost", 3000],
-      worker1: ["localhost", 3001],
-      worker2: ["localhost", 3002],
+      primary: ["localhost", await getPort()],
+      worker1: ["localhost", await getPort()],
+      worker2: ["localhost", await getPort()],
     };
     const [primaryTransport, worker1Transport, worker2Transport] =
       await Promise.all([

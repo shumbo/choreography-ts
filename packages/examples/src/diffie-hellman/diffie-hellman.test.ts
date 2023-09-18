@@ -12,7 +12,7 @@ import { diffieHellman } from "./diffie-hellman";
 let aliceProjector: Projector<L, "alice">;
 let bobProjector: Projector<L, "bob">;
 
-// Test the diffie hellman implementation using Jest
+// Test the diffie hellman implementation
 describe("Diffie Hellman", () => {
   beforeAll(async () => {
     const config: HttpConfig<L> = {

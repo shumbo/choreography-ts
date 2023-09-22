@@ -9,8 +9,8 @@ import {
   Subscription,
   Transport,
   Queue,
+  parcelFromJSON,
 } from "@choreography-ts/core";
-import { parcelFromJSON } from "@choreography-ts/core/dist/core";
 
 export type HttpConfig<L extends Location> = Record<L, [string, number]>;
 

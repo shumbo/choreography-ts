@@ -1,3 +1,6 @@
+import { describe, beforeAll, afterAll, expect, it } from "vitest";
+import getPort from "get-port";
+
 import {
   ExpressTransport,
   HttpConfig,
@@ -11,8 +14,8 @@ let bobProjector: Projector<L, "bob">;
 describe("concurrentCall", () => {
   beforeAll(async () => {
     const config: HttpConfig<L> = {
-      alice: ["localhost", 3000],
-      bob: ["localhost", 3001],
+      alice: ["localhost", await getPort()],
+      bob: ["localhost", await getPort()],
     };
     const [aliceTransport, bobTransport] = await Promise.all([
       ExpressTransport.create(config, "alice"),

@@ -1,14 +1,16 @@
-import { Tag } from "./tag.js";
+import { describe, test, expect } from "vitest";
+
+import { Tag } from "./tag";
 
 describe("Tag", () => {
-  it("comm increments counter", () => {
+  test("comm increments counter", () => {
     const t = new Tag();
     const s1 = t.toString();
     t.comm();
     const s2 = t.toString();
     expect(s1).not.toEqual(s2);
   });
-  it("call creates a fork", () => {
+  test("call creates a fork", () => {
     const t1 = new Tag();
     const t2 = t1.call();
     const s1 = t1.toString();
@@ -16,7 +18,7 @@ describe("Tag", () => {
     expect(s2.startsWith(s1)).toBe(true);
     expect(s1).not.toEqual(s2);
   });
-  it("serialization", () => {
+  test("serialization", () => {
     const t = new Tag();
     const s = t.toJSON();
     const t2 = new Tag(JSON.parse(s));

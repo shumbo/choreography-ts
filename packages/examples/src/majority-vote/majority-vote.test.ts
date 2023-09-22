@@ -1,3 +1,6 @@
+import { describe, beforeAll, afterAll, expect, it } from "vitest";
+import getPort from "get-port";
+
 import {
   ExpressTransport,
   HttpConfig,
@@ -6,10 +9,10 @@ import { L, majorityVote } from "./majority-vote";
 import { Projector } from "@choreography-ts/core";
 
 const config: HttpConfig<L> = {
-  judge: ["localhost", 3000],
-  voter1: ["localhost", 3001],
-  voter2: ["localhost", 3002],
-  voter3: ["localhost", 3003],
+  judge: ["localhost", await getPort()],
+  voter1: ["localhost", await getPort()],
+  voter2: ["localhost", await getPort()],
+  voter3: ["localhost", await getPort()],
 };
 
 let judgeProjector: Projector<L, "judge">;

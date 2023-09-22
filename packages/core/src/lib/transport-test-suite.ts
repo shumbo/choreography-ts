@@ -1,3 +1,5 @@
+import type { beforeAll, test, afterAll, expect } from "vitest";
+
 import { Choreography, Located, Projector, Transport } from "..";
 import { InMemoryLogManager } from "../in-memory-log-manager";
 
@@ -13,7 +15,25 @@ export namespace TransportTestSuite {
     ];
     teardown: () => Promise<void>;
   }>;
-  export function transportTestSuite(factory: TransportFactory) {
+  export type TestFramework = {
+    beforeAll: typeof beforeAll;
+    test: typeof test;
+    afterAll: typeof afterAll;
+    expect: typeof expect;
+  };
+  export function transportTestSuite(
+    factory: TransportFactory,
+    testFramework?: TestFramework,
+  ) {
+    const beforeAll =
+      testFramework?.beforeAll ?? (globalThis as any)["beforeAll"];
+    const test = testFramework?.test ?? (globalThis as any)["test"];
+    const afterAll = testFramework?.afterAll ?? (globalThis as any)["afterAll"];
+    const expect = testFramework?.expect ?? (globalThis as any)["expect"];
+    if (!beforeAll || !test || !afterAll || !expect) {
+      throw new Error("Test framework not found");
+    }
+
     /* eslint-disable @typescript-eslint/no-explicit-any */
     let pa: Projector<Locations, "alice">;
     let pb: Projector<Locations, "bob">;

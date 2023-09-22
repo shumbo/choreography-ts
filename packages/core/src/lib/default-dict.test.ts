@@ -1,3 +1,5 @@
+import { describe, test, expect } from "vitest";
+
 import { DefaultDict } from "./default-dict";
 
 describe("DefaultDict", () => {

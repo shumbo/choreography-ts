@@ -13,7 +13,14 @@ export type {
   Subscription,
   Parcel,
 } from "./core.js";
-export { Located, Colocated, Transport, Projector, Runner } from "./core.js";
+export {
+  Located,
+  Colocated,
+  Transport,
+  Projector,
+  Runner,
+  parcelFromJSON,
+} from "./core.js";
 export { Queue } from "./lib/queue.js";
 export { Tag } from "./lib/tag.js";
 export { DefaultDict } from "./lib/default-dict.js";

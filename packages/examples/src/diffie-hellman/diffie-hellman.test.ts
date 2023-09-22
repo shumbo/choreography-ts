@@ -1,3 +1,6 @@
+import { describe, beforeAll, afterAll, expect, it } from "vitest";
+import getPort from "get-port";
+
 import { Projector } from "@choreography-ts/core";
 import {
   ExpressTransport,
@@ -9,12 +12,12 @@ import { diffieHellman } from "./diffie-hellman";
 let aliceProjector: Projector<L, "alice">;
 let bobProjector: Projector<L, "bob">;
 
-// Test the diffie hellman implementation using Jest
+// Test the diffie hellman implementation
 describe("Diffie Hellman", () => {
   beforeAll(async () => {
     const config: HttpConfig<L> = {
-      alice: ["localhost", 3000],
-      bob: ["localhost", 3001],
+      alice: ["localhost", await getPort()],
+      bob: ["localhost", await getPort()],
     };
     const [aliceTransport, bobTransport] = await Promise.all([
       ExpressTransport.create(config, "alice"),

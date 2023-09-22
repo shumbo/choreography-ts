@@ -7,7 +7,7 @@ ruleTester.run("no-renaming-operator", noRenameRule, {
   valid: [
     {
       name: "valid test case 1",
-      code: `const test: Choreography<Locations> = async ({locally}) => {
+      code: /* ts */ `const test: Choreography<Locations> = async ({locally}) => {
                 await locally("alice", () => {
                   console.log("Hi from Alice");
                 });
@@ -18,7 +18,7 @@ ruleTester.run("no-renaming-operator", noRenameRule, {
   invalid: [
     {
       name: "test for invalid dependencies destructuring",
-      code: `const test2: Choreography<Locations> = async (operators) => {
+      code: /* ts */ `const test2: Choreography<Locations> = async (operators) => {
                 await operators.locally("alice", () => {
                   console.log("Hi from Alice");
                 });
@@ -32,7 +32,7 @@ ruleTester.run("no-renaming-operator", noRenameRule, {
     },
     {
       name: "test for invalid dependency operator renaming",
-      code: `const test: Choreography<Locations> = async ({locally: l}) => {
+      code: /* ts */ `const test: Choreography<Locations> = async ({locally: l}) => {
               await l("alice", () => {
                 console.log("Hi from Alice");
               });
@@ -46,7 +46,7 @@ ruleTester.run("no-renaming-operator", noRenameRule, {
     },
     {
       name: "test to make sure `...rest` element isn't in the dependencies parameter",
-      code: `const test: Choreography<Locations> = async ({locally, ...rest}) => {
+      code: /* ts */ `const test: Choreography<Locations> = async ({locally, ...rest}) => {
               await l("alice", () => {
                 console.log("Hi from Alice");
               });
@@ -60,7 +60,7 @@ ruleTester.run("no-renaming-operator", noRenameRule, {
     },
     {
       name: "test for error in choreography as a `colocally` argument",
-      code: `
+      code: /* ts */ `
       type Locations = "alice" | "bob" | "carol";
       const _test: Choreography<Locations> = async ({ colocally }) => {
         await colocally(
@@ -84,7 +84,7 @@ ruleTester.run("no-renaming-operator", noRenameRule, {
     },
     {
       name: "test for error in choreography as a `call` argument",
-      code: `
+      code: /* ts */ `
       type Locations = "alice" | "bob" | "carol";
       const _test: Choreography<Locations> = async ({ call }) => {
         await call(async ({ locally: l }) => {

@@ -14,12 +14,12 @@ module.exports = {
   // Configuring monorepos properly: https://typescript-eslint.io/linting/typed-linting/monorepos
   extends: [
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-type-checked",
     "plugin:@choreography-ts/choreography-ts/base",
     "prettier",
   ],
   parserOptions: {
-    project: ["./tsconfig.json"], // Required for using rules that need type information!
+    project: true, // Required for using rules that need type information!
     tsconfigRootDir: __dirname,
   },
   parser: "@typescript-eslint/parser",

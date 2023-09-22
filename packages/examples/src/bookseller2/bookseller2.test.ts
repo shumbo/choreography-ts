@@ -1,3 +1,6 @@
+import { describe, beforeAll, afterAll, expect, it } from "vitest";
+import getPort from "get-port";
+
 import {
   HttpConfig,
   ExpressTransport,
@@ -6,9 +9,9 @@ import { Locations, bookseller, oneBuyer, twoBuyers } from "./bookseller2";
 import { Projector } from "@choreography-ts/core";
 
 const config: HttpConfig<Locations> = {
-  seller: ["127.0.0.1", 3000],
-  buyer1: ["127.0.0.1", 3001],
-  buyer2: ["127.0.0.1", 3002],
+  seller: ["127.0.0.1", await getPort()],
+  buyer1: ["127.0.0.1", await getPort()],
+  buyer2: ["127.0.0.1", await getPort()],
 };
 
 let buyer1Projector: Projector<Locations, "buyer1">;

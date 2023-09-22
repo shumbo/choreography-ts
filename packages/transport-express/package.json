@@ -2,13 +2,21 @@
   "name": "@choreography-ts/transport-express",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "typings": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
     "clean": "rimraf dist",
-    "build": "tsc --project tsconfig.build.json",
-    "test": "jest --silent",
-    "coverage": "jest --silent --coverage",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "test": "vitest run --silent",
+    "coverage": "vitest run --silent --coverage",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],
@@ -18,11 +26,10 @@
     "@choreography-ts/core": "workspace:*",
     "@types/body-parser": "^1.19.2",
     "@types/express": "^4.17.17",
-    "@types/jest": "^29.5.1",
     "@types/node-fetch": "2.x",
-    "jest": "^29.5.0",
+    "get-port": "^7.0.0",
     "rimraf": "^5.0.1",
-    "ts-jest": "^29.1.0",
+    "tsup": "^7.2.0",
     "typescript": "^5.0.4"
   },
   "dependencies": {

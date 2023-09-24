@@ -5,7 +5,7 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
   valid: [
     {
       name: `passing test case 1: all locations for 'colocally' are used operationally with 'locally' in the body`,
-      code: `type Locations = "alice" | "bob";
+      code: /* ts */ `type Locations = "alice" | "bob";
       const test: Choreography<Locations, [], []> = async ({ colocally }) => {
         await colocally(
           ["alice", "bob"],
@@ -21,7 +21,7 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
     },
     {
       name: `passing test case 2: all locations for 'colocally' are used with 'locally' and 'multicast' in the body`,
-      code: `type Locations = "alice" | "bob" | "carol";
+      code: /* ts */ `type Locations = "alice" | "bob" | "carol";
       const test: Choreography<Locations, [], []> = async ({ colocally }) => {
         await colocally(
           ["alice", "bob", "carol"],
@@ -37,7 +37,7 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
     },
     {
       name: `passing test case 3: all locations for 'colocally' are used with 'locally' and 'comm' in the body`,
-      code: `type Locations = "alice" | "bob" | "carol";
+      code: /* ts */ `type Locations = "alice" | "bob" | "carol";
       const test: Choreography<Locations, [], []> = async ({ colocally }) => {
         await colocally(
           ["alice", "bob", "carol"],
@@ -54,7 +54,7 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
     },
     {
       name: `passing test case 4: all locations marked as used when 'broadcast' is used, and then using the same locations with other operators in 'colocally' causes no problems`,
-      code: `type Locations = "alice" | "bob" | "carol";
+      code: /* ts */ `type Locations = "alice" | "bob" | "carol";
       const test: Choreography<Locations, [], []> = async ({ colocally }) => {
         await colocally(
           ["alice", "bob", "carol"],
@@ -90,7 +90,7 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
     },
     {
       name: `passing test case 5: all locations marked as used when 'call' is used in 'colocally'`,
-      code: `type Locations = "alice" | "bob" | "carol";
+      code: /* ts */ `type Locations = "alice" | "bob" | "carol";
       const subChoreo: Choreography<Locations, [], []> = async ({ locally }) => {
         await locally("alice", () => "Hi from alice");
         await locally("bob", () => "Hi from bob");
@@ -112,7 +112,7 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
     },
     {
       name: `passing test case 6: all locations are used as type arguments and with 'locally' inside 'colocally'`,
-      code: `type Locations = "alice" | "bob" | "carol";
+      code: /* ts */ `type Locations = "alice" | "bob" | "carol";
       const test: Choreography<Locations, [], []> = async ({ colocally }) => {
         await colocally(
           ["alice", "bob", "carol"],
@@ -134,7 +134,7 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
     },
     {
       name: `passing test case 7: all locations for 'colocally' and nested 'colocally' calls are used as arguments inside the 'colocally' bodies`,
-      code: `type Locations = "alice" | "bob" | "carol";
+      code: /* ts */ `type Locations = "alice" | "bob" | "carol";
       const test: Choreography<Locations, [], []> = async ({ colocally }) => {
         await colocally(
           ["alice", "bob", "carol"],
@@ -160,7 +160,7 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
   invalid: [
     {
       name: `failing test case 1: not all locations specified for top-level 'colocally' call are used inside the body`,
-      code: `type Locations = "alice" | "bob";
+      code: /* ts */ `type Locations = "alice" | "bob";
       const test: Choreography<Locations, [], []> = async ({ colocally }) => {
         await colocally(
           ["alice", "bob"],
@@ -180,7 +180,7 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
     },
     {
       name: `failing test case 2: not all locations for nested 'colocally' call are used inside the body`,
-      code: `type Locations = "alice" | "bob" | "carol";
+      code: /* ts */ `type Locations = "alice" | "bob" | "carol";
       const test: Choreography<Locations, [], []> = async ({ colocally }) => {
         await colocally(
           ["alice", "bob", "carol"],
@@ -208,8 +208,7 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
     },
     {
       name: `failing test case 3: locations are correctly marked as not used in nested 'colocally' call where 'broadcast' is left unused`,
-      code: `{
-        type Locations = "alice" | "bob" | "carol";
+      code: /* ts */ `type Locations = "alice" | "bob" | "carol";
         const test: Choreography<Locations, [], []> = async ({ colocally }) => {
           await colocally(
             ["alice", "bob", "carol"],
@@ -240,8 +239,7 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
             [],
           );
           return [];
-        };
-      }`,
+        };`,
       errors: [
         {
           messageId: "warning",
@@ -250,7 +248,7 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
     },
     {
       name: `failing test case 4: location use warnings are correctly reported for 'colocally' expressions in choreographies declared with a type alias`,
-      code: `type Locations = "alice" | "bob" | "carol";
+      code: /* ts */ `type Locations = "alice" | "bob" | "carol";
       type TypeAlias = Choreography<Locations, [], []>;
       const subtleChoreo: TypeAlias = async ({ colocally }) => {
         colocally(

@@ -47,7 +47,7 @@ const noRenameRule: TSESLint.RuleModule<MessageIDs, []> = {
           .getAncestors()
           .find(
             (val) => val.type === AST_NODE_TYPES.VariableDeclarator,
-          ) as TSESTree.VariableDeclarator;
+          ) as TSESTree.VariableDeclarator; // This will return the top-most variableDeclarator node, which must be the one associated with the choreography
 
         const resolvedTypeAlias = services.getTypeAtLocation(
           variableDeclaratorAncestor.id,

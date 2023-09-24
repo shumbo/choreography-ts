@@ -139,5 +139,19 @@ ruleTester.run("no-renaming-operator", noRenameRule, {
         },
       ],
     },
+    {
+      name: "detects errors with choreographies defined using normal function expressions",
+      code: /* ts */ `
+      type Locations = "alice" | "bob";
+      const _choreo: Choreography<Locations, [], []> = async function (operators) {
+        await operators.locally("alice", () => "hi from alice");
+        return [];
+      };`,
+      errors: [
+        {
+          messageId: "invalid",
+        },
+      ],
+    },
   ],
 });

@@ -10,6 +10,7 @@ import {
   TSESLint,
   ESLintUtils,
 } from "@typescript-eslint/utils";
+import ts from "typescript";
 
 type MessageIDs = "rename" | "invalid";
 
@@ -47,10 +48,18 @@ const noRenameRule: TSESLint.RuleModule<MessageIDs, []> = {
           .find(
             (val) => val.type === AST_NODE_TYPES.VariableDeclarator,
           ) as TSESTree.VariableDeclarator;
+
+        const resolvedTypeAlias = services.getTypeAtLocation(
+          variableDeclaratorAncestor.id,
+        ).aliasSymbol;
+        const resolvedTypeAliasName = (
+          (resolvedTypeAlias?.declarations?.[0] as ts.TypeAliasDeclaration)
+            ?.type as ts.TypeReferenceNode
+        )?.typeName as ts.Identifier;
+
         if (
-          services
-            .getTypeAtLocation(variableDeclaratorAncestor.id)
-            .aliasSymbol?.getEscapedName() === "Choreography"
+          resolvedTypeAlias?.getName() === "Choreography" ||
+          resolvedTypeAliasName?.text === "Choreography"
         ) {
           if (node.params[0]?.type === AST_NODE_TYPES.ObjectPattern) {
             // If the first argument for the choreography is an object pattern

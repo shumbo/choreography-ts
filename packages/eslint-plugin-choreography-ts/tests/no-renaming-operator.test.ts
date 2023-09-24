@@ -14,6 +14,12 @@ ruleTester.run("no-renaming-operator", noRenameRule, {
                 return [];
               };`,
     },
+    {
+      name: "non-choreography arrow function test - this should return no errors",
+      code: /* ts */ `
+      const nonChoreo = (operators) => {};
+      `,
+    },
   ],
   invalid: [
     {
@@ -99,6 +105,37 @@ ruleTester.run("no-renaming-operator", noRenameRule, {
       errors: [
         {
           messageId: "rename",
+        },
+      ],
+    },
+    {
+      name: "detects errors for type-aliased choreographies",
+      code: /* ts */ `
+      type Locations = "alice" | "bob";
+      type MyType = Choreography<Locations, [], []>;
+      const _test: MyType = async (operators) => {
+        await operators.locally("alice", () => 1);
+        return [];
+      };`,
+      errors: [
+        {
+          messageId: "invalid",
+        },
+      ],
+    },
+    {
+      name: "detects errors with multi-level type-aliased choreographies",
+      code: /* ts */ `
+      type Locations = "alice" | "bob";
+      type MyType = Choreography<Locations, [], []>;
+      type MyType2 = MyType;
+      const _test: MyType2 = async (operators) => {
+        await operators.locally("alice", () => 1);
+        return [];
+      };`,
+      errors: [
+        {
+          messageId: "invalid",
         },
       ],
     },

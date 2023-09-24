@@ -14,7 +14,7 @@ module.exports = {
   // Configuring monorepos properly: https://typescript-eslint.io/linting/typed-linting/monorepos
   extends: [
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended-type-checked",
+    "plugin:@typescript-eslint/recommended",
     "plugin:@choreography-ts/choreography-ts/base",
     "prettier",
   ],

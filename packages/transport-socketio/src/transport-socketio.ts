@@ -1,7 +1,4 @@
-import type { Server as HttpServer } from "node:http";
-
 import { io, Socket } from "socket.io-client";
-import { Server } from "socket.io";
 
 import {
   Location,
@@ -10,26 +7,7 @@ import {
   Transport,
   parcelFromJSON,
 } from "@choreography-ts/core";
-
-const SEND_EV = "__SOCKETIO_SEND__";
-const RECV_EV = "__SOCKETIO_RECV__";
-
-function createRoomId(prefix: string, location: string) {
-  return `${prefix}/${location}`;
-}
-
-export function setupServer(httpServer: HttpServer) {
-  const io = new Server(httpServer);
-  io.on("connection", (socket) => {
-    const prefix = socket.handshake.query["prefix"] as string;
-    const whoami = socket.handshake.query["whoami"] as string;
-    socket.join(createRoomId(prefix, whoami));
-    socket.on(SEND_EV, (prefix, target, json, cb) => {
-      socket.to(createRoomId(prefix, target)).emit(RECV_EV, json);
-      cb();
-    });
-  });
-}
+import { SEND_EV, RECV_EV } from "./shared.js";
 
 export type SocketIOConfig<L extends Location> = {
   uri: string;

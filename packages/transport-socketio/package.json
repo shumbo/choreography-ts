@@ -2,9 +2,28 @@
   "name": "@choreography-ts/transport-socketio",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "typings": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./server": {
+      "require": "./dist/server.cjs",
+      "import": "./dist/server.js",
+      "types": "./dist/server.d.ts"
+    }
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "clean": "rimraf dist",
+    "build": "tsup src/index.ts src/server.ts --format cjs,esm --dts --clean",
+    "test": "vitest run --silent",
+    "coverage": "vitest run --silent --coverage",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
@@ -12,7 +31,9 @@
   "devDependencies": {
     "@choreography-ts/core": "workspace:*",
     "@types/node": "^20.5.2",
-    "get-port": "^7.0.0"
+    "get-port": "^7.0.0",
+    "tsup": "^7.2.0",
+    "typescript": "^5.2.2"
   },
   "dependencies": {
     "socket.io": "^4.7.2",

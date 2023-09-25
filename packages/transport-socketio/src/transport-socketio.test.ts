@@ -3,11 +3,8 @@ import getPort from "get-port";
 import { createServer } from "node:http";
 
 import { TransportTestSuite } from "@choreography-ts/core";
-import {
-  SocketIOConfig,
-  SocketIOTransport,
-  setupServer,
-} from "./transport-socketio";
+import { SocketIOConfig, SocketIOTransport } from "./transport-socketio";
+import { setupServer } from "./server";
 
 const port = await getPort();
 

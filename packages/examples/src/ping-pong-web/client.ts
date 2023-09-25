@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
         prefix: room,
         locations: ["Alice", "Bob"],
       },
-      role
+      role,
     );
     const projector = new Projector(transport, role);
     await projector.epp(pingPongChoreography)([]);

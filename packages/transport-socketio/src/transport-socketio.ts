@@ -20,7 +20,7 @@ export class SocketIOTransport<L extends Location, L1 extends L>
 {
   public static async create<L extends Location, L1 extends L>(
     config: SocketIOConfig<L>,
-    target: L1
+    target: L1,
   ) {
     const socket = io(config.uri, {
       query: { prefix: config.prefix, whoami: target },
@@ -29,14 +29,14 @@ export class SocketIOTransport<L extends Location, L1 extends L>
       socket,
       config.prefix,
       config.locations,
-      target
+      target,
     );
   }
   private constructor(
     private socket: Socket,
     private prefix: string,
     private locs: L[],
-    private target: L1
+    private target: L1,
   ) {}
 
   get locations(): readonly L[] {
@@ -54,7 +54,7 @@ export class SocketIOTransport<L extends Location, L1 extends L>
         JSON.stringify(parcel),
         () => {
           resolve();
-        }
+        },
       );
     });
   }

@@ -87,24 +87,21 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
               const properties = param.properties;
               // if the dependencies object isn't empty
               if (properties.length > 0) {
-                // `match` tracks if the operator is found
-                let match = false;
                 // `propertyRange` tracks the location range of the last encountered
                 // operator in the dependencies parameter `{locally, colocally, ...}` so we
                 // know where to place the missing operator
                 let propertyRange: [number, number];
                 // find matching operator in the dependencies parameter
-                properties.forEach((prop) => {
+                const match = properties.find((prop) => {
                   if (prop.type === AST_NODE_TYPES.Property) {
                     // Store the range of the current operator
                     propertyRange = prop.range;
-                    if (prop.key.type === AST_NODE_TYPES.Identifier) {
-                      // This is more readable without using "&&"
-                      if (prop.key.name === operator) {
-                        match = true;
-                      }
-                    }
+                    return (
+                      prop.key.type === AST_NODE_TYPES.Identifier &&
+                      prop.key.name === operator
+                    );
                   }
+                  return undefined;
                 });
                 // if operator not in the dependencies parameter
                 if (!match) {

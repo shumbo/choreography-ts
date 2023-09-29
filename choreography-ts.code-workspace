@@ -35,5 +35,11 @@
 		"files.associations": {
 			"turbo.json": "jsonc"
 		}
+	},
+	"extensions": {
+		"recommendations": [
+			"esbenp.prettier-vscode",
+			"bierner.comment-tagged-templates"
+		]
 	}
 }

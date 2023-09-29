@@ -19,7 +19,7 @@ module.exports = {
     "prettier",
   ],
   parserOptions: {
-    project: ["./tsconfig.json"], // Required for using rules that need type information!
+    project: true, // Required for using rules that need type information!
     tsconfigRootDir: __dirname,
   },
   parser: "@typescript-eslint/parser",

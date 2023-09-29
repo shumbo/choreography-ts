@@ -5,7 +5,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
   valid: [
     {
       name: "valid test case 1",
-      code: `
+      code: /* ts */ `
       const test: Choreography<Locations> = async ({
         locally,
         broadcast,
@@ -17,7 +17,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
     },
     {
       name: "valid test case 2",
-      code: `
+      code: /* ts */ `
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
@@ -35,14 +35,29 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
             }
           }
         )
-      }`,
+      };`,
+    },
+    {
+      name: "no error thrown on non-Choreography type",
+      code: /* ts */ `
+      const nonChoreo = async (colocally) => {
+        await colocally(
+          "alice",
+          async (locally) => {
+            await locally("alice", () => "hi");
+            return [];
+          },
+          []
+        );
+        return [];
+      };`,
     },
   ],
   invalid: [
     {
       name: `test for proper insertion of missing depedencies parameter 
       into empty parameter list`,
-      code: `
+      code: /* ts */ `
       const test1: Choreography<Locations> = async ({
         locally,
         broadcast,
@@ -55,7 +70,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
         });
         return [];
       };`,
-      output: `
+      output: /* ts */ `
       const test1: Choreography<Locations> = async ({
         locally,
         broadcast,
@@ -78,7 +93,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       // no fixes should be applied or suggested in this case
       name: `test for error on missing nested operator in
       non-empty parameter list with no object parameter`,
-      code: `
+      code: /* ts */ `
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
@@ -96,7 +111,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
             }
           }
         )
-      }`,
+      };`,
       output: null, // assert that no autofix is suggested
       errors: [
         {
@@ -112,9 +127,44 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       ],
     },
     {
+      name: `test for error on missing nested operators in non-empty parameter list with no object parameter,
+      the choreography defined using a type alias, and the sub-choreography argument defined using a normal function expression`,
+      code: /* ts */ `
+      type Locations = "buyer1" | "seller";
+      type MyType = Choreography<Locations>
+      const _test2: MyType = async ({
+        locally,
+        broadcast,
+        colocally,
+      }) => {
+        const msg = await locally("buyer1", () => 1);
+        const decision = await broadcast("buyer1", msg);
+        await colocally(
+          ["buyer1", "seller"],
+          async function (arg) {
+            const sharedDecision = peel(decision);
+            await locally("seller", () => sharedDecision);
+            return [];
+          },
+          []
+        );
+        return [];
+      };`,
+      errors: [
+        {
+          messageId: "error",
+          suggestions: null,
+        },
+        {
+          messageId: "error",
+          suggestions: null,
+        },
+      ],
+    },
+    {
       name: `test for proper insertion of missing nested operator into 
       non-empty dependencies object parameter`,
-      code: `
+      code: /* ts */ `
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
@@ -132,8 +182,8 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
             }
           }
         )
-      }`,
-      output: `
+      };`,
+      output: /* ts */ `
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
@@ -151,14 +201,14 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
             }
           }
         )
-      }`,
+      };`,
       errors: [
         {
           messageId: "error",
           suggestions: [
             {
               messageId: "suggestion",
-              output: `
+              output: /* ts */ `
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
@@ -176,7 +226,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
             }
           }
         )
-      }`,
+      };`,
             },
           ],
         },
@@ -185,7 +235,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
     {
       name: `test for proper insertion of missing nested operator 
       into empty dependencies object parameter`,
-      code: `
+      code: /* ts */ `
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
@@ -197,8 +247,8 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
             const sharedDecision = peel(decision);
           }
         )
-      }`,
-      output: `
+      };`,
+      output: /* ts */ `
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
@@ -210,7 +260,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
             const sharedDecision = peel(decision);
           }
         )
-      }`,
+      };`,
       errors: [
         {
           messageId: "error",
@@ -220,7 +270,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
     {
       name: `test for insertion of missing nested operator in 
       correct nested context`,
-      code: `
+      code: /* ts */ `
       type Locations = "alice" | "bob" | "carol";
       const _test2: Choreography<Locations> = async ({ colocally }) => {
         await colocally(
@@ -242,7 +292,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
         );
         return [];
       };`,
-      output: `
+      output: /* ts */ `
       type Locations = "alice" | "bob" | "carol";
       const _test2: Choreography<Locations> = async ({ colocally }) => {
         await colocally(

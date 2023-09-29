@@ -84,24 +84,26 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
           if (param) {
             // if first parameter is a dependencies object
             if (param.type === AST_NODE_TYPES.ObjectPattern) {
-              const properties = param.properties;
+              const properties = param.properties; // `properties` is an array containing the keys in the dependecies object
               // if the dependencies object isn't empty
               if (properties.length > 0) {
+                let match = false;
                 // `propertyRange` tracks the location range of the last encountered
                 // operator in the dependencies parameter `{locally, colocally, ...}` so we
                 // know where to place the missing operator
                 let propertyRange: [number, number];
-                // find matching operator in the dependencies parameter
-                const match = properties.find((prop) => {
+                // find the matching operator in the dependencies parameter if it exists
+                properties.forEach((prop) => {
                   if (prop.type === AST_NODE_TYPES.Property) {
                     // Store the range of the current operator
                     propertyRange = prop.range;
-                    return (
+                    if (
                       prop.key.type === AST_NODE_TYPES.Identifier &&
                       prop.key.name === operator
-                    );
+                    ) {
+                      match = true;
+                    }
                   }
-                  return undefined;
                 });
                 // if operator not in the dependencies parameter
                 if (!match) {
@@ -133,7 +135,7 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
                     fix, // autofix (can be applied with `--fix`)
                   });
                 }
-                // otherwise if the dependencies object is empty
+                // otherwise if the dependencies parameter object is empty
               } else {
                 // fix to replace the empty object with one containing the missing operator
                 const fix = (fixture: TSESLint.RuleFixer) => {

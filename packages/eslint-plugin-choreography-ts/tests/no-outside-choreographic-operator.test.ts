@@ -128,7 +128,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
     },
     {
       name: `test for error on missing nested operators in non-empty parameter list with no object parameter,
-      the choreography defined using a type alias, the sub-choreography argument defined using a normal function expression`,
+      the choreography defined using a type alias, and the sub-choreography argument defined using a normal function expression`,
       code: /* ts */ `
       type Locations = "buyer1" | "seller";
       type MyType = Choreography<Locations>

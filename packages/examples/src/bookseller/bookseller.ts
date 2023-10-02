@@ -1,3 +1,5 @@
+import esMain from "es-main";
+
 import { Choreography, Located, Projector } from "@choreography-ts/core";
 import {
   ExpressTransport,
@@ -90,8 +92,9 @@ async function main() {
     sellerProjector.epp(bookseller)([undefined]),
   ]);
   console.log("Delivery date:", dateForHoTT);
+  await Promise.all([sellerTransport.teardown(), buyerTransport.teardown()]);
 }
 
-if (require.main === module) {
+if (esMain(import.meta)) {
   main();
 }

@@ -43,7 +43,7 @@ export class Located<T, L1 extends Location> {
   protected phantom?: L1;
 }
 
-export class Colocated<T, L extends Location> {
+export class MultiplyLocated<T, L extends Location> {
   constructor(value: T, key: symbol) {
     this.value = value;
     this.key = key;
@@ -84,7 +84,7 @@ export type Locally<L extends Location> = <L1 extends L, T>(
 ) => Promise<Located<T, L1>>;
 
 export type Unwrap<L1 extends Location> = <T>(
-  located: Located<T, L1> | Colocated<T, L1>,
+  located: Located<T, L1> | MultiplyLocated<T, L1>,
 ) => T;
 
 /**
@@ -107,7 +107,7 @@ export type Colocally<L extends Location> = <
 ) => Promise<Return>;
 
 export type Peel<L extends Location> = <LL extends L, T>(
-  colocated: Colocated<T, LL>,
+  mlv: MultiplyLocated<T, LL>,
 ) => T;
 
 export type Multicast<L extends Location> = <
@@ -118,7 +118,7 @@ export type Multicast<L extends Location> = <
   sender: L1,
   receivers: LL[],
   value: Located<T, L1>,
-) => Promise<Colocated<T, LL | L1>>;
+) => Promise<MultiplyLocated<T, LL | L1>>;
 
 /**
  * Broadcast a value of type `T` from location `L1` to all other locations
@@ -434,17 +434,17 @@ export class Projector<L extends Location, L1 extends L> {
               }
             }
             await Promise.all(promises);
-            return new Colocated<T, LL | L1>(v, key);
+            return new MultiplyLocated<T, LL | L1>(v, key);
             // @ts-ignore
           } else if (receivers.includes(this.target)) {
             const log = await logManager.read<T>(t.toJSON());
             if (log.ok) {
-              return new Colocated<T, LL | L1>(log.value, key);
+              return new MultiplyLocated<T, LL | L1>(log.value, key);
             }
             // if not sender, wait for value to be sent
             const message: T = await this.receiveTag(sender, this.target, t);
             await logManager.write(t.toJSON(), message);
-            return new Colocated<T, LL | L1>(message, key);
+            return new MultiplyLocated<T, LL | L1>(message, key);
           }
           return undefined as any;
         };
@@ -489,7 +489,7 @@ export class Projector<L extends Location, L1 extends L> {
           }
         };
 
-      const peel: Peel<L> = <LL extends L, T>(cv: Colocated<T, LL>) =>
+      const peel: Peel<L> = <LL extends L, T>(cv: MultiplyLocated<T, LL>) =>
         cv.getValue(key);
 
       const call: (t: Tag) => Call<L> =
@@ -636,7 +636,7 @@ export class Runner {
         _receivers: LL[],
         value: Located<T, L1>,
       ) => {
-        return new Colocated(value.getValue(key), key);
+        return new MultiplyLocated(value.getValue(key), key);
       };
       const broadcast: Broadcast<L> = async <L1 extends L, T>(
         _sender: L1,
@@ -666,7 +666,7 @@ export class Runner {
         );
         return ret;
       };
-      const peel: Peel<L> = <LL extends L, T>(cv: Colocated<T, LL>) =>
+      const peel: Peel<L> = <LL extends L, T>(cv: MultiplyLocated<T, LL>) =>
         cv.getValue(key);
 
       const ret = await choreography(

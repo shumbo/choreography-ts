@@ -15,7 +15,7 @@ export type {
 } from "./core.js";
 export {
   Located,
-  Colocated,
+  MultiplyLocated,
   Transport,
   Projector,
   Runner,

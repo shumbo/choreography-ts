@@ -89,6 +89,27 @@ describe("core", () => {
       await g([]);
       expect(count).toBe(2);
     });
+    test("naked", async () => {
+      let check = "";
+      const test: Choreography<Locations> = async ({ locally, multicast, naked, enclave }) => {
+        const msg = await locally("alice", () => "Hello, world!");
+        const mlv = await multicast(
+          "alice",
+          ["bob"],
+          msg,
+        );
+        // @ts-expect-error: xx
+        naked(mlv);
+        enclave(["alice", "bob"], async ({ naked }) => {
+          check = naked(mlv);
+          return [];
+        },[])
+        return [];
+      };
+      const g = runner.compile(test);
+      await g([]);
+      expect(check).toBe("Hello, world!");
+    });
     test("broadcast", async () => {
       let count = 0;
       const test: Choreography<Locations> = async ({ locally, broadcast }) => {

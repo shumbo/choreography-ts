@@ -59,6 +59,22 @@ export class MultiplyLocated<T, L extends Location> {
   protected phantom?: (x: L) => void;
 }
 
+export class Faceted<T, L extends Location> {
+  constructor(value: T, key: symbol) {
+    this.value = value;
+    this.key = key;
+  }
+  public getValue(key: symbol) {
+    if (this.key !== key) {
+      throw new Error("Invalid key");
+    }
+    return this.value;
+  }
+  protected value: T;
+  protected key: symbol;
+  protected phantom?: (x: L) => void;
+}
+
 /**
  * The dependencies of a choreography
  */
@@ -106,8 +122,8 @@ export type Enclave<L extends Location> = <
   args: Args,
 ) => Promise<Return>;
 
-export type Naked<L extends Location> = <LL extends L, T>(
-  mlv: MultiplyLocated<T, LL>,
+export type Naked<L extends Location> = <T>(
+  mlv: MultiplyLocated<T, L>,
 ) => T;
 
 export type Multicast<L extends Location> = <
@@ -489,9 +505,6 @@ export class Projector<L extends Location, L1 extends L> {
           }
         };
 
-      const naked: Naked<L> = <LL extends L, T>(cv: MultiplyLocated<T, LL>) =>
-        cv.getValue(key);
-
       const call: (t: Tag) => Call<L> =
         (t: Tag) =>
         async <
@@ -503,6 +516,8 @@ export class Projector<L extends Location, L1 extends L> {
           a: Args,
         ) => {
           const childTag = t.call();
+          const naked: Naked<LL> = <T>(cv: MultiplyLocated<T, LL>) =>
+            cv.getValue(key);
           return await c(
             wrapMethods((m) => ctxManager.checkContext(m), {
               locally: locally(childTag),
@@ -517,6 +532,8 @@ export class Projector<L extends Location, L1 extends L> {
           );
         };
 
+      const naked: Naked<L> = <T>(cv: MultiplyLocated<T, L>) =>
+          cv.getValue(key);
       const ret = await choreography(
         wrapMethods((m) => ctxManager.checkContext(m), {
           locally: locally(tag),
@@ -613,6 +630,8 @@ export class Runner {
         choreography: Choreography<LL, Args, Return>,
         args: Args,
       ) => {
+        const naked: Naked<LL> = <T>(cv: MultiplyLocated<T, LL>) =>
+          cv.getValue(key);
         const ret = await choreography(
           wrapMethods((m) => m, {
             locally: locally,
@@ -652,6 +671,8 @@ export class Runner {
         c: Choreography<LL, Args, Return>,
         a: Args,
       ) => {
+        const naked: Naked<LL> = <T>(cv: MultiplyLocated<T, LL>) =>
+          cv.getValue(key);
         const ret = await c(
           wrapMethods((m) => m, {
             locally: locally,

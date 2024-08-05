@@ -122,9 +122,7 @@ export type Enclave<L extends Location> = <
   args: Args,
 ) => Promise<Return>;
 
-export type Naked<L extends Location> = <T>(
-  mlv: MultiplyLocated<T, L>,
-) => T;
+export type Naked<L extends Location> = <T>(mlv: MultiplyLocated<T, L>) => T;
 
 export type Multicast<L extends Location> = <
   L1 extends L,
@@ -533,7 +531,7 @@ export class Projector<L extends Location, L1 extends L> {
         };
 
       const naked: Naked<L> = <T>(cv: MultiplyLocated<T, L>) =>
-          cv.getValue(key);
+        cv.getValue(key);
       const ret = await choreography(
         wrapMethods((m) => ctxManager.checkContext(m), {
           locally: locally(tag),

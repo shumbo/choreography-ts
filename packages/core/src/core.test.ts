@@ -91,19 +91,24 @@ describe("core", () => {
     });
     test("naked", async () => {
       let check = "";
-      const test: Choreography<Locations> = async ({ locally, multicast, naked, enclave }) => {
+      const test: Choreography<Locations> = async ({
+        locally,
+        multicast,
+        naked,
+        enclave,
+      }) => {
         const msg = await locally("alice", () => "Hello, world!");
-        const mlv = await multicast(
-          "alice",
-          ["bob"],
-          msg,
-        );
+        const mlv = await multicast("alice", ["bob"], msg);
         // @ts-expect-error: xx
         naked(mlv);
-        enclave(["alice", "bob"], async ({ naked }) => {
-          check = naked(mlv);
-          return [];
-        },[])
+        enclave(
+          ["alice", "bob"],
+          async ({ naked }) => {
+            check = naked(mlv);
+            return [];
+          },
+          [],
+        );
         return [];
       };
       const g = runner.compile(test);

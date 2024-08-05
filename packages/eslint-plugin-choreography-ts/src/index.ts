@@ -1,7 +1,7 @@
 import { TSESLint } from "@typescript-eslint/utils";
 import noRenameRule from "./no-renaming-operator";
 import noOutsideOperatorRule from "./no-outside-choreographic-operator";
-import noUnusedColocallyLocation from "./no-unused-colocally-location";
+import noUnusedEnclaveLocation from "./no-unused-enclave-location";
 
 // https://stackoverflow.com/a/63188062
 const rules: TSESLint.Linter.Plugin = {
@@ -12,14 +12,14 @@ const rules: TSESLint.Linter.Plugin = {
         "@choreography-ts/choreography-ts/no-renaming-operator": "error",
         "@choreography-ts/choreography-ts/no-outside-choreographic-operator":
           "error",
-        "@choreography-ts/choreography-ts/no-unused-colocally-location": "warn",
+        "@choreography-ts/choreography-ts/no-unused-enclave-location": "warn",
       },
     },
   },
   rules: {
     "no-renaming-operator": noRenameRule,
     "no-outside-choreographic-operator": noOutsideOperatorRule,
-    "no-unused-colocally-location": noUnusedColocallyLocation,
+    "no-unused-enclave-location": noUnusedEnclaveLocation,
   },
 };
 export = rules;

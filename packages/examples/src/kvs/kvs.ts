@@ -57,7 +57,7 @@ export const nullReplicationStrategy: ReplicationStrategy<
 export const primaryBackupReplicationStrategy: ReplicationStrategy<
   [Located<State, "primary">, Located<State, "backup">]
 > = async (
-  { multicast, locally, colocally },
+  { multicast, locally, enclave },
   [requestAtPrimary, primaryState, backupState],
 ) => {
   // primary checks if the request is mutating
@@ -68,7 +68,7 @@ export const primaryBackupReplicationStrategy: ReplicationStrategy<
   // multicast the boolean to branch
   const isPut = await multicast("primary", ["backup"], isPutAtPrimary);
   // forward request to backup if mutating
-  await colocally(
+  await enclave(
     ["primary", "backup"],
     async ({ locally, comm, naked }) => {
       if (naked(isPut)) {
@@ -99,9 +99,9 @@ export function kvs<S extends Located<State, ServerLocations>[]>(
     Locations,
     [Located<Request, "client">, ...S],
     [Located<Response, "client">]
-  > = async ({ comm, colocally }, [requestAtClient, ...states]) => {
+  > = async ({ comm, enclave }, [requestAtClient, ...states]) => {
     const requestAtPrimary = await comm("client", "primary", requestAtClient);
-    const [responseAtPrimary] = await colocally(
+    const [responseAtPrimary] = await enclave(
       ["primary", "backup"],
       replicationStrategy,
       [requestAtPrimary, ...states],

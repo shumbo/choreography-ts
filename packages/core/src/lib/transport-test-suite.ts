@@ -177,10 +177,10 @@ export namespace TransportTestSuite {
       ]);
       expect(count).toEqual(4);
     });
-    test("colocally", async () => {
+    test("enclave", async () => {
       let count = 0;
-      const test: Choreography<Locations, [], []> = async ({ colocally }) => {
-        await colocally(
+      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
+        await enclave(
           ["alice", "bob"],
           async ({ locally, broadcast }) => {
             const bAtAlice = await locally("alice", () => "SECRET");
@@ -202,14 +202,14 @@ export namespace TransportTestSuite {
       expect(count).toEqual(2);
     });
 
-    test("colocally changes context", async () => {
+    test("enclave changes context", async () => {
       const test: Choreography<Locations> = async ({
         locally,
         broadcast,
-        colocally,
+        enclave,
       }) => {
         const msgAtCarol = await locally("carol", () => "I'm Carol");
-        await colocally(
+        await enclave(
           ["alice", "bob"],
           async () => {
             const _msgAtEveryone = await broadcast("carol", msgAtCarol);

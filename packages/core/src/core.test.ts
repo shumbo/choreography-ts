@@ -102,10 +102,10 @@ describe("core", () => {
       await g([]);
       expect(count).toBe(1);
     });
-    test("colocally", async () => {
+    test("enclave", async () => {
       let count = 0;
-      const test: Choreography<Locations> = async ({ colocally }) => {
-        await colocally(
+      const test: Choreography<Locations> = async ({ enclave }) => {
+        await enclave(
           ["bob", "carol"],
           async ({ locally, broadcast }) => {
             const msgAtBob = await locally("bob", () => "Hello, world!");

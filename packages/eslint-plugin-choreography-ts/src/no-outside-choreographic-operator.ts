@@ -13,7 +13,7 @@ import ts from "typescript";
 
 type MessageIDs = "error" | "suggestion";
 
-const operators = /^(locally|colocally|multicast|broadcast|comm|call|naked)$/;
+const operators = /^(locally|enclave|multicast|broadcast|comm|call|naked)$/;
 
 const choreographySelector = `VariableDeclaration[kind = "const"] > VariableDeclarator`;
 const functionSelector = `${choreographySelector} > :matches(ArrowFunctionExpression, FunctionExpression)`;
@@ -89,7 +89,7 @@ const noOutsideOperatorRule: TSESLint.RuleModule<MessageIDs, []> = {
               if (properties.length > 0) {
                 let match = false;
                 // `propertyRange` tracks the location range of the last encountered
-                // operator in the dependencies parameter `{locally, colocally, ...}` so we
+                // operator in the dependencies parameter `{locally, enclave, ...}` so we
                 // know where to place the missing operator
                 let propertyRange: [number, number];
                 // find the matching operator in the dependencies parameter if it exists

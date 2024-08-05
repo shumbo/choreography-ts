@@ -65,7 +65,7 @@ export class MultiplyLocated<T, L extends Location> {
 export type Dependencies<L extends Location> = {
   locally: Locally<L>;
   comm: Comm<L>;
-  colocally: Colocally<L>;
+  enclave: Enclave<L>;
   multicast: Multicast<L>;
   broadcast: Broadcast<L>;
   call: Call<L>;
@@ -96,7 +96,7 @@ export type Comm<L extends Location> = <L1 extends L, L2 extends L, T>(
   value: Located<T, L1>,
 ) => Promise<Located<T, L2>>;
 
-export type Colocally<L extends Location> = <
+export type Enclave<L extends Location> = <
   LL extends L,
   Args extends Located<any, LL>[],
   Return extends Located<any, LL>[],
@@ -362,7 +362,7 @@ export class Projector<L extends Location, L1 extends L> {
           return undefined as any;
         };
 
-      const colocally: (t: Tag) => Colocally<L> =
+      const enclave: (t: Tag) => Enclave<L> =
         (t: Tag) =>
         async <
           LL extends L,
@@ -381,7 +381,7 @@ export class Projector<L extends Location, L1 extends L> {
                 wrapMethods((m) => ctxManager.checkContext(m), {
                   locally: locally(childTag),
                   comm: comm(childTag),
-                  colocally: colocally(childTag),
+                  enclave: enclave(childTag),
                   multicast: multicast(childTag),
                   broadcast: broadcast(childTag),
                   call: call(childTag),
@@ -510,7 +510,7 @@ export class Projector<L extends Location, L1 extends L> {
               broadcast: broadcast(childTag),
               call: call(childTag),
               multicast: multicast(childTag),
-              colocally: colocally(childTag),
+              enclave: enclave(childTag),
               naked: naked,
             }),
             a,
@@ -524,7 +524,7 @@ export class Projector<L extends Location, L1 extends L> {
           broadcast: broadcast(tag),
           call: call(tag),
           multicast: multicast(tag),
-          colocally: colocally(tag),
+          enclave: enclave(tag),
           naked: naked,
         }),
         args.map((x) => new Located(x, key)) as any,
@@ -604,7 +604,7 @@ export class Runner {
       ) => {
         return new Located(value.getValue(key), key);
       };
-      const colocally: Colocally<L> = async <
+      const enclave: Enclave<L> = async <
         LL extends L,
         Args extends Located<any, LL>[],
         Return extends Located<any, LL>[],
@@ -617,7 +617,7 @@ export class Runner {
           wrapMethods((m) => m, {
             locally: locally,
             comm: comm,
-            colocally: colocally,
+            enclave: enclave,
             multicast: multicast,
             broadcast: broadcast,
             call: call,
@@ -659,7 +659,7 @@ export class Runner {
             broadcast: broadcast,
             call: call,
             multicast: multicast,
-            colocally: colocally,
+            enclave: enclave,
             naked: naked,
           }),
           a,
@@ -676,7 +676,7 @@ export class Runner {
           broadcast: broadcast,
           call: call,
           multicast: multicast,
-          colocally: colocally,
+          enclave: enclave,
           naked: naked,
         },
         args.map((x) => new Located(x, key)) as any,

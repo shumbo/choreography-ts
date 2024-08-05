@@ -4,7 +4,7 @@ export type {
   Locally,
   Comm,
   Colocally,
-  Peel,
+  Naked,
   Multicast,
   Broadcast,
   Call,

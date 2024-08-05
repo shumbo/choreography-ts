@@ -13,7 +13,7 @@ import ts from "typescript";
 
 type MessageIDs = "error" | "suggestion";
 
-const operators = /^(locally|colocally|multicast|broadcast|comm|call|peel)$/;
+const operators = /^(locally|colocally|multicast|broadcast|comm|call|naked)$/;
 
 const choreographySelector = `VariableDeclaration[kind = "const"] > VariableDeclarator`;
 const functionSelector = `${choreographySelector} > :matches(ArrowFunctionExpression, FunctionExpression)`;

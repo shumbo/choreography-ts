@@ -69,7 +69,7 @@ export type Dependencies<L extends Location> = {
   multicast: Multicast<L>;
   broadcast: Broadcast<L>;
   call: Call<L>;
-  peel: Peel<L>;
+  naked: Naked<L>;
 };
 
 /**
@@ -106,7 +106,7 @@ export type Colocally<L extends Location> = <
   args: Args,
 ) => Promise<Return>;
 
-export type Peel<L extends Location> = <LL extends L, T>(
+export type Naked<L extends Location> = <LL extends L, T>(
   mlv: MultiplyLocated<T, LL>,
 ) => T;
 
@@ -385,7 +385,7 @@ export class Projector<L extends Location, L1 extends L> {
                   multicast: multicast(childTag),
                   broadcast: broadcast(childTag),
                   call: call(childTag),
-                  peel: (v) => v.getValue(key),
+                  naked: (v) => v.getValue(key),
                 }),
                 args,
               );
@@ -489,7 +489,7 @@ export class Projector<L extends Location, L1 extends L> {
           }
         };
 
-      const peel: Peel<L> = <LL extends L, T>(cv: MultiplyLocated<T, LL>) =>
+      const naked: Naked<L> = <LL extends L, T>(cv: MultiplyLocated<T, LL>) =>
         cv.getValue(key);
 
       const call: (t: Tag) => Call<L> =
@@ -511,7 +511,7 @@ export class Projector<L extends Location, L1 extends L> {
               call: call(childTag),
               multicast: multicast(childTag),
               colocally: colocally(childTag),
-              peel: peel,
+              naked: naked,
             }),
             a,
           );
@@ -525,7 +525,7 @@ export class Projector<L extends Location, L1 extends L> {
           call: call(tag),
           multicast: multicast(tag),
           colocally: colocally(tag),
-          peel: peel,
+          naked: naked,
         }),
         args.map((x) => new Located(x, key)) as any,
       );
@@ -621,7 +621,7 @@ export class Runner {
             multicast: multicast,
             broadcast: broadcast,
             call: call,
-            peel: peel,
+            naked: naked,
           }),
           args,
         );
@@ -660,13 +660,13 @@ export class Runner {
             call: call,
             multicast: multicast,
             colocally: colocally,
-            peel: peel,
+            naked: naked,
           }),
           a,
         );
         return ret;
       };
-      const peel: Peel<L> = <LL extends L, T>(cv: MultiplyLocated<T, LL>) =>
+      const naked: Naked<L> = <LL extends L, T>(cv: MultiplyLocated<T, LL>) =>
         cv.getValue(key);
 
       const ret = await choreography(
@@ -677,7 +677,7 @@ export class Runner {
           call: call,
           multicast: multicast,
           colocally: colocally,
-          peel: peel,
+          naked: naked,
         },
         args.map((x) => new Located(x, key)) as any,
       );

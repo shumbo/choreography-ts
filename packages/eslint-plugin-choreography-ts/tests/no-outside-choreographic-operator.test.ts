@@ -25,8 +25,8 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       }) => {
         const [deliveryDateAtBuyer] = await colocally(
           ["buyer1", "seller"],
-          async ({ locally, comm, peel }) => {
-            const sharedDecision = peel(decision);
+          async ({ locally, comm, naked }) => {
+            const sharedDecision = naked(decision);
             if (sharedDecision) {
               const deliveryDateAtSeller = await locally(
                 "seller",
@@ -102,7 +102,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
         const [deliveryDateAtBuyer] = await colocally(
           ["buyer1", "seller"],
           async (arg) => {
-            const sharedDecision = peel(decision);
+            const sharedDecision = naked(decision);
             if (sharedDecision) {
               const deliveryDateAtSeller = await locally(
                 "seller",
@@ -115,7 +115,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       output: null, // assert that no autofix is suggested
       errors: [
         {
-          // error for missing `peel` operator, with no suggestions
+          // error for missing `naked` operator, with no suggestions
           messageId: "error",
           suggestions: null,
         },
@@ -142,7 +142,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
         await colocally(
           ["buyer1", "seller"],
           async function (arg) {
-            const sharedDecision = peel(decision);
+            const sharedDecision = naked(decision);
             await locally("seller", () => sharedDecision);
             return [];
           },
@@ -172,8 +172,8 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       }) => {
         const [deliveryDateAtBuyer] = await colocally(
           ["buyer1", "seller"],
-          async ({ peel }) => {
-            const sharedDecision = peel(decision);
+          async ({ naked }) => {
+            const sharedDecision = naked(decision);
             if (sharedDecision) {
               const deliveryDateAtSeller = await locally(
                 "seller",
@@ -191,8 +191,8 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       }) => {
         const [deliveryDateAtBuyer] = await colocally(
           ["buyer1", "seller"],
-          async ({ peel, locally }) => {
-            const sharedDecision = peel(decision);
+          async ({ naked, locally }) => {
+            const sharedDecision = naked(decision);
             if (sharedDecision) {
               const deliveryDateAtSeller = await locally(
                 "seller",
@@ -216,8 +216,8 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       }) => {
         const [deliveryDateAtBuyer] = await colocally(
           ["buyer1", "seller"],
-          async ({ peel, locally }) => {
-            const sharedDecision = peel(decision);
+          async ({ naked, locally }) => {
+            const sharedDecision = naked(decision);
             if (sharedDecision) {
               const deliveryDateAtSeller = await locally(
                 "seller",
@@ -244,7 +244,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
         const [deliveryDateAtBuyer] = await colocally(
           ["buyer1", "seller"],
           async ({}) => {
-            const sharedDecision = peel(decision);
+            const sharedDecision = naked(decision);
           }
         )
       };`,
@@ -256,8 +256,8 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       }) => {
         const [deliveryDateAtBuyer] = await colocally(
           ["buyer1", "seller"],
-          async ({ peel }) => {
-            const sharedDecision = peel(decision);
+          async ({ naked }) => {
+            const sharedDecision = naked(decision);
           }
         )
       };`,

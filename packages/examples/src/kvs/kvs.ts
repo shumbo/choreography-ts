@@ -70,8 +70,8 @@ export const primaryBackupReplicationStrategy: ReplicationStrategy<
   // forward request to backup if mutating
   await colocally(
     ["primary", "backup"],
-    async ({ locally, comm, peel }) => {
-      if (peel(isPut)) {
+    async ({ locally, comm, naked }) => {
+      if (naked(isPut)) {
         const requestAtBackup = await comm(
           "primary",
           "backup",

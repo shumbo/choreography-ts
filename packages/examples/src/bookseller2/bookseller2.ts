@@ -67,8 +67,8 @@ export const bookseller: (
     const decision = await multicast("buyer1", ["seller"], decisionAtBuyer);
     const [deliveryDateAtBuyer] = await colocally(
       ["buyer1", "seller"],
-      async ({ locally, comm, peel }) => {
-        const sharedDecision = peel(decision);
+      async ({ locally, comm, naked }) => {
+        const sharedDecision = naked(decision);
         if (sharedDecision) {
           const deliveryDateAtSeller = await locally(
             "seller",

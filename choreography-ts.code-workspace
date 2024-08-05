@@ -1,48 +1,43 @@
 {
-	"folders": [
-		{
-			"name": "root",
-			"path": "."
-		},
-		{
-			"name": "core",
-			"path": "packages/core"
-		},
-		{
-			"name": "examples",
-			"path": "packages/examples"
-		},
-		{
-			"path": "packages/eslint-plugin-choreography-ts"
-		},
-		{
-			"path": "packages/transport-express"
-		},
-		{
-			"path": "packages/transport-socketio"
-		}
-	],
-	"settings": {
-		"files.exclude": {
-			"packages": true
-		},
-		"search.exclude": {
-			"dist/**": true
-		},
-		"cSpell.words": [
-			"choreographies",
-			"Colocally",
-			"Colocated",
-			"ivar"
-		],
-		"files.associations": {
-			"turbo.json": "jsonc"
-		}
-	},
-	"extensions": {
-		"recommendations": [
-			"esbenp.prettier-vscode",
-			"bierner.comment-tagged-templates"
-		]
-	}
+  "folders": [
+    {
+      "name": "root",
+      "path": ".",
+    },
+    {
+      "name": "core",
+      "path": "packages/core",
+    },
+    {
+      "name": "examples",
+      "path": "packages/examples",
+    },
+    {
+      "path": "packages/eslint-plugin-choreography-ts",
+    },
+    {
+      "path": "packages/transport-express",
+    },
+    {
+      "path": "packages/transport-socketio",
+    },
+  ],
+  "settings": {
+    "files.exclude": {
+      "packages": true,
+    },
+    "search.exclude": {
+      "dist/**": true,
+    },
+    "cSpell.words": ["choreographies", "Colocally", "Colocated", "ivar"],
+    "files.associations": {
+      "turbo.json": "jsonc",
+    },
+  },
+  "extensions": {
+    "recommendations": [
+      "esbenp.prettier-vscode",
+      "bierner.comment-tagged-templates",
+    ],
+  },
 }

@@ -38,6 +38,9 @@ export class Located<T, L1 extends Location> {
     }
     return this.value;
   }
+  public getValueAt(_at: unknown, key: symbol): T {
+    return this.getValue(key);
+  }
   protected value: T;
   protected key: symbol;
   protected phantom?: L1;
@@ -54,23 +57,26 @@ export class MultiplyLocated<T, L extends Location> {
     }
     return this.value;
   }
+  public getValueAt(_at: unknown, key: symbol): T {
+    return this.getValue(key);
+  }
   protected value: T;
   protected key: symbol;
   protected phantom?: (x: L) => void;
 }
 
 export class Faceted<T, L extends Location> {
-  constructor(value: T, key: symbol) {
-    this.value = value;
+  constructor(map: { [loc in L]: T }, key: symbol) {
+    this.value = map;
     this.key = key;
   }
-  public getValue(key: symbol) {
+  public getValueAt(at: L, key: symbol): T {
     if (this.key !== key) {
       throw new Error("Invalid key");
     }
-    return this.value;
+    return this.value[at];
   }
-  protected value: T;
+  protected value: { [loc in L]: T };
   protected key: symbol;
   protected phantom?: (x: L) => void;
 }
@@ -86,6 +92,9 @@ export type Dependencies<L extends Location> = {
   broadcast: Broadcast<L>;
   call: Call<L>;
   naked: Naked<L>;
+  parallel: Parallel<L>;
+  fanout: FanOut<L>;
+  fanin: FanIn<L>;
 };
 
 /**
@@ -96,11 +105,11 @@ export type Dependencies<L extends Location> = {
  */
 export type Locally<L extends Location> = <L1 extends L, T>(
   location: L1,
-  callback: (unwrap: Unwrap<L1>) => T | Promise<T>,
+  callback: (unwrap: Unwrap<L1>) => T | Promise<T>
 ) => Promise<Located<T, L1>>;
 
 export type Unwrap<L1 extends Location> = <T>(
-  located: Located<T, L1> | MultiplyLocated<T, L1>,
+  located: Located<T, L1> | MultiplyLocated<T, L1> | Faceted<T, L1>
 ) => T;
 
 /**
@@ -109,7 +118,7 @@ export type Unwrap<L1 extends Location> = <T>(
 export type Comm<L extends Location> = <L1 extends L, L2 extends L, T>(
   sender: L1,
   receiver: L2,
-  value: Located<T, L1>,
+  value: Located<T, L1>
 ) => Promise<Located<T, L2>>;
 
 export type Enclave<L extends Location> = <
@@ -119,7 +128,7 @@ export type Enclave<L extends Location> = <
 >(
   locations: LL[],
   choreography: Choreography<LL, Args, Return>,
-  args: Args,
+  args: Args
 ) => Promise<Return>;
 
 export type Naked<L extends Location> = <T>(mlv: MultiplyLocated<T, L>) => T;
@@ -131,7 +140,7 @@ export type Multicast<L extends Location> = <
 >(
   sender: L1,
   receivers: LL[],
-  value: Located<T, L1>,
+  value: Located<T, L1>
 ) => Promise<MultiplyLocated<T, LL | L1>>;
 
 /**
@@ -139,7 +148,7 @@ export type Multicast<L extends Location> = <
  */
 export type Broadcast<L extends Location> = <L1 extends L, T>(
   sender: L1,
-  value: Located<T, L1>,
+  value: Located<T, L1>
 ) => Promise<T>;
 
 export type Call<L extends Location> = <
@@ -148,8 +157,28 @@ export type Call<L extends Location> = <
   Return extends Located<any, LL>[],
 >(
   choreography: Choreography<LL, Args, Return>,
-  args: Args,
+  args: Args
 ) => Promise<Return>;
+
+export type Parallel<L extends Location> = <const QS extends L, T>(
+  locations: QS[],
+  callback: <Q extends QS>(member: Q, unwrap: Unwrap<Q>) => Promise<T>
+) => Promise<Faceted<T, QS>>;
+
+export type FanOut<L extends Location> = <QS extends L, T>(
+  locations: QS[],
+  c: <Q extends QS>(q: Q) => Choreography<L, [], [Located<T, Q>]>
+) => Promise<Faceted<T, QS>>;
+
+export type FanIn<L extends Location> = <
+  const QS extends L,
+  const RS extends L,
+  T,
+>(
+  participants: QS[],
+  recipients: RS[],
+  c: <Q extends QS>(loc: Q) => Choreography<L, [], [Located<T, RS>]>
+) => Promise<Located<{ [key in QS]: T }, RS>>;
 
 /**
  * A choreography is a function that takes a set of dependencies and a set of arguments and returns a set of results
@@ -243,7 +272,7 @@ class NotLogManager implements LogManager {
     return;
   }
   public async read<T>(
-    _lid: string,
+    _lid: string
   ): Promise<{ ok: true; value: T } | { ok: false }> {
     return { ok: false };
   }
@@ -266,7 +295,7 @@ export class Projector<L extends Location, L1 extends L> {
   private subscription: Subscription | null;
   constructor(
     public transport: Transport<L, L1>,
-    private target: L1,
+    private target: L1
   ) {
     this.inbox = new DefaultDict<string, IVar<Parcel<L>>>(() => new IVar());
     this.subscription = this.transport.subscribe((parcel) => {
@@ -296,10 +325,10 @@ export class Projector<L extends Location, L1 extends L> {
     return parcel.data;
   }
   epp<Args extends Located<any, L>[], Return extends Located<any, L>[]>(
-    choreography: Choreography<L, Args, Return>,
+    choreography: Choreography<L, Args, Return>
   ): (
     args: LocatedElements<L, L1, Args>,
-    options?: { logManager?: LogManager },
+    options?: { logManager?: LogManager }
   ) => Promise<LocatedElements<L, L1, Return>> {
     return async (args, options) => {
       const logManager = options?.logManager ?? new NotLogManager();
@@ -307,10 +336,10 @@ export class Projector<L extends Location, L1 extends L> {
       const tag = new Tag();
       const key = Symbol(this.target.toString());
       const ctxManager = new ContextManager<L>(this.transport.locations);
-      const locally: (t: Tag) => Locally<L> = (tag) => {
+      const locally: (_: Tag) => Locally<L> = (tag) => {
         return async <L2 extends L, T>(
           loc: L2,
-          callback: (unwrap: Unwrap<L2>) => T | Promise<T>,
+          callback: (unwrap: Unwrap<L2>) => T | Promise<T>
         ) => {
           tag.comm();
 
@@ -323,7 +352,7 @@ export class Projector<L extends Location, L1 extends L> {
           if (log.ok) {
             return new Located(log.value, key);
           }
-          const retVal = callback((located) => located.getValue(key));
+          const retVal = callback((located) => located.getValueAt(loc, key));
           let v: T;
           if (retVal instanceof Promise) {
             v = await retVal;
@@ -340,7 +369,7 @@ export class Projector<L extends Location, L1 extends L> {
         async <L1 extends L, L2 extends L, T>(
           sender: L1,
           receiver: L2,
-          value: Located<T, L1>,
+          value: Located<T, L1>
         ) => {
           t.comm();
 
@@ -376,6 +405,51 @@ export class Projector<L extends Location, L1 extends L> {
           return undefined as any;
         };
 
+      const parallel: (t: Tag) => Parallel<L> =
+        (t: Tag) =>
+        async <const S extends L, T>(
+          locations: S[],
+          callback: <L1 extends S>(member: L1, unwrap: Unwrap<L1>) => Promise<T>
+        ) => {
+          t.comm();
+          for (const loc of locations) {
+            // @ts-ignore
+            if (loc === this.target) {
+              const ret = await callback(loc, (located) =>
+                located.getValueAt(loc, key)
+              );
+              return new Faceted({ loc: ret }, key);
+            }
+          }
+          return undefined as any;
+        };
+
+      const fanout: (t: Tag) => FanOut<L> = (t: Tag) => async (qs, c) => {
+        const m: Record<string, any> = {};
+        for (const q of qs) {
+          const choreography = c(q);
+          const [located] = await call(t)(choreography, []);
+          // @ts-ignore
+          if (q === this.target) {
+            m[q] = located.getValueAt(q, key);
+          }
+        }
+        return new Faceted(m, key);
+      };
+
+      const fanin: (t: Tag) => FanIn<L> = (t: Tag) => async (qs, rs, c) => {
+        const m: Record<string, any> = {};
+        for (const q of qs) {
+          const choreography = c(q);
+          const [located] = await call(t)(choreography, []);
+          // @ts-ignore
+          if (rs.includes(this.target)) {
+            m[q] = located.getValueAt(q, key);
+          }
+        }
+        return new Located(m as any, key);
+      };
+
       const enclave: (t: Tag) => Enclave<L> =
         (t: Tag) =>
         async <
@@ -385,7 +459,7 @@ export class Projector<L extends Location, L1 extends L> {
         >(
           locations: LL[],
           choreography: Choreography<LL, Args, Return>,
-          args: Args,
+          args: Args
         ) => {
           const childTag = t.call();
           return ctxManager.withContext(new Set(locations), async () => {
@@ -399,9 +473,12 @@ export class Projector<L extends Location, L1 extends L> {
                   multicast: multicast(childTag),
                   broadcast: broadcast(childTag),
                   call: call(childTag),
-                  naked: (v) => v.getValue(key),
+                  naked: (v) => v.getValueAt(this.target as any, key),
+                  parallel: parallel(childTag),
+                  fanout: fanout(childTag),
+                  fanin: fanin(childTag),
                 }),
-                args,
+                args
               );
               return ret;
             }
@@ -422,7 +499,7 @@ export class Projector<L extends Location, L1 extends L> {
         async <L1 extends L, const LL extends L, T>(
           sender: L1,
           receivers: LL[],
-          value: Located<T, L1>,
+          value: Located<T, L1>
         ) => {
           t.comm();
 
@@ -430,7 +507,7 @@ export class Projector<L extends Location, L1 extends L> {
           if (this.target === sender) {
             // if sender, send value to all receivers
             const promises: Promise<any>[] = [];
-            const v = value.getValue(key);
+            const v = value.getValueAt(sender, key);
             for (const receiver of receivers) {
               // @ts-ignore
               if (receiver !== sender) {
@@ -443,7 +520,7 @@ export class Projector<L extends Location, L1 extends L> {
                     }
                     await this.sendTag(sender, receiver, t, v);
                     await logManager.write(lid, v);
-                  })(),
+                  })()
                 );
               }
             }
@@ -471,7 +548,7 @@ export class Projector<L extends Location, L1 extends L> {
           if (this.target === sender) {
             // if sender, broadcast value to all other locations
             const promises: Promise<any>[] = [];
-            const v = value.getValue(key);
+            const v = value.getValueAt(sender, key);
             const locations = ctxManager.getLocationsInContext();
             for (const receiver of locations) {
               // @ts-ignore
@@ -485,7 +562,7 @@ export class Projector<L extends Location, L1 extends L> {
                     }
                     await this.sendTag(sender, receiver, t, v);
                     await logManager.write(lid, v);
-                  })(),
+                  })()
                 );
               }
             }
@@ -511,11 +588,11 @@ export class Projector<L extends Location, L1 extends L> {
           Return extends Located<any, LL>[],
         >(
           c: Choreography<LL, Args, Return>,
-          a: Args,
+          a: Args
         ) => {
           const childTag = t.call();
           const naked: Naked<LL> = <T>(cv: MultiplyLocated<T, LL>) =>
-            cv.getValue(key);
+            cv.getValueAt(this.target as any, key);
           return await c(
             wrapMethods((m) => ctxManager.checkContext(m), {
               locally: locally(childTag),
@@ -525,13 +602,16 @@ export class Projector<L extends Location, L1 extends L> {
               multicast: multicast(childTag),
               enclave: enclave(childTag),
               naked: naked,
+              parallel: parallel(childTag),
+              fanout: fanout(childTag),
+              fanin: fanin(childTag),
             }),
-            a,
+            a
           );
         };
 
       const naked: Naked<L> = <T>(cv: MultiplyLocated<T, L>) =>
-        cv.getValue(key);
+        cv.getValueAt(this.target, key);
       const ret = await choreography(
         wrapMethods((m) => ctxManager.checkContext(m), {
           locally: locally(tag),
@@ -541,11 +621,14 @@ export class Projector<L extends Location, L1 extends L> {
           multicast: multicast(tag),
           enclave: enclave(tag),
           naked: naked,
+          parallel: parallel(tag),
+          fanout: fanout(tag),
+          fanin: fanin(tag),
         }),
-        args.map((x) => new Located(x, key)) as any,
+        args.map((x) => new Located(x, key)) as any
       );
       return ret.map((x) =>
-        x instanceof Located ? x.getValue(key) : undefined,
+        x instanceof Located ? x.getValueAt(this.target, key) : undefined
       ) as any;
     };
   }
@@ -567,7 +650,7 @@ export class ContextManager<L extends Location> {
    */
   public async withContext<T>(
     context: Set<L>,
-    callback: () => Promise<T>,
+    callback: () => Promise<T>
   ): Promise<T> {
     const oldContext = this.context;
     this.context = context;
@@ -595,15 +678,17 @@ export class Runner {
     Args extends Located<any, L>[],
     Return extends Located<any, L>[],
   >(
-    choreography: Choreography<L, Args, Return>,
+    choreography: Choreography<L, Args, Return>
   ): (args: AllElements<Args>) => Promise<AllElements<Return>> {
     return async (args) => {
       const key = Symbol();
       const locally: Locally<L> = async <L1 extends L, T>(
-        _: L1,
-        callback: (unwrap: Unwrap<L1>) => T | Promise<T>,
+        loc: L1,
+        callback: (unwrap: Unwrap<L1>) => T | Promise<T>
       ) => {
-        const retVal = await callback((located) => located.getValue(key));
+        const retVal = await callback((located) =>
+          located.getValueAt(loc, key)
+        );
         let v: T;
         if (retVal instanceof Promise) {
           v = await retVal;
@@ -613,20 +698,59 @@ export class Runner {
         return new Located(v, key);
       };
       const comm: Comm<L> = async <L1 extends L, L2 extends L, T>(
-        _sender: L1,
+        sender: L1,
         _receiver: L2,
-        value: Located<T, L1>,
+        value: Located<T, L1>
       ) => {
         return new Located(value.getValue(key), key);
+      };
+      const parallel: Parallel<L> = async <const S extends L, T>(
+        locations: S[],
+        callback: <L1 extends S>(member: L1, unwrap: Unwrap<L1>) => Promise<T>
+      ) => {
+        const obj: { [loc in S]: T } = {} as any;
+        const promises = locations.map(async (loc) => {
+          const ret = await callback(loc, (located) =>
+            located.getValueAt(loc, key)
+          );
+          obj[loc] = ret;
+        });
+        await Promise.all(promises);
+        return new Faceted(obj, key);
+      };
+      const fanout: FanOut<L> = async <const S extends L, T>(
+        locations: S[],
+        c: <Q extends S>(loc: Q) => Choreography<L, [], [Located<T, Q>]>
+      ) => {
+        const m: Record<string, T> = {};
+        for (const q of locations) {
+          const choreography = c(q);
+          const [located] = await call(choreography, []);
+          m[q] = located.getValueAt(q, key);
+        }
+        return new Faceted(m, key);
+      };
+      const fanin: FanIn<L> = async <const QS extends L, const RS extends L, T>(
+        participants: QS[],
+        recipients: RS[],
+        c: <Q extends QS>(loc: Q) => Choreography<L, [], [Located<T, RS>]>
+      ) => {
+        const m: Record<string, T> = {};
+        for (const q of participants) {
+          const choreography = c(q);
+          const [located] = await call(choreography, []);
+          m[q] = located.getValueAt(q, key);
+        }
+        return new Located(m as any, key);
       };
       const enclave: Enclave<L> = async <
         LL extends L,
         Args extends Located<any, LL>[],
         Return extends Located<any, LL>[],
       >(
-        _locations: LL[],
+        locations: LL[],
         choreography: Choreography<LL, Args, Return>,
-        args: Args,
+        args: Args
       ) => {
         const naked: Naked<LL> = <T>(cv: MultiplyLocated<T, LL>) =>
           cv.getValue(key);
@@ -639,8 +763,11 @@ export class Runner {
             broadcast: broadcast,
             call: call,
             naked: naked,
+            parallel: parallel,
+            fanout: fanout,
+            fanin: fanin,
           }),
-          args,
+          args
         );
         return ret;
       };
@@ -651,15 +778,15 @@ export class Runner {
       >(
         _sender: L1,
         _receivers: LL[],
-        value: Located<T, L1>,
+        value: Located<T, L1>
       ) => {
-        return new MultiplyLocated(value.getValue(key), key);
+        return new MultiplyLocated(value.getValueAt(_sender, key), key);
       };
       const broadcast: Broadcast<L> = async <L1 extends L, T>(
         _sender: L1,
-        value: Located<T, L1>,
+        value: Located<T, L1>
       ) => {
-        return value.getValue(key);
+        return value.getValueAt(_sender, key);
       };
       const call: Call<L> = async <
         LL extends L,
@@ -667,7 +794,7 @@ export class Runner {
         Return extends Located<any, LL>[],
       >(
         c: Choreography<LL, Args, Return>,
-        a: Args,
+        a: Args
       ) => {
         const naked: Naked<LL> = <T>(cv: MultiplyLocated<T, LL>) =>
           cv.getValue(key);
@@ -680,8 +807,11 @@ export class Runner {
             multicast: multicast,
             enclave: enclave,
             naked: naked,
+            parallel,
+            fanout,
+            fanin,
           }),
-          a,
+          a
         );
         return ret;
       };
@@ -697,12 +827,33 @@ export class Runner {
           multicast: multicast,
           enclave: enclave,
           naked: naked,
+          parallel: parallel,
+          fanout: fanout,
+          fanin: fanin,
         },
-        args.map((x) => new Located(x, key)) as any,
+        args.map((x) => new Located(x, key)) as any
       );
       return ret.map((x) =>
-        x instanceof Located ? x.getValue(key) : undefined,
+        x instanceof Located ? x.getValue(key) : undefined
       ) as any;
     };
   }
 }
+
+export const fanout_test: Choreography<
+  "alice" | "bob" | "carol",
+  [],
+  []
+> = async ({ locally, fanout }) => {
+  await fanout(
+    ["bob", "carol"],
+    <Q extends "bob" | "carol">(loc: Q) =>
+      async ({ locally, comm }) => {
+        const msgAtAlice = await locally("alice", () => `Hi ${loc}!`);
+        const msgAtLoc = await comm("alice", loc, msgAtAlice);
+        return [msgAtLoc];
+      }
+  );
+
+  return [];
+};

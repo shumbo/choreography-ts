@@ -30,11 +30,11 @@ export const lottery = <SL extends Location, CL extends Location>(
 
       const clientShares = await parallel(clientLocations, async (_ , unwrap) => {
         const freeShares = Array.from({ length: serverLocations.length }, () => randomFp());
-        var serverToShares : any = {} // - Record<SL, FiniteField> = {};
+        var serverToShares: any = {}
         serverLocations.forEach((server, i) => {
           serverToShares[server] = unwrap(secret) - freeShares.reduce((a, b) => a + b, 0);
         });
-        return serverToShares;
+        return serverToShares as Record<SL, FiniteField>;
       })
 
       // Weird that Q extends is needed here
@@ -43,13 +43,12 @@ export const lottery = <SL extends Location, CL extends Location>(
           // Temporary code to make it compile might not be the type we want
           // const temp = undefined as any as Located<[FiniteField], Server>
           // return [temp]
-          // TODO there is also a comm I'm missing here
           const temp : Located<[FiniteField], Server> = await fanin(clientLocations, serverLocations, async (client) => {
-              const c2 : Located<FiniteField, Server> = await locally(client, (unwrap) => {
+              const serverShare: Located<FiniteField, Server> = await locally(client, (unwrap) => {
                 let clientShare = unwrap(clientShares);
                 return clientShare[server];
               })
-              return c2
+              return comm(client, server, serverShare)
             })
           return [temp]
         }
@@ -76,39 +75,44 @@ export const lottery = <SL extends Location, CL extends Location>(
         return hash(rhoValue, psiValue)
       })
 
-      const alpha_ = await fanin(serverLocations, serverLocations, async(server) => {
-        comm(server, serverLocations, alpha)
-      })
+      const alpha_ = await fanin(serverLocations, serverLocations, (server) =>
+        async ({ comm }) => {
+          return comm(server, serverLocations, alpha)
+        }
+      )
 
       // 3) Every server opens their commitments by publishing their ψ and ρ to each other
-      const psi_ = await fanin(serverLocations, serverLocations, async(server) => {
-        return comm(server, serverLocations, psi)
+      const psi_ = await fanin(serverLocations, serverLocations, (server) =>
+        async ({ comm }) => {
+          return comm(server, serverLocations, psi)
       })
 
-      const rho_ = await fanin(serverLocations, serverLocations, async(server) => {
-        return comm(server, serverLocations, rho)
+      const rho_ = await fanin(serverLocations, serverLocations, (server) =>
+        async ({ comm }) => {
+          return comm(server, serverLocations, rho)
       })
 
       // 4) All servers verify each other's commitment by checking α = H(ρ, ψ)
 
-      await parallel(serverLocations, async(server, unwrap) => {
+      await parallel(serverLocations, async (server, unwrap) => {
         if (alpha_ != hash(rho_, psi_)) {
           throw new Error("Commitment failed")
         }
       })
 
       // 5) If all the checks are successful, then sum random values to get the random index.
-      const omega = await parallel(serverLocations, async(server, unwrap) => {
+      const omega = await parallel(serverLocations, async (server, unwrap) => {
         return rho_.reduce((a, b) => a + b, 0) % clientLocations.length
       })
 
-      const chosenShares = await parallel(serverLocations, async(server, unwrap) => {
+      const chosenShares = await parallel(serverLocations, async (server, unwrap) => {
         return serverShares[omega]
       })
 
       // Server sends the chosen shares to the analyst
-      const allShares = fanin(serverLocations, ["analyst"], async(server) => {
-        return comm(server, "analyst", chosenShares)
+      const allShares = fanin(serverLocations, ["analyst"], (server) => {
+        async ({ comm }) => {
+          return comm(server, "analyst", chosenShares)
       })
 
       await locally("analyst", (unwrap) => {

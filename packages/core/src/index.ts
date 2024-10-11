@@ -16,6 +16,7 @@ export type {
 export {
   Located,
   MultiplyLocated,
+  Faceted,
   Transport,
   Projector,
   Runner,

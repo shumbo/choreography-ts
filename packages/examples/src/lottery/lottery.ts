@@ -8,6 +8,8 @@ type FiniteField = number // TODO use some finite field library
 
 const randomFp = () => Math.random();
 
+const hash = (rho : number, psi : number) => 42; // TODO implement
+
 // Perhaps I can pass it in as an argument?
 // TODO also test this. Possibly new combinators (fanIn, fanOut, parallel) might have a bug
 export const lottery = <SL extends Location, CL extends Location>(
@@ -41,6 +43,7 @@ export const lottery = <SL extends Location, CL extends Location>(
           // Temporary code to make it compile might not be the type we want
           // const temp = undefined as any as Located<[FiniteField], Server>
           // return [temp]
+          // TODO there is also a comm I'm missing here
           const temp : Located<[FiniteField], Server> = await fanin(clientLocations, serverLocations, async (client) => {
               const c2 : Located<FiniteField, Server> = await locally(client, (unwrap) => {
                 let clientShare = unwrap(clientShares);
@@ -52,7 +55,67 @@ export const lottery = <SL extends Location, CL extends Location>(
         }
         return c
         })
-    return 1;
+
+      // 1) Each server selects a random number; τ is some multiple of the number of clients.
+      const rho = await parallel(serverLocations, async(server, unwrap) => {
+        console.log("Pick a number from 1 to tau:")
+        // TODO get input from user
+        return 42
+      })
+      // Salt value
+      const psi = await parallel(serverLocations, async(server, unwrap) => {
+        const max = 2^18
+        const min = 2^20
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      })
+
+      // 2) Each server computes and publishes the hash α = H(ρ, ψ) to serve as a commitment
+      const alpha = await parallel(serverLocations, async(server, unwrap) => {
+        const rhoValue = unwrap(rho)
+        const psiValue = unwrap(psi)
+        return hash(rhoValue, psiValue)
+      })
+
+      const alpha_ = await fanin(serverLocations, serverLocations, async(server) => {
+        comm(server, serverLocations, alpha)
+      })
+
+      // 3) Every server opens their commitments by publishing their ψ and ρ to each other
+      const psi_ = await fanin(serverLocations, serverLocations, async(server) => {
+        return comm(server, serverLocations, psi)
+      })
+
+      const rho_ = await fanin(serverLocations, serverLocations, async(server) => {
+        return comm(server, serverLocations, rho)
+      })
+
+      // 4) All servers verify each other's commitment by checking α = H(ρ, ψ)
+
+      await parallel(serverLocations, async(server, unwrap) => {
+        if (alpha_ != hash(rho_, psi_)) {
+          throw new Error("Commitment failed")
+        }
+      })
+
+      // 5) If all the checks are successful, then sum random values to get the random index.
+      const omega = await parallel(serverLocations, async(server, unwrap) => {
+        return rho_.reduce((a, b) => a + b, 0) % clientLocations.length
+      })
+
+      const chosenShares = await parallel(serverLocations, async(server, unwrap) => {
+        return serverShares[omega]
+      })
+
+      // Server sends the chosen shares to the analyst
+      const allShares = fanin(serverLocations, ["analyst"], async(server) => {
+        return comm(server, "analyst", chosenShares)
+      })
+
+      await locally("analyst", (unwrap) => {
+        console.log(`The answer is: ${allShares.reduce((a, b) => a + b, 0)}`)
+      })
+      
+    return undefined;
   }
   return c;
 }

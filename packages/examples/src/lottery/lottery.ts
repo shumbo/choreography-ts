@@ -38,18 +38,20 @@ export const lottery = <SL extends Location, CL extends Location>(
       })
 
       // Weird that Q extends is needed here
-      const serverShares : Faceted<[FiniteField], SL> = await fanout(serverLocations, <Server extends SL>(server : Server) => {
-        const c : Choreography<SL | CL | "analyst", [], [Located<[FiniteField], Server>]> = async ({ locally, fanin }) => {
+      const serverShares : Faceted<{[client in CL]: FiniteField}, SL> = await fanout(serverLocations, <Server extends SL>(server : Server) => {
+        const c : Choreography<SL | CL | "analyst", [], [Located<{[client in CL]: FiniteField}, Server>]> = async ({ locally, fanin }) => {
           // Temporary code to make it compile might not be the type we want
           // const temp = undefined as any as Located<[FiniteField], Server>
           // return [temp]
-          const temp : Located<[FiniteField], Server> = await fanin(clientLocations, serverLocations, async (client) => {
-              const serverShare: Located<FiniteField, Server> = await locally(client, (unwrap) => {
-                let clientShare = unwrap(clientShares);
-                return clientShare[server];
-              })
-              return comm(client, server, serverShare)
+          const temp : Located<{[client in CL]: FiniteField}, Server> = await fanin(clientLocations, [server], (client) => 
+              (async ({ locally, fanin }) => {
+                const serverShare: Located<FiniteField, typeof client> = await locally(client, (unwrap) => {
+                  let clientShare = unwrap(clientShares);
+                  return clientShare[server];
+                })
+                return [await comm(client, server, serverShare)]
             })
+            )
           return [temp]
         }
         return c
@@ -87,7 +89,7 @@ export const lottery = <SL extends Location, CL extends Location>(
           return comm(server, serverLocations, psi)
       })
 
-      const rho_ = await fanin(serverLocations, serverLocations, (server) =>
+      const rho_ : Located<{ [key in SL]: FiniteField }, SL> = await fanin(serverLocations, serverLocations, (server) =>
         async ({ comm }) => {
           return comm(server, serverLocations, rho)
       })
@@ -95,19 +97,21 @@ export const lottery = <SL extends Location, CL extends Location>(
       // 4) All servers verify each other's commitment by checking α = H(ρ, ψ)
 
       await parallel(serverLocations, async (server, unwrap) => {
-        if (alpha_ != hash(rho_, psi_)) {
+        if (unwrap(alpha_) != hash(rho_, psi_)) {
           throw new Error("Commitment failed")
         }
       })
 
       // 5) If all the checks are successful, then sum random values to get the random index.
       const omega = await parallel(serverLocations, async (server, unwrap) => {
-        return rho_.reduce((a, b) => a + b, 0) % clientLocations.length
+        const temp = unwrap(rho_)
+        const temp2 = Object.values(temp) as [FiniteField]
+        return temp2.reduce((a, b) => a + b, 0) % clientLocations.length
       })
 
-      const chosenShares = await parallel(serverLocations, async (server, unwrap) => {
-        return serverShares[omega]
-      })
+      const chosenShares = await parallel(serverLocations, async (server, unwrap) => 
+         Object.values(unwrap(serverShares))[unwrap(omega)]
+      )
 
       // Server sends the chosen shares to the analyst
       const allShares = fanin(serverLocations, ["analyst"], (server) => {
@@ -116,7 +120,7 @@ export const lottery = <SL extends Location, CL extends Location>(
       })
 
       await locally("analyst", (unwrap) => {
-        console.log(`The answer is: ${allShares.reduce((a, b) => a + b, 0)}`)
+        console.log(`The answer is: ${Object.values(unwrap(allShares)).reduce((a, b) => a + b, 0)}`)
       })
       
     return undefined;

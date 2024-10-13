@@ -3,12 +3,27 @@ import {
   HttpConfig,
   ExpressTransport,
 } from "@choreography-ts/transport-express";
+import readline from 'readline';
 
 type FiniteField = number // TODO use some finite field library
 
 const randomFp = () => Math.random();
 
 const hash = (rho : number, psi : number) => 42; // TODO implement
+
+// https://stackoverflow.com/questions/18193953/waiting-for-user-to-enter-input-in-node-js
+function askQuestion(query: string): Promise<string> {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+
+    return new Promise(resolve => rl.question(query, ans => {
+        rl.close();
+        resolve(ans);
+    }))
+}
+
 
 // Perhaps I can pass it in as an argument?
 // TODO also test this. Possibly new combinators (fanIn, fanOut, parallel) might have a bug
@@ -24,8 +39,9 @@ export const lottery = <SL extends Location, CL extends Location>(
   "analyst" | SL | CL,
   [Located<FiniteField, "analyst">]> = async ({ locally, comm, multicast, enclave, call, fanin, fanout, parallel }, []) => {
 
-      const secret = await parallel(clientLocations, async (unwrap) => {
-        return randomFp();
+      const secret = await parallel(clientLocations, async () => {
+        const secretStr = await askQuestion("Secret: ")
+        return parseInt(secretStr)
       })
 
       const clientShares = await parallel(clientLocations, async (_ , unwrap) => {
@@ -37,13 +53,9 @@ export const lottery = <SL extends Location, CL extends Location>(
         return serverToShares as Record<SL, FiniteField>;
       })
 
-      // Weird that Q extends is needed here
-      const serverShares : Faceted<{[client in CL]: FiniteField}, SL> = await fanout(serverLocations, <Server extends SL>(server : Server) => {
-        const c : Choreography<SL | CL | "analyst", [], [Located<{[client in CL]: FiniteField}, Server>]> = async ({ locally, fanin }) => {
-          // Temporary code to make it compile might not be the type we want
-          // const temp = undefined as any as Located<[FiniteField], Server>
-          // return [temp]
-          const temp : Located<{[client in CL]: FiniteField}, Server> = await fanin(clientLocations, [server], (client) => 
+      const serverShares : Faceted<{[client in CL]: FiniteField}, SL> = await fanout(serverLocations, <Server extends SL>(server : Server) => 
+        async ({ locally, fanin }) =>
+          [await fanin(clientLocations, [server], (client) => 
               (async ({ locally, fanin }) => {
                 const serverShare: Located<FiniteField, typeof client> = await locally(client, (unwrap) => {
                   let clientShare = unwrap(clientShares);
@@ -51,18 +63,15 @@ export const lottery = <SL extends Location, CL extends Location>(
                 })
                 return [await comm(client, server, serverShare)]
             })
-            )
-          return [temp]
-        }
-        return c
-        })
+            )]
+        )
 
       // 1) Each server selects a random number; τ is some multiple of the number of clients.
-      const rho = await parallel(serverLocations, async(server, unwrap) => {
-        console.log("Pick a number from 1 to tau:")
-        // TODO get input from user
-        return 42
+      const rho = await parallel(serverLocations, async () => {
+        const tauStr = await askQuestion("Pick a number from 1 to tau:")
+        return parseInt(tauStr)
       })
+
       // Salt value
       const psi = await parallel(serverLocations, async(server, unwrap) => {
         const max = 2^18
@@ -117,6 +126,7 @@ export const lottery = <SL extends Location, CL extends Location>(
       const allShares = fanin(serverLocations, ["analyst"], (server) => {
         async ({ comm }) => {
           return comm(server, "analyst", chosenShares)
+        }
       })
 
       await locally("analyst", (unwrap) => {

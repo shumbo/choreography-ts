@@ -1,6 +1,10 @@
 import esMain from "es-main";
 
-import { Choreography, Located, Projector } from "@choreography-ts/core";
+import {
+  Choreography,
+  MultiplyLocated,
+  Projector,
+} from "@choreography-ts/core";
 import {
   ExpressTransport,
   HttpConfig,
@@ -22,22 +26,22 @@ const buyerBudget = 100;
 
 export const bookseller: Choreography<
   Locations,
-  [Located<string, "buyer">],
-  [Located<Date | null, "buyer">]
-> = async ({ locally, comm, broadcast }, [titleAtBuyer]) => {
+  MultiplyLocated<string, "buyer">,
+  MultiplyLocated<Date | null, "buyer">
+> = async ({ locally, comm, broadcast }, titleAtBuyer) => {
   // move the title from buyer to seller
   const titleAtSeller = await comm("buyer", "seller", titleAtBuyer);
   // seller looks up the price
   const priceAtSeller = await locally(
     "seller",
-    (unwrap) => priceTable.get(unwrap(titleAtSeller)) ?? Number("Infinity"), // can't buy a book that doesn't exist
+    (unwrap) => priceTable.get(unwrap(titleAtSeller)) ?? Number("Infinity") // can't buy a book that doesn't exist
   );
   // send the price back to the buyer
   const priceAtBuyer = await comm("seller", "buyer", priceAtSeller);
   // buyer decides whether to buy the book
   const decisionAtBuyer = await locally(
     "buyer",
-    (unwrap) => unwrap(priceAtBuyer) <= buyerBudget,
+    (unwrap) => unwrap(priceAtBuyer) <= buyerBudget
   );
   // broadcast the decision
   const decision = await broadcast("buyer", decisionAtBuyer);
@@ -46,26 +50,26 @@ export const bookseller: Choreography<
     const deliveryDateAtSeller = await locally(
       "seller",
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))!,
+      (unwrap) => deliveryDateTable.get(unwrap(titleAtSeller))!
     );
     // send the delivery date back to the buyer
     const deliveryDateAtBuyer = await comm(
       "seller",
       "buyer",
-      deliveryDateAtSeller,
+      deliveryDateAtSeller
     );
     await locally("buyer", (unwrap) => {
       console.log(
-        `Your book will be delivered on ${unwrap(deliveryDateAtBuyer)}`,
+        `Your book will be delivered on ${unwrap(deliveryDateAtBuyer)}`
       );
     });
-    return [deliveryDateAtBuyer];
+    return deliveryDateAtBuyer;
   } else {
     await locally("buyer", () => {
       console.log("You don't have enough money to buy this book");
     });
     // return null on the buyer side
-    return [await locally("buyer", () => null)];
+    return await locally("buyer", () => null);
   }
 };
 
@@ -81,17 +85,17 @@ async function main() {
   const sellerProjector = new Projector(sellerTransport, "seller");
   const buyerProjector = new Projector(buyerTransport, "buyer");
 
-  const [[dateForTAPL]] = await Promise.all([
-    buyerProjector.epp(bookseller)(["TAPL"]),
-    sellerProjector.epp(bookseller)([undefined]),
+  const [dateForTAPL] = await Promise.all([
+    buyerProjector.epp(bookseller)(buyerProjector.local("TAPL")),
+    sellerProjector.epp(bookseller)(sellerProjector.remote("buyer")),
   ]);
-  console.log("Delivery date:", dateForTAPL);
+  console.log("Delivery date:", buyerProjector.unwrap(dateForTAPL));
   console.log("--- Buying HoTT ---");
-  const [[dateForHoTT]] = await Promise.all([
-    buyerProjector.epp(bookseller)(["HoTT"]),
-    sellerProjector.epp(bookseller)([undefined]),
+  const [dateForHoTT] = await Promise.all([
+    buyerProjector.epp(bookseller)(buyerProjector.local("HoTT")),
+    sellerProjector.epp(bookseller)(buyerProjector.remote("buyer")),
   ]);
-  console.log("Delivery date:", dateForHoTT);
+  console.log("Delivery date:", buyerProjector.unwrap(dateForHoTT));
   await Promise.all([sellerTransport.teardown(), buyerTransport.teardown()]);
 }
 

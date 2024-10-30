@@ -11,41 +11,6 @@ import { wrapMethods } from "./lib/wrap-methods";
  */
 export type Location = string;
 
-/**
- * A class for representing a located value
- * @typeParam T - The type of the located value
- * @typeParam L1 - The location of the located value
- */
-export class Located<T, L1 extends Location> {
-  /**
-   * Create a new located value
-   * @param value value
-   * @param key the key associated with the location
-   */
-  constructor(value: T, key: symbol) {
-    this.value = value;
-    this.key = key;
-  }
-  /**
-   * The internal function to get the normal value.
-   * @internal
-   * @param key
-   * @returns
-   */
-  public getValue(key: symbol) {
-    if (this.key !== key) {
-      throw new Error("Invalid key");
-    }
-    return this.value;
-  }
-  public getValueAt(_at: unknown, key: symbol): T {
-    return this.getValue(key);
-  }
-  protected value: T;
-  protected key: symbol;
-  protected phantom?: L1;
-}
-
 export class MultiplyLocated<T, L extends Location> {
   constructor(value: T, key: symbol) {
     this.value = value;
@@ -143,7 +108,7 @@ export type Multicast<L extends Location> = <
 >(
   sender: L1,
   receivers: LL[],
-  value: Located<T, L1> | Faceted<T, L1> | MultiplyLocated<T, L1>
+  value: Faceted<T, L1> | MultiplyLocated<T, L1>
 ) => Promise<MultiplyLocated<T, LL | L1>>;
 
 /**
@@ -159,25 +124,30 @@ export type Call<L extends Location> = <LL extends L, Args, Return>(
   args: Args
 ) => Promise<Return>;
 
-export type Parallel<L extends Location> = <const QS extends L, T>(
+export type Parallel<L extends Location> = <
+  const QS extends L,
+  Q extends QS,
+  T,
+>(
   locations: QS[],
-  callback: <Q extends QS>(member: Q, unwrap: Unwrap<Q>) => Promise<T>
+  callback: (member: Q, unwrap: Unwrap<Q>) => Promise<T>
 ) => Promise<Faceted<T, QS>>;
 
-export type FanOut<L extends Location> = <QS extends L, T>(
+export type FanOut<L extends Location> = <QS extends L, Q extends QS, T>(
   locations: QS[],
-  c: <Q extends QS>(q: Q) => Choreography<L, undefined, MultiplyLocated<T, QS>>
+  c: (q: Q) => Choreography<L, undefined, MultiplyLocated<T, QS>>
 ) => Promise<Faceted<T, QS>>;
 
 export type FanIn<L extends Location> = <
   const QS extends L,
+  Q extends QS,
   const RS extends L,
   T,
 >(
   participants: QS[],
   recipients: RS[],
-  c: <Q extends QS>(loc: Q) => Choreography<L, [], MultiplyLocated<T, RS>>
-) => Promise<Located<{ [key in QS]: T }, RS>>;
+  c: (loc: Q) => Choreography<L, [], MultiplyLocated<T, RS>>
+) => Promise<MultiplyLocated<{ [key in QS]: T }, RS>>;
 
 /**
  * A choreography is a function that takes a set of dependencies and a set of arguments and returns a set of results
@@ -328,7 +298,7 @@ export class Projector<L extends Location, L1 extends L> {
 
           const log = await logManager.read(tag.toJSON());
           if (log.ok) {
-            return new Located(log.value, key);
+            return new MultiplyLocated(log.value, key);
           }
           const retVal = callback((located) => located.getValueAt(loc, key));
           let v: T;
@@ -338,7 +308,7 @@ export class Projector<L extends Location, L1 extends L> {
             v = retVal;
           }
           await logManager.write(tag.toJSON(), v);
-          return new Located(v, key);
+          return new MultiplyLocated(v, key);
         };
       };
 
@@ -353,7 +323,7 @@ export class Projector<L extends Location, L1 extends L> {
 
           const log = await logManager.read(t.toJSON());
           if (log.ok) {
-            return new Located(log.value, key);
+            return new MultiplyLocated(log.value, key);
           }
 
           // @ts-ignore
@@ -385,9 +355,9 @@ export class Projector<L extends Location, L1 extends L> {
 
       const parallel: (t: Tag) => Parallel<L> =
         (t: Tag) =>
-        async <const S extends L, T>(
-          locations: S[],
-          callback: <L1 extends S>(member: L1, unwrap: Unwrap<L1>) => Promise<T>
+        async <QS extends L, Q extends QS, T>(
+          locations: QS[],
+          callback: (member: Q, unwrap: Unwrap<Q>) => Promise<T>
         ) => {
           t.comm();
           for (const loc of locations) {
@@ -406,6 +376,7 @@ export class Projector<L extends Location, L1 extends L> {
         (t: Tag) => async (qs, c) => {
           const m: Record<string, any> = {};
           for (const q of qs) {
+            // @ts-ignore
             const choreography = c(q);
             const located = await call(t)(choreography, undefined);
             if ((q as string) === (this.target as string)) {
@@ -419,6 +390,7 @@ export class Projector<L extends Location, L1 extends L> {
         (t: Tag) => async (qs, rs, c) => {
           const m: Record<string, any> = {};
           for (const q of qs) {
+            // @ts-ignore
             const choreography = c(q);
             const v = await call(t)(choreography, []);
             // @ts-ignore
@@ -426,7 +398,7 @@ export class Projector<L extends Location, L1 extends L> {
               m[q] = v.getValueAt(q, key);
             }
           }
-          return new Located(m as any, key);
+          return new MultiplyLocated(m as any, key);
         };
 
       const enclave: (t: Tag) => Enclave<L> =
@@ -466,7 +438,7 @@ export class Projector<L extends Location, L1 extends L> {
         async <L1 extends L, const LL extends L, T>(
           sender: L1,
           receivers: LL[],
-          value: Located<T, L1> | MultiplyLocated<T, L1> | Faceted<T, L1>
+          value: MultiplyLocated<T, L1> | Faceted<T, L1>
         ) => {
           t.comm();
 
@@ -681,14 +653,14 @@ export class Runner {
       ) => {
         return new MultiplyLocated(value.getValue(key), key);
       };
-      const parallel: Parallel<L> = async <const S extends L, T>(
-        locations: S[],
-        callback: <L1 extends S>(member: L1, unwrap: Unwrap<L1>) => Promise<T>
+      const parallel: Parallel<L> = async <const QS extends L, Q extends QS, T>(
+        locations: QS[],
+        callback: (member: Q, unwrap: Unwrap<Q>) => Promise<T>
       ) => {
-        const obj: { [loc in S]: T } = {} as any;
+        const obj: { [loc in QS]: T } = {} as any;
         const promises = locations.map(async (loc) => {
-          const ret = await callback(loc, (located) =>
-            located.getValueAt(loc, key)
+          const ret = await callback(loc as unknown as Q, (located) =>
+            located.getValueAt(loc as unknown as Q, key)
           );
           obj[loc] = ret;
         });
@@ -697,14 +669,13 @@ export class Runner {
       };
       const fanout: <S extends L>() => FanOut<S> =
         <S extends L>() =>
-        async <QS extends S, T>(
+        async <QS extends S, Q extends QS, T>(
           locations: QS[],
-          c: <Q extends QS>(
-            loc: Q
-          ) => Choreography<S, undefined, MultiplyLocated<T, QS>>
+          c: (loc: Q) => Choreography<S, undefined, MultiplyLocated<T, QS>>
         ) => {
           const m: Record<string, T> = {};
           for (const q of locations) {
+            // @ts-ignore
             const choreography = c(q);
             const v = await call(choreography, undefined);
             m[q] = v.getValueAt(q, key);
@@ -713,20 +684,19 @@ export class Runner {
         };
       const fanin: <S extends L>() => FanIn<S> =
         <S extends L>() =>
-        async <const QS extends S, const RS extends S, T>(
+        async <QS extends S, Q extends QS, RS extends S, T>(
           participants: QS[],
           recipients: RS[],
-          c: <Q extends QS>(
-            loc: Q
-          ) => Choreography<S, [], MultiplyLocated<T, RS>>
+          c: (loc: Q) => Choreography<S, [], MultiplyLocated<T, RS>>
         ) => {
           const m: Record<string, T> = {};
           for (const q of participants) {
+            // @ts-ignore
             const choreography = c(q);
             const v = await call(choreography, []);
             m[q] = v.getValueAt(q, key);
           }
-          return new Located(m as any, key);
+          return new MultiplyLocated(m as any, key);
         };
       const enclave: Enclave<L> = async <LL extends L, Args, Return>(
         locations: LL[],
@@ -759,7 +729,7 @@ export class Runner {
       >(
         _sender: L1,
         _receivers: LL[],
-        value: Located<T, L1> | MultiplyLocated<T, L1> | Faceted<T, L1>
+        value: MultiplyLocated<T, L1> | Faceted<T, L1>
       ) => {
         return new MultiplyLocated(value.getValueAt(_sender, key), key);
       };
@@ -820,3 +790,17 @@ export class Runner {
     return value.getValue(this.key);
   }
 }
+
+export const fanout_test: Choreography<
+  "alice" | "bob" | "carol",
+  [],
+  []
+> = async ({ locally, fanout }) => {
+  await fanout(["bob", "carol"], (loc) => async ({ locally, comm }) => {
+    const msgAtAlice = await locally("alice", () => `Hi ${loc}!`);
+    const msgAtLoc = await comm("alice", loc, msgAtAlice);
+    return msgAtLoc;
+  });
+
+  return [];
+};

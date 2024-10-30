@@ -13,7 +13,6 @@ export type {
   Parcel,
 } from "./core.js";
 export {
-  Located,
   MultiplyLocated,
   Faceted,
   Transport,

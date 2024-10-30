@@ -1,12 +1,6 @@
 import type { beforeAll, test, afterAll, expect } from "vitest";
 
-import {
-  Choreography,
-  Located,
-  MultiplyLocated,
-  Projector,
-  Transport,
-} from "..";
+import { Choreography, MultiplyLocated, Projector, Transport } from "..";
 import { InMemoryLogManager } from "../in-memory-log-manager";
 
 export namespace TransportTestSuite {

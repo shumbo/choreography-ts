@@ -366,7 +366,7 @@ export class Projector<L extends Location, L1 extends L> {
               const ret = await callback(loc, (located) =>
                 located.getValueAt(loc, key)
               );
-              return new Faceted({ loc: ret }, key);
+              return new Faceted({ [loc]: ret }, key);
             }
           }
           return undefined as any;

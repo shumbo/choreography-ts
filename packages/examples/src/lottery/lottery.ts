@@ -2,20 +2,20 @@ import {
   Choreography,
   Projector,
   Location,
-  Faceted,
   MultiplyLocated,
 } from "@choreography-ts/core";
 import {
   HttpConfig,
   ExpressTransport,
 } from "@choreography-ts/transport-express";
+import esMain from "es-main";
 import readline from "readline";
 
 type FiniteField = number; // TODO use some finite field library
 
 const randomFp = () => Math.random();
 
-const hash = (rho: number, psi: number) => 42; // TODO implement
+const hash = (rho: number, psi: number) => rho + psi; // TODO implement
 
 // https://stackoverflow.com/questions/18193953/waiting-for-user-to-enter-input-in-node-js
 function askQuestion(query: string): Promise<string> {
@@ -46,16 +46,7 @@ export const lottery = <SL extends Location, CL extends Location>(
     "analyst" | SL | CL,
     undefined,
     MultiplyLocated<FiniteField, "analyst">
-  > = async ({
-    locally,
-    comm,
-    multicast,
-    enclave,
-    call,
-    fanin,
-    fanout,
-    parallel,
-  }) => {
+  > = async ({ locally, fanin, fanout, parallel }) => {
     const secret = await parallel(clientLocations, async () => {
       const secretStr = await askQuestion("Secret: ");
       return parseInt(secretStr);
@@ -66,10 +57,10 @@ export const lottery = <SL extends Location, CL extends Location>(
         randomFp()
       );
       const serverToShares: Record<string, number> = {};
-      serverLocations.forEach((server, i) => {
+      for (const server of serverLocations) {
         serverToShares[server] =
           unwrap(secret) - freeShares.reduce((a, b) => a + b, 0);
-      });
+      }
       return serverToShares as Record<SL, FiniteField>;
     });
 
@@ -80,10 +71,11 @@ export const lottery = <SL extends Location, CL extends Location>(
           const shares = await fanin(
             clientLocations,
             [server],
-            <C extends CL>(client: C) =>
+            (client) =>
               async ({ locally, comm }) => {
                 const share = await locally(client, (unwrap) => {
                   const dict = unwrap(clientShares);
+                  console.log({ dict });
                   const x = dict[server] as number;
                   return x;
                 });
@@ -146,7 +138,10 @@ export const lottery = <SL extends Location, CL extends Location>(
     // 4) All servers verify each other's commitment by checking α = H(ρ, ψ)
 
     await parallel(serverLocations, async (server, unwrap) => {
-      if (unwrap(alpha_) != hash(unwrap(rho_)[server], unwrap(psi_)[server])) {
+      if (
+        unwrap(alpha_)[server] !=
+        hash(unwrap(rho_)[server], unwrap(psi_)[server])
+      ) {
         throw new Error("Commitment failed");
       }
     });
@@ -188,3 +183,56 @@ export const lottery = <SL extends Location, CL extends Location>(
   };
   return c;
 };
+async function main() {
+  type Locations = "server1" | "server2" | "client1" | "client2" | "analyst";
+  const config: HttpConfig<Locations> = {
+    server1: ["localhost", 3000],
+    server2: ["localhost", 3001],
+    client1: ["localhost", 3002],
+    client2: ["localhost", 3003],
+    analyst: ["localhost", 3004],
+  };
+  const [
+    server1Transport,
+    server2Transport,
+    client1Transport,
+    client2Transport,
+    analystTransport,
+  ] = await Promise.all([
+    ExpressTransport.create(config, "server1"),
+    ExpressTransport.create(config, "server2"),
+    ExpressTransport.create(config, "client1"),
+    ExpressTransport.create(config, "client2"),
+    ExpressTransport.create(config, "analyst"),
+  ]);
+  const server1Projector = new Projector(server1Transport, "server1");
+  const server2Projector = new Projector(server2Transport, "server2");
+  const client1Projector = new Projector(client1Transport, "client1");
+  const client2Projector = new Projector(client2Transport, "client2");
+  const analystProjector = new Projector(analystTransport, "analyst");
+
+  // instantiate the choreography with concrete locations
+  const lotteryChoreography = lottery(
+    ["server1", "server2"],
+    ["client1", "client2"]
+  );
+  await Promise.all([
+    server1Projector.epp(lotteryChoreography)(void 0),
+    server2Projector.epp(lotteryChoreography)(void 0),
+    client1Projector.epp(lotteryChoreography)(void 0),
+    client2Projector.epp(lotteryChoreography)(void 0),
+    analystProjector.epp(lotteryChoreography)(void 0),
+  ]);
+  console.log("done");
+  await Promise.all([
+    server1Transport.teardown(),
+    server2Transport.teardown(),
+    client1Transport.teardown(),
+    client2Transport.teardown(),
+    analystTransport.teardown(),
+  ]);
+}
+
+if (esMain(import.meta)) {
+  main();
+}

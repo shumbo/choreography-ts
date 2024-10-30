@@ -75,7 +75,6 @@ export const lottery = <SL extends Location, CL extends Location>(
               async ({ locally, comm }) => {
                 const share = await locally(client, (unwrap) => {
                   const dict = unwrap(clientShares);
-                  console.log({ dict });
                   const x = dict[server] as number;
                   return x;
                 });

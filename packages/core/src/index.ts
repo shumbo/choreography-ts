@@ -9,7 +9,6 @@ export type {
   Broadcast,
   Call,
   Choreography,
-  LocatedElements,
   Subscription,
   Parcel,
 } from "./core.js";

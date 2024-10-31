@@ -11,10 +11,13 @@ import {
 import esMain from "es-main";
 import readline from "readline";
 import { createHash } from 'node:crypto'
+import Field from "./finiteField";
 
-type FiniteField = number; // TODO use some finite field library
+const field = new Field(999983);
 
-const randomFp = () => Math.random();
+type FiniteField = number;
+
+const randomFp = () => field.rand()
 
 const hash = (rho: number, psi: number) => createHash('sha256').update((rho + psi).toString()).digest('hex')
 
@@ -53,13 +56,11 @@ export const lottery = <SL extends Location, CL extends Location>(
     });
 
     const clientShares = await parallel(clientLocations, async (_, unwrap) => {
-      const freeShares = Array.from({ length: serverLocations.length }, () =>
-        randomFp()
-      );
-      const serverToShares: Record<string, number> = {};
+      const freeShares = Array.from({ length: serverLocations.length }, () => randomFp());
+      const serverToShares: Record<string, FiniteField> = {};
       for (const server of serverLocations) {
         serverToShares[server] =
-          unwrap(secret) - freeShares.reduce((a, b) => a + b, 0);
+          field.sub(unwrap(secret), freeShares.reduce((a, b) => field.add(a, b), field.zero));
       }
       return serverToShares as Record<SL, FiniteField>;
     });
@@ -75,7 +76,7 @@ export const lottery = <SL extends Location, CL extends Location>(
               async ({ locally, comm }) => {
                 const share = await locally(client, (unwrap) => {
                   const dict = unwrap(clientShares);
-                  const x = dict[server] as number;
+                  const x = dict[server] as FiniteField;
                   return x;
                 });
                 const share_ = await comm(client, server, share);
@@ -125,7 +126,7 @@ export const lottery = <SL extends Location, CL extends Location>(
         }
     );
 
-    const rho_: MultiplyLocated<{ [key in SL]: FiniteField }, SL> = await fanin(
+    const rho_: MultiplyLocated<{ [key in SL]: number}, SL> = await fanin(
       serverLocations,
       serverLocations,
       (server) =>
@@ -149,7 +150,7 @@ export const lottery = <SL extends Location, CL extends Location>(
     const omega = await parallel(serverLocations, async (server, unwrap) => {
       const temp = unwrap(rho_);
       const temp2 = Object.values(temp) as [FiniteField];
-      return temp2.reduce((a, b) => a + b, 0) % clientLocations.length;
+      return temp2.reduce((a, b) => field.add(a, b), field.zero) % clientLocations.length;
     });
 
     const chosenShares = await parallel(
@@ -173,8 +174,8 @@ export const lottery = <SL extends Location, CL extends Location>(
 
     const ans = await locally("analyst", (unwrap) => {
       const ans = Object.values(
-        unwrap(allShares) as Record<string, number>
-      ).reduce((a, b) => a + b, 0);
+        unwrap(allShares) as Record<string, FiniteField>
+      ).reduce((a, b) => field.add(a, b), field.zero);
       console.log(`The answer is: ${ans}`);
       return ans;
     });
@@ -197,7 +198,12 @@ export const lottery = <SL extends Location, CL extends Location>(
     }
 
     const chosenRole = roles[index];
-    console.log(`You chose: ${chosenRole}`);
+    if (chosenRole === undefined) {
+      console.log("Invalid choice. Please enter a number between 1 and 5.");
+      rl.close();
+      return;
+    }
+
 
     type Locations = "server1" | "server2" | "client1" | "client2" | "analyst";
     const config: HttpConfig<Locations> = {
@@ -209,8 +215,8 @@ export const lottery = <SL extends Location, CL extends Location>(
     };
 
     // Create transport for the chosen role
-    const transport = await ExpressTransport.create(config, chosenRole);
-    const projector = new Projector(transport, chosenRole);
+    const transport = await ExpressTransport.create(config, chosenRole as Locations);
+    const projector = new Projector(transport, chosenRole as Locations);
 
     // Instantiate the choreography with the chosen role
     const lotteryChoreography = lottery(

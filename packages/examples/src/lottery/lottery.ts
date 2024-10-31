@@ -10,12 +10,13 @@ import {
 } from "@choreography-ts/transport-express";
 import esMain from "es-main";
 import readline from "readline";
+import { createHash } from 'node:crypto'
 
 type FiniteField = number; // TODO use some finite field library
 
 const randomFp = () => Math.random();
 
-const hash = (rho: number, psi: number) => rho + psi; // TODO implement
+const hash = (rho: number, psi: number) => createHash('sha256').update((rho + psi).toString()).digest('hex')
 
 // https://stackoverflow.com/questions/18193953/waiting-for-user-to-enter-input-in-node-js
 function askQuestion(query: string): Promise<string> {
@@ -32,8 +33,6 @@ function askQuestion(query: string): Promise<string> {
   );
 }
 
-// Perhaps I can pass it in as an argument?
-// TODO also test this. Possibly new combinators (fanIn, fanOut, parallel) might have a bug
 export const lottery = <SL extends Location, CL extends Location>(
   serverLocations: SL[],
   clientLocations: CL[]

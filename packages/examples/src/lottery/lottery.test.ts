@@ -56,11 +56,11 @@ describe("lottery", () => {
   });
   it("Test lottery", async () => {
     const k = await Promise.all([
-      client1Projector.epp(lottery)([servers, clients]),
-      client2Projector.epp(lottery)([servers, clients]),
-      server1Projector.epp(lottery)([servers, clients]),
-      server2Projector.epp(lottery)([servers, clients]),
-      analystProjector.epp(lottery)([servers, clients]),
+      client1Projector.epp(lottery(servers, client)),
+      client2Projector.epp(lottery(servers, clients)),
+      server1Projector.epp(lottery(servers, clients)),
+      server2Projector.epp(lottery(servers, clients)),
+      analystProjector.epp(lottery(servers, clients)),
     ]);
     expect(true).toBeTruthy();
   });

@@ -18,12 +18,13 @@ const randomFp = () => Math.random();
 
 const hash = (rho: number, psi: number) => createHash('sha256').update((rho + psi).toString()).digest('hex')
 
-// https://stackoverflow.com/questions/18193953/waiting-for-user-to-enter-input-in-node-js
-function askQuestion(query: string): Promise<string> {
-  const rl = readline.createInterface({
+const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
-  });
+});
+
+// https://stackoverflow.com/questions/18193953/waiting-for-user-to-enter-input-in-node-js
+function askQuestion(query: string): Promise<string> {
 
   return new Promise((resolve) =>
     rl.question(query, (ans) => {
@@ -181,54 +182,50 @@ export const lottery = <SL extends Location, CL extends Location>(
   };
   return c;
 };
-async function main() {
-  type Locations = "server1" | "server2" | "client1" | "client2" | "analyst";
-  const config: HttpConfig<Locations> = {
-    server1: ["localhost", 3000],
-    server2: ["localhost", 3001],
-    client1: ["localhost", 3002],
-    client2: ["localhost", 3003],
-    analyst: ["localhost", 3004],
-  };
-  const [
-    server1Transport,
-    server2Transport,
-    client1Transport,
-    client2Transport,
-    analystTransport,
-  ] = await Promise.all([
-    ExpressTransport.create(config, "server1"),
-    ExpressTransport.create(config, "server2"),
-    ExpressTransport.create(config, "client1"),
-    ExpressTransport.create(config, "client2"),
-    ExpressTransport.create(config, "analyst"),
-  ]);
-  const server1Projector = new Projector(server1Transport, "server1");
-  const server2Projector = new Projector(server2Transport, "server2");
-  const client1Projector = new Projector(client1Transport, "client1");
-  const client2Projector = new Projector(client2Transport, "client2");
-  const analystProjector = new Projector(analystTransport, "analyst");
 
-  // instantiate the choreography with concrete locations
-  const lotteryChoreography = lottery(
-    ["server1", "server2"],
-    ["client1", "client2"]
-  );
-  await Promise.all([
-    server1Projector.epp(lotteryChoreography)(void 0),
-    server2Projector.epp(lotteryChoreography)(void 0),
-    client1Projector.epp(lotteryChoreography)(void 0),
-    client2Projector.epp(lotteryChoreography)(void 0),
-    analystProjector.epp(lotteryChoreography)(void 0),
-  ]);
-  console.log("done");
-  await Promise.all([
-    server1Transport.teardown(),
-    server2Transport.teardown(),
-    client1Transport.teardown(),
-    client2Transport.teardown(),
-    analystTransport.teardown(),
-  ]);
+ async function main() {
+  // Available roles to choose from
+  const roles = ["server1", "server2", "client1", "client2", "analyst"];
+
+  rl.question(`Choose a role (1-5):\n  1) server1\n  2) server2\n  3) client1\n  4) client2\n  5) analyst\nEnter the number: `, async (roleNumber) => {
+    const index = parseInt(roleNumber, 10) - 1;
+
+    if (index < 0 || index >= roles.length) {
+      console.log("Invalid choice. Please enter a number between 1 and 5.");
+      rl.close();
+      return;
+    }
+
+    const chosenRole = roles[index];
+    console.log(`You chose: ${chosenRole}`);
+
+    type Locations = "server1" | "server2" | "client1" | "client2" | "analyst";
+    const config: HttpConfig<Locations> = {
+      server1: ["localhost", 3000],
+      server2: ["localhost", 3001],
+      client1: ["localhost", 3002],
+      client2: ["localhost", 3003],
+      analyst: ["localhost", 3004],
+    };
+
+    // Create transport for the chosen role
+    const transport = await ExpressTransport.create(config, chosenRole);
+    const projector = new Projector(transport, chosenRole);
+
+    // Instantiate the choreography with the chosen role
+    const lotteryChoreography = lottery(
+      ["server1", "server2"], // Servers involved in the choreography
+      ["client1", "client2"]  // Clients involved in the choreography
+    );
+
+    await projector.epp(lotteryChoreography)(void 0);
+    console.log("done");
+
+    // Tear down the transport after use
+    await transport.teardown();
+
+    rl.close();
+  });
 }
 
 if (esMain(import.meta)) {

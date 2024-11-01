@@ -9,10 +9,10 @@ import { Projector } from "@choreography-ts/core";
 
 import { lottery } from "./lottery";
 
+const servers = ["server1" as const, "server2" as const];
+const clients = ["client1" as const, "client2" as const];
+const analyst = "analyst" as const
 
-const servers = ["server1", "server2"]
-const clients = ["client1", "client2"]
-const analyst = "analyst"
 
 
 let server1Projector: Projector<"server1" | "server2" | "client1" | "client2" | "analyst", "server1">;
@@ -55,13 +55,25 @@ describe("lottery", () => {
     ]);
   });
   it("Test lottery", async () => {
-    const k = await Promise.all([
-      client1Projector.epp(lottery(servers, client)),
-      client2Projector.epp(lottery(servers, clients)),
-      server1Projector.epp(lottery(servers, clients)),
-      server2Projector.epp(lottery(servers, clients)),
-      analystProjector.epp(lottery(servers, clients)),
+    
+    // TODO randomize this
+    const client1Secret = 42;
+    const client2Secret = 84;
+    const server1Secret = 3;
+    const server2Secret = 5;
+
+    const asAnswer = (num: number) => () => Promise.resolve(num.toString())
+    const [,,,,analystAnswer] = await Promise.all([
+      client1Projector.epp(lottery(servers, clients, asAnswer(client1Secret)))(undefined),
+      client2Projector.epp(lottery(servers, clients, asAnswer(client2Secret)))(undefined),
+      server1Projector.epp(lottery(servers, clients, asAnswer(server1Secret)))(undefined),
+      server2Projector.epp(lottery(servers, clients, asAnswer(server2Secret)))(undefined),
+      analystProjector.epp(lottery(servers, clients, () => Promise.resolve("")))(undefined),
     ]);
-    expect(true).toBeTruthy();
+
+    let i = (server1Secret + server2Secret) % servers.length;
+    let expectedAnswer = [client1Secret, client2Secret][i]
+
+    expect(analystProjector.unwrap(analystAnswer)).toBe(expectedAnswer?.toString());
   });
 });

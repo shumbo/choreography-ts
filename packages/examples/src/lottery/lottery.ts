@@ -39,7 +39,8 @@ function askQuestion(query: string): Promise<string> {
 
 export const lottery = <SL extends Location, CL extends Location>(
   serverLocations: SL[],
-  clientLocations: CL[]
+  clientLocations: CL[],
+  askQuestion: (query: string) => Promise<string>
 ): Choreography<
   "analyst" | SL | CL,
   undefined,
@@ -221,7 +222,8 @@ export const lottery = <SL extends Location, CL extends Location>(
     // Instantiate the choreography with the chosen role
     const lotteryChoreography = lottery(
       ["server1", "server2"], // Servers involved in the choreography
-      ["client1", "client2"]  // Clients involved in the choreography
+      ["client1", "client2"],  // Clients involved in the choreography
+      askQuestion
     );
 
     await projector.epp(lotteryChoreography)(void 0);

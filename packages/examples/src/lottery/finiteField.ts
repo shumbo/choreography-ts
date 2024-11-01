@@ -24,10 +24,6 @@ class Field {
     }
   }
 
-  multiply(a: number, b: number) {
-    return (a * b) % this.prime;
-  }
-
   rand() {
     return Math.floor(Math.random() * this.prime);
   }

@@ -74,6 +74,6 @@ describe("lottery", () => {
     let i = (server1Secret + server2Secret) % servers.length;
     let expectedAnswer = [client1Secret, client2Secret][i]
 
-    expect(analystProjector.unwrap(analystAnswer)).toBe(expectedAnswer?.toString());
+    expect(analystProjector.unwrap(analystAnswer)).toBe(expectedAnswer);
   });
 });

@@ -16,7 +16,12 @@ class Field {
   }
 
   sub(a: number, b: number) {
-    return (a - b + this.prime) % this.prime;
+    const x = (a - b) % this.prime;
+    if (x < 0) { // I think this is right
+      return x + this.prime;
+    } else {
+      return x;
+    }
   }
 
   multiply(a: number, b: number) {

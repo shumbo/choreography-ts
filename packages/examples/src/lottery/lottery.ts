@@ -13,7 +13,7 @@ import readline from "readline";
 import { createHash } from 'node:crypto'
 import Field from "./finiteField";
 
-const field = new Field(999983);
+const field = new Field(661);
 
 type FiniteField = number;
 
@@ -34,15 +34,12 @@ function askQuestion(query: string): Promise<string> {
   );
 }
 
-const maxBound = 2 ^ 18;
-const minBound = 2 ^ 20;
+const max = 2 ^ 18;
+const min = 2 ^ 20;
 
-export const lottery = <SL extends Location, CL extends Location>(
-  serverLocations: SL[],
-  clientLocations: CL[],
+export const lottery = <SL extends Location, CL extends Location>( serverLocations: SL[], clientLocations: CL[],
   askQuestion: (query: string) => Promise<string>
-): Choreography< "analyst" | SL | CL, undefined, MultiplyLocated<FiniteField, "analyst"> > => {
-  const c: Choreography< "analyst" | SL | CL, undefined, MultiplyLocated<FiniteField, "analyst">> =
+): Choreography<"analyst" | SL | CL, undefined, MultiplyLocated<FiniteField, "analyst">> =>
    async ({ locally, fanin, fanout, parallel }) => {
     const secret = await parallel(clientLocations, async () => {
       const secretStr = await askQuestion("Secret: ");
@@ -50,27 +47,21 @@ export const lottery = <SL extends Location, CL extends Location>(
     });
 
     const clientShares = await parallel(clientLocations, async (_, unwrap) => {
-      const freeShares = Array.from({ length: serverLocations.length }, () => field.rand());
+      const freeShares = Array.from({ length: serverLocations.length - 1 }, () => field.rand());
+      const lastShare = field.sub(unwrap(secret), freeShares.reduce((a, b) => field.add(a, b), field.zero));
+      const shares = freeShares.concat(lastShare);
       const serverToShares: Record<string, FiniteField> = {};
-      for (const server of serverLocations) {
-        serverToShares[server] =
-          field.sub(unwrap(secret), freeShares.reduce((a, b) => field.add(a, b), field.zero));
+      for (const [index, server] of serverLocations.entries()) {
+        serverToShares[server] = shares[index] as number
       }
       return serverToShares as Record<SL, FiniteField>;
     });
 
-    const serverShares = await fanout( serverLocations, (server) =>
-        async ({ fanin }) => 
-          fanin( clientLocations, [server], (client) =>
-              async ({ locally, comm }) => {
-                const share = await locally(client, (unwrap) => {
-                  const dict = unwrap(clientShares);
-                  const x = dict[server] as FiniteField;
-                  return x;
-                });
-                return comm(client, server, share);
-              }
-          )        
+    const serverShares = await fanout(serverLocations, (server) =>
+      async ({ fanin }) => fanin(clientLocations, [server], (client) => async ({ locally, comm }) => {
+          const share = await locally(client, (unwrap) => unwrap(clientShares)[server] as FiniteField);
+          return comm(client, server, share);
+        })
     );
 
     // 1) Each server selects a random number; τ is some multiple of the number of clients.
@@ -80,7 +71,7 @@ export const lottery = <SL extends Location, CL extends Location>(
     });
 
     // Salt value
-    const psi = await parallel(serverLocations, async () => Math.floor(Math.random() * (maxBound - minBound + 1)) + minBound);
+    const psi = await parallel(serverLocations, async () => Math.floor(Math.random() * (max - min + 1)) + min);
 
     // 2) Each server computes and publishes the hash α = H(ρ, ψ) to serve as a commitment
     const alpha = await parallel(serverLocations, async (server, unwrap) => {
@@ -90,33 +81,21 @@ export const lottery = <SL extends Location, CL extends Location>(
     });
 
     const alpha_ = await fanin(serverLocations, serverLocations, (server) =>
-      async ({ multicast }) => {
-        return await multicast(server, serverLocations, alpha);
-      }
+      async ({ multicast }) =>  multicast(server, serverLocations, alpha)
     );
 
     // 3) Every server opens their commitments by publishing their ψ and ρ to each other
     const psi_ = await fanin(serverLocations, serverLocations, (server) =>
-        async ({ multicast }) => {
-          return multicast(server, serverLocations, psi);
-        }
+      async ({ multicast }) => multicast(server, serverLocations, psi)
     );
 
-    const rho_: MultiplyLocated<{ [key in SL]: number}, SL> = await fanin(
-      serverLocations,
-      serverLocations,
-      (server) =>
-        async ({ multicast }) => {
-          return multicast(server, serverLocations, rho);
-        }
+    const rho_: MultiplyLocated<{ [key in SL]: FiniteField}, SL> = await fanin(serverLocations, serverLocations, (server) =>
+      async ({ multicast }) => multicast(server, serverLocations, rho)
     );
 
     // 4) All servers verify each other's commitment by checking α = H(ρ, ψ)
     await parallel(serverLocations, async (server, unwrap) => {
-      if (
-        unwrap(alpha_)[server] !=
-        hash(unwrap(rho_)[server], unwrap(psi_)[server])
-      ) {
+      if (unwrap(alpha_)[server] != hash(unwrap(rho_)[server], unwrap(psi_)[server])) {
         throw new Error("Commitment failed");
       }
     });
@@ -128,7 +107,7 @@ export const lottery = <SL extends Location, CL extends Location>(
     });
 
     const chosenShares = await parallel(serverLocations, async (server, unwrap) =>
-        Object.values(unwrap(serverShares))[unwrap(omega)]
+      Object.values(unwrap(serverShares))[unwrap(omega)]
     );
 
     // Server sends the chosen shares to the analyst
@@ -138,17 +117,9 @@ export const lottery = <SL extends Location, CL extends Location>(
           return unwrap(chosenShares);
         });
         return comm(server, "analyst", c);
-      }
-    );
-
-    const ans = await locally("analyst", (unwrap) => {
-      const ans = Object.values( unwrap(allShares) as Record<string, FiniteField>).reduce((a, b) => field.add(a, b), field.zero);
-      console.log(`The answer is: ${ans}`);
-      return ans;
-    });
-    return ans;
-  };
-  return c;
+      });
+    return await locally("analyst", (unwrap) => Object.values(unwrap(allShares) as Record<string, FiniteField>)
+                                                      .reduce((a, b) => field.add(a, b), field.zero));
 };
 
  async function main() {
@@ -192,7 +163,10 @@ export const lottery = <SL extends Location, CL extends Location>(
       askQuestion
     );
 
-    await projector.epp(lotteryChoreography)(void 0);
+    const answer = await projector.epp(lotteryChoreography)(void 0);
+    if (chosenRole === "analyst") {
+      console.log("The chosen number is: ", await projector.unwrap(answer));
+    }
     console.log("done");
 
     // Tear down the transport after use

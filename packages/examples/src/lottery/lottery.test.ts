@@ -59,19 +59,20 @@ describe("lottery", () => {
     // TODO randomize this
     const client1Secret = 42;
     const client2Secret = 84;
-    const server1Secret = 3;
-    const server2Secret = 5;
+    const server1Secret = 2;
+    const server2Secret = 4;
 
     const asAnswer = (num: number) => () => Promise.resolve(num.toString())
+
     const [,,,,analystAnswer] = await Promise.all([
       client1Projector.epp(lottery(servers, clients, asAnswer(client1Secret)))(undefined),
       client2Projector.epp(lottery(servers, clients, asAnswer(client2Secret)))(undefined),
       server1Projector.epp(lottery(servers, clients, asAnswer(server1Secret)))(undefined),
       server2Projector.epp(lottery(servers, clients, asAnswer(server2Secret)))(undefined),
-      analystProjector.epp(lottery(servers, clients, () => Promise.resolve("")))(undefined),
+      analystProjector.epp(lottery(servers, clients, () => Promise.resolve("Not invoked")))(undefined),
     ]);
 
-    let i = (server1Secret + server2Secret) % servers.length;
+    let i = (server1Secret + server2Secret) % clients.length;
     let expectedAnswer = [client1Secret, client2Secret][i]
 
     expect(analystProjector.unwrap(analystAnswer)).toBe(expectedAnswer);

@@ -1,5 +1,5 @@
 // Generic finite field library that should be swapable with galois
-// Ididn't use galois due to issues with Bigint serialization
+// I didn't use galois due to issues with Bigint serialization
 // Just contains the operators we need for this example
 
 class Field {

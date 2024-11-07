@@ -13,18 +13,17 @@ import readline from "readline";
 import { createHash } from 'node:crypto'
 import Field from "./finiteField";
 
-const field = new Field(661);
+const field = new Field(999983);
 
 type FiniteField = number;
 
 const hash = (rho: number, psi: number) => createHash('sha256').update((rho + psi).toString()).digest('hex')
 
 const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
+  input: process.stdin,
+  output: process.stdout,
 });
 
-// https://stackoverflow.com/questions/18193953/waiting-for-user-to-enter-input-in-node-js
 function askQuestion(query: string): Promise<string> {
   return new Promise((resolve) =>
     rl.question(query, (ans) => {
@@ -34,13 +33,13 @@ function askQuestion(query: string): Promise<string> {
   );
 }
 
-const max = 2 ^ 18;
-const min = 2 ^ 20;
+const maxSalt = 2 ^ 18;
+const minSalt = 2 ^ 20;
 
-export const lottery = <SL extends Location, CL extends Location>( serverLocations: SL[], clientLocations: CL[],
-  askQuestion: (query: string) => Promise<string>
+export const lottery = <SL extends Location, CL extends Location>(
+  serverLocations: SL[], clientLocations: CL[], askQuestion: (query: string) => Promise<string>
 ): Choreography<"analyst" | SL | CL, undefined, MultiplyLocated<FiniteField, "analyst">> =>
-   async ({ locally, fanin, fanout, parallel }) => {
+  async ({ locally, fanin, fanout, parallel }) => {
     const secret = await parallel(clientLocations, async () => {
       const secretStr = await askQuestion("Secret: ");
       return parseInt(secretStr);
@@ -54,12 +53,13 @@ export const lottery = <SL extends Location, CL extends Location>( serverLocatio
       for (const [index, server] of serverLocations.entries()) {
         serverToShares[server] = shares[index] as number
       }
-      return serverToShares as Record<SL, FiniteField>;
+      return serverToShares;
     });
 
     const serverShares = await fanout(serverLocations, (server) =>
-      async ({ fanin }) => fanin(clientLocations, [server], (client) => async ({ locally, comm }) => {
-          const share = await locally(client, (unwrap) => unwrap(clientShares)[server] as FiniteField);
+      async ({ fanin }) => fanin(clientLocations, [server], (client) =>
+        async ({ locally, comm }) => {
+          const share = await locally(client, (unwrap) => unwrap(clientShares)[server]);
           return comm(client, server, share);
         })
     );
@@ -71,17 +71,19 @@ export const lottery = <SL extends Location, CL extends Location>( serverLocatio
     });
 
     // Salt value
-    const psi = await parallel(serverLocations, async () => Math.floor(Math.random() * (max - min + 1)) + min);
+    const psi = await parallel(serverLocations, async () =>
+      Math.floor(Math.random() * (maxSalt - minSalt + 1)) + minSalt
+    );
 
     // 2) Each server computes and publishes the hash α = H(ρ, ψ) to serve as a commitment
-    const alpha = await parallel(serverLocations, async (server, unwrap) => {
+    const alpha = await parallel(serverLocations, async (_, unwrap) => {
       const rhoValue = unwrap(rho);
       const psiValue = unwrap(psi);
       return hash(rhoValue, psiValue);
     });
 
     const alpha_ = await fanin(serverLocations, serverLocations, (server) =>
-      async ({ multicast }) =>  multicast(server, serverLocations, alpha)
+      async ({ multicast }) => multicast(server, serverLocations, alpha)
     );
 
     // 3) Every server opens their commitments by publishing their ψ and ρ to each other
@@ -89,7 +91,7 @@ export const lottery = <SL extends Location, CL extends Location>( serverLocatio
       async ({ multicast }) => multicast(server, serverLocations, psi)
     );
 
-    const rho_: MultiplyLocated<{ [key in SL]: FiniteField}, SL> = await fanin(serverLocations, serverLocations, (server) =>
+    const rho_ = await fanin(serverLocations, serverLocations, (server) =>
       async ({ multicast }) => multicast(server, serverLocations, rho)
     );
 
@@ -101,28 +103,28 @@ export const lottery = <SL extends Location, CL extends Location>( serverLocatio
     });
 
     // 5) If all the checks are successful, then sum random values to get the random index.
-    const omega = await parallel(serverLocations, async (server, unwrap) => {
+    const omega = await parallel(serverLocations, async (_, unwrap) => {
       const randomValues = Object.values(unwrap(rho_)) as [FiniteField];
       return randomValues.reduce((a, b) => field.add(a, b), field.zero) % clientLocations.length;
     });
 
-    const chosenShares = await parallel(serverLocations, async (server, unwrap) =>
-      Object.values(unwrap(serverShares))[unwrap(omega)]
+    const chosenShares = await parallel(serverLocations, async (_, unwrap) =>
+      Object.values(unwrap(serverShares))[unwrap(omega)] as FiniteField
     );
 
     // Server sends the chosen shares to the analyst
     const allShares = await fanin(serverLocations, ["analyst"], (server) =>
       async ({ locally, comm }) => {
-        const c = await locally(server, (unwrap) => {
-          return unwrap(chosenShares);
-        });
-        return comm(server, "analyst", c);
+        const chosenShares_ = await locally(server, (unwrap) => unwrap(chosenShares));
+        return comm(server, "analyst", chosenShares_);
       });
-    return await locally("analyst", (unwrap) => Object.values(unwrap(allShares) as Record<string, FiniteField>)
-                                                      .reduce((a, b) => field.add(a, b), field.zero));
-};
 
- async function main() {
+    return await locally("analyst", (unwrap) =>
+      Object.values(unwrap(allShares) as Record<string, FiniteField>)
+        .reduce((a, b) => field.add(a, b), field.zero));
+  };
+
+async function main() {
   // Available roles to choose from
   const roles = ["server1", "server2", "client1", "client2", "analyst"];
 

@@ -56,11 +56,10 @@ describe("lottery", () => {
   });
   it("Test lottery", async () => {
     
-    // TODO randomize this
-    const client1Secret = 42;
-    const client2Secret = 84;
-    const server1Secret = 2;
-    const server2Secret = 4;
+    const client1Secret = Math.floor(Math.random() * 999983);
+    const client2Secret = Math.floor(Math.random() * 999983);
+    const server1Secret = Math.floor(Math.random() * 10);
+    const server2Secret = Math.floor(Math.random() * 10);
 
     const asAnswer = (num: number) => () => Promise.resolve(num.toString())
 

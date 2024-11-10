@@ -47,11 +47,12 @@ export const lottery = <SL extends Location, CL extends Location>(
 
     const clientShares = await parallel(clientLocations, async (_, unwrap) => {
       const freeShares = Array.from({ length: serverLocations.length - 1 }, () => field.rand());
-      const lastShare = field.sub(unwrap(secret), freeShares.reduce((a, b) => field.add(a, b), field.zero));
+      const lastShare = field.sub(unwrap(secret),
+        freeShares.reduce((a, b) => field.add(a, b), field.zero));
       const shares = freeShares.concat(lastShare);
       const serverToShares: Record<string, FiniteField> = {};
       for (const [index, server] of serverLocations.entries()) {
-        serverToShares[server] = shares[index] as number
+        serverToShares[server] = shares[index] as FiniteField;
       }
       return serverToShares;
     });

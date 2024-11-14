@@ -11,7 +11,6 @@ import { lottery } from "./lottery";
 
 const servers = ["server1" as const, "server2" as const];
 const clients = ["client1" as const, "client2" as const];
-const analyst = "analyst" as const
 
 
 
@@ -71,8 +70,8 @@ describe("lottery", () => {
       analystProjector.epp(lottery(servers, clients, () => Promise.resolve("Not invoked")))(undefined),
     ]);
 
-    let i = (server1Secret + server2Secret) % clients.length;
-    let expectedAnswer = [client1Secret, client2Secret][i]
+    const i = (server1Secret + server2Secret) % clients.length;
+    const expectedAnswer = [client1Secret, client2Secret][i]
 
     expect(analystProjector.unwrap(analystAnswer)).toBe(expectedAnswer);
   });

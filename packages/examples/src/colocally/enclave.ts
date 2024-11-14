@@ -11,12 +11,11 @@ const test: Choreography<Locations> = async ({ locally, enclave }) => {
       ["alice", "bob", "carol"],
       async ({ broadcast }) => {
         const _msgAtEveryone = await broadcast("carol", msgAtCarol);
-        return [];
       },
-      [],
+      []
     );
   } catch (e) {
     console.warn(e);
   }
-  return [];
+  return undefined;
 };

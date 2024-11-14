@@ -1,13 +1,13 @@
 import esMain from "es-main";
 
-import { Choreography, Located, Runner } from "@choreography-ts/core";
+import { Choreography, Runner } from "@choreography-ts/core";
 
 export type Locations = "alice" | "bob" | "carol";
 
 export const parallel_test: Choreography<Locations, [], []> = async ({
   parallel,
 }) => {
-  await parallel(["alice", "bob", "carol"], async (location, unwrap) => {
+  await parallel(["alice", "bob", "carol"], async (location) => {
     console.log(`Hello from ${location}`);
     return location;
   });

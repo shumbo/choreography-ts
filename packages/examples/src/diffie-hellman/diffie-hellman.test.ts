@@ -33,11 +33,11 @@ describe("Diffie Hellman", () => {
     ]);
   });
   it("should return the same shared key", async () => {
-    const keyExchange = diffieHellman("alice", "bob");
+    const keyExchange = diffieHellman<"alice", "bob">("alice", "bob");
     const [[s1, _a], [_b, s2]] = await Promise.all([
-      aliceProjector.epp(keyExchange)([false]),
-      bobProjector.epp(keyExchange)([undefined]),
+      aliceProjector.epp(keyExchange)(aliceProjector.local(false)),
+      bobProjector.epp(keyExchange)(bobProjector.remote("alice")),
     ]);
-    expect(s1).toEqual(s2); // The shared key should be the same
+    expect(aliceProjector.unwrap(s1)).toEqual(bobProjector.unwrap(s2)); // The shared key should be the same
   });
 });

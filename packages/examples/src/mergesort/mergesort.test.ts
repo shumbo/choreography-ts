@@ -42,10 +42,14 @@ describe("mergesort", () => {
   it("should sort the array", async () => {
     const mergesort = sort("primary", "worker1", "worker2");
     const [[sorted]] = await Promise.all([
-      primaryProjector.epp(mergesort)([[9, 7, 5, 1, 0, 8, 3, 4, 2, 6]]),
-      worker1Projector.epp(mergesort)([undefined]),
-      worker2Projector.epp(mergesort)([undefined]),
+      primaryProjector.epp(mergesort)([
+        primaryProjector.local([9, 7, 5, 1, 0, 8, 3, 4, 2, 6]),
+      ]),
+      worker1Projector.epp(mergesort)([worker1Projector.remote("primary")]),
+      worker2Projector.epp(mergesort)([worker2Projector.remote("primary")]),
     ]);
-    expect(sorted).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(primaryProjector.unwrap(sorted)).toEqual([
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+    ]);
   });
 });

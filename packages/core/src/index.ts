@@ -19,6 +19,7 @@ export {
   Projector,
   Runner,
   parcelFromJSON,
+  flatten,
 } from "./core.js";
 export { Queue } from "./lib/queue.js";
 export { Tag } from "./lib/tag.js";

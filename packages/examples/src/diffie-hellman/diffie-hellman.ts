@@ -1,4 +1,9 @@
-import { Choreography, Located, Projector } from "@choreography-ts/core";
+import {
+  Choreography,
+  MultiplyLocated,
+  Projector,
+  Location,
+} from "@choreography-ts/core";
 import {
   HttpConfig,
   ExpressTransport,
@@ -43,18 +48,18 @@ const randInRange = (min: number, max: number) =>
 ///////////////////////////////////
 // Diffie-Hellman implementation //
 ///////////////////////////////////
-const locations = ["alice", "bob"];
-export type Location = (typeof locations)[number];
+const locations = ["alice", "bob"] as const;
+export type L = (typeof locations)[number];
 
 export const diffieHellman = <A extends Location, B extends Location>(
   a: A,
-  b: B,
+  b: B
 ) => {
   const choreo: Choreography<
-    Location,
-    [Located<boolean, A>], // Specify boolean argument specifically for location "A" ("A|B" instead would mean for both)
-    [Located<number, A>, Located<number, B>]
-  > = async ({ locally, comm }, [arg]) => {
+    A | B,
+    MultiplyLocated<boolean, A>, // Specify boolean argument specifically for location "A" ("A|B" instead would mean for both)
+    [MultiplyLocated<number, A>, MultiplyLocated<number, B>]
+  > = async ({ locally, comm }, arg) => {
     // The `arg` specifies whether `a` should wait to initiate key exchange
 
     // Wait for alice to start key exchange (if desired)
@@ -83,7 +88,7 @@ export const diffieHellman = <A extends Location, B extends Location>(
       });
     });
     await locally(b, () =>
-      console.log("Waiting for alice to begin exchange..."),
+      console.log("Waiting for alice to begin exchange...")
     );
 
     // Alice picks p and g to send to bob
@@ -105,11 +110,11 @@ export const diffieHellman = <A extends Location, B extends Location>(
     // Alice and bob compute and exchange numbers
     const a_ = await locally(
       a,
-      (unwrap) => unwrap(ga) ^ unwrap(sa) % unwrap(pa),
+      (unwrap) => unwrap(ga) ^ unwrap(sa) % unwrap(pa)
     );
     const b_ = await locally(
       b,
-      (unwrap) => unwrap(gb) ^ unwrap(sb) % unwrap(pb),
+      (unwrap) => unwrap(gb) ^ unwrap(sb) % unwrap(pb)
     );
     const a__ = await comm(a, b, a_); // Send a_ to b
     const b__ = await comm(b, a, b_); // Send b_ to a
@@ -134,7 +139,7 @@ export const diffieHellman = <A extends Location, B extends Location>(
 // Testing //
 /////////////
 async function main(host: string): Promise<void> {
-  const config: HttpConfig<Location> = {
+  const config: HttpConfig<L> = {
     alice: ["localhost", 3000],
     bob: ["localhost", 3001],
   };
@@ -143,11 +148,11 @@ async function main(host: string): Promise<void> {
   if (host === "alice") {
     const aliceTransport = await ExpressTransport.create(config, "alice");
     const aliceProjector = new Projector(aliceTransport, "alice");
-    await aliceProjector.epp(keyExchange)([true]);
+    await aliceProjector.epp(keyExchange)(aliceProjector.local(true));
   } else {
     const bobTransport = await ExpressTransport.create(config, "bob");
     const bobProjector = new Projector(bobTransport, "bob");
-    await bobProjector.epp(keyExchange)([undefined]);
+    await bobProjector.epp(keyExchange)(bobProjector.remote("alice"));
   }
 }
 

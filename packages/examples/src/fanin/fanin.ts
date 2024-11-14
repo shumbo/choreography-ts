@@ -1,11 +1,6 @@
 import esMain from "es-main";
 
-import {
-  Choreography,
-  Located,
-  Runner,
-  Projector,
-} from "@choreography-ts/core";
+import { Choreography, Projector } from "@choreography-ts/core";
 import {
   HttpConfig,
   ExpressTransport,
@@ -24,13 +19,13 @@ export const fanin_test: Choreography<Locations, [], []> = async ({
       async ({ locally, comm }) => {
         const msgAtLoc = await locally(loc, () => `Hello from ${loc}!`);
         const msgAtAlice = await comm(loc, "alice", msgAtLoc);
-        return [msgAtAlice];
-      }
+        return msgAtAlice;
+      },
   );
   locally("alice", (unwrap) =>
     console.log(
-      `Bob said "${unwrap(m).bob}" and Carol said "${unwrap(m).carol}"`
-    )
+      `Bob said "${unwrap(m).bob}" and Carol said "${unwrap(m).carol}"`,
+    ),
   );
   return [];
 };

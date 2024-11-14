@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest";
 
-import { Choreography, Located, Runner } from "./core";
+import { Choreography, MultiplyLocated, Runner } from "./core";
 
 const runner = new Runner();
 
@@ -13,7 +13,7 @@ describe("core", () => {
       const choreography: Choreography<
         "alice" | "bob",
         [],
-        [Located<string, "bob">]
+        [MultiplyLocated<string, "bob">]
       > = async ({ locally, comm }) => {
         const msg = await locally("alice", () => "Hello, world!");
         const msgAtBob = await comm("alice", "bob", msg);
@@ -22,7 +22,7 @@ describe("core", () => {
 
       const f = runner.compile(choreography);
       const [msgAtBob] = await f([]);
-      expect(msgAtBob).toEqual("Hello, world!");
+      expect(runner.unwrap(msgAtBob)).toEqual("Hello, world!");
     });
     test("Global arguments", async () => {
       const p = "GLOBAL ARGUMENT";
@@ -38,17 +38,16 @@ describe("core", () => {
     });
     test("Located arguments", async () => {
       const p = "Alice's Secret Message";
-      const c: Choreography<Locations, [Located<string, "alice">]> = async (
-        { locally },
-        [msg],
-      ) => {
+      const c: Choreography<
+        Locations,
+        MultiplyLocated<string, "alice">
+      > = async ({ locally }, msg) => {
         await locally("alice", (unwrap) => {
           expect(unwrap(msg)).toBe(p);
         });
-        return [];
       };
       const g = runner.compile(c);
-      await g([p]);
+      await g(runner.local(p));
     });
     test("Async locally", async () => {
       let count = 0;
@@ -60,10 +59,9 @@ describe("core", () => {
           expect(unwrap(msg)).toBe(5);
           count += 1;
         });
-        return [];
       };
       const g = runner.compile(c);
-      await g([]);
+      await g(void 0);
       expect(count).toBe(1);
     });
     test("multicast", async () => {
@@ -83,10 +81,9 @@ describe("core", () => {
           expect(unwrap(msgAtSelectedTwo)).toBe("Hello, world!");
           count += 1;
         });
-        return [];
       };
       const g = runner.compile(test);
-      await g([]);
+      await g(void 0);
       expect(count).toBe(2);
     });
     test("naked", async () => {
@@ -109,10 +106,9 @@ describe("core", () => {
           },
           [],
         );
-        return [];
       };
       const g = runner.compile(test);
-      await g([]);
+      await g(void 0);
       expect(check).toBe("Hello, world!");
     });
     test("broadcast", async () => {
@@ -122,10 +118,9 @@ describe("core", () => {
         const msg = await broadcast("alice", localMsg);
         expect(msg).toBe("Hello everyone!");
         count += 1;
-        return [];
       };
       const g = runner.compile(test);
-      await g([]);
+      await g(void 0);
       expect(count).toBe(1);
     });
     test("enclave", async () => {
@@ -138,14 +133,12 @@ describe("core", () => {
             const msg = await broadcast("bob", msgAtBob);
             expect(msg).toBe("Hello, world!");
             count += 1;
-            return [];
           },
-          [],
+          void 0,
         );
-        return [];
       };
       const g = runner.compile(test);
-      await g([]);
+      await g(void 0);
       expect(count).toBe(1);
     });
   });

@@ -1,11 +1,6 @@
 import esMain from "es-main";
 
-import {
-  Choreography,
-  Located,
-  Runner,
-  Projector,
-} from "@choreography-ts/core";
+import { Choreography, Projector } from "@choreography-ts/core";
 import {
   HttpConfig,
   ExpressTransport,
@@ -19,13 +14,19 @@ export const fanout_test: Choreography<Locations, [], []> = async ({
 }) => {
   const x = await fanout(
     ["bob", "carol"],
-    <Q extends "bob" | "carol">(loc: Q) =>
+    (loc) =>
       async ({ locally, comm }) => {
         const msgAtAlice = await locally("alice", () => `Hi ${loc}!`);
         const msgAtLoc = await comm("alice", loc, msgAtAlice);
-        return [msgAtLoc];
-      }
+        return msgAtLoc;
+      },
   );
+  locally("bob", (unwrap) => {
+    console.log(`Bob received: ${unwrap(x)}`);
+  });
+  locally("carol", (unwrap) => {
+    console.log(`Carol received: ${unwrap(x)}`);
+  });
   return [];
 };
 
@@ -49,8 +50,7 @@ async function main() {
   const bob = bobProjector.epp(fanout_test);
   const carol = carolProjector.epp(fanout_test);
 
-  const ret = await Promise.all([alice([]), bob([]), carol([])]);
-  console.log(ret);
+  await Promise.all([alice([]), bob([]), carol([])]);
   await Promise.all([
     aliceTransport.teardown(),
     bobTransport.teardown(),

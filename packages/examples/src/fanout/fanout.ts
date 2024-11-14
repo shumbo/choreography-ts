@@ -19,7 +19,7 @@ export const fanout_test: Choreography<Locations, [], []> = async ({
         const msgAtAlice = await locally("alice", () => `Hi ${loc}!`);
         const msgAtLoc = await comm("alice", loc, msgAtAlice);
         return msgAtLoc;
-      }
+      },
   );
   locally("bob", (unwrap) => {
     console.log(`Bob received: ${unwrap(x)}`);

@@ -20,12 +20,12 @@ export const fanin_test: Choreography<Locations, [], []> = async ({
         const msgAtLoc = await locally(loc, () => `Hello from ${loc}!`);
         const msgAtAlice = await comm(loc, "alice", msgAtLoc);
         return msgAtAlice;
-      }
+      },
   );
   locally("alice", (unwrap) =>
     console.log(
-      `Bob said "${unwrap(m).bob}" and Carol said "${unwrap(m).carol}"`
-    )
+      `Bob said "${unwrap(m).bob}" and Carol said "${unwrap(m).carol}"`,
+    ),
   );
   return [];
 };

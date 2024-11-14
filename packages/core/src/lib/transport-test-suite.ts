@@ -23,7 +23,7 @@ export namespace TransportTestSuite {
   };
   export function transportTestSuite(
     factory: TransportFactory,
-    testFramework?: TestFramework
+    testFramework?: TestFramework,
   ) {
     const beforeAll =
       testFramework?.beforeAll ?? (globalThis as any)["beforeAll"];
@@ -123,7 +123,7 @@ export namespace TransportTestSuite {
         const msgAtSelectedTwo = await multicast(
           "alice",
           ["carol", "bob"],
-          msg
+          msg,
         );
         const msgAtBob = await locally("bob", (unwrap) => {
           return unwrap(msgAtSelectedTwo);
@@ -189,7 +189,7 @@ export namespace TransportTestSuite {
             count += 1;
             return [];
           },
-          []
+          [],
         );
         return [];
       };
@@ -214,7 +214,7 @@ export namespace TransportTestSuite {
           async () => {
             const _msgAtEveryone = await broadcast("carol", msgAtCarol);
           },
-          undefined
+          undefined,
         );
         return undefined;
       };

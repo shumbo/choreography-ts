@@ -12,23 +12,36 @@ import { lottery } from "./lottery";
 const servers = ["server1" as const, "server2" as const];
 const clients = ["client1" as const, "client2" as const];
 
+let server1Projector: Projector<
+  "server1" | "server2" | "client1" | "client2" | "analyst",
+  "server1"
+>;
+let server2Projector: Projector<
+  "server1" | "server2" | "client1" | "client2" | "analyst",
+  "server2"
+>;
+let client1Projector: Projector<
+  "server1" | "server2" | "client1" | "client2" | "analyst",
+  "client1"
+>;
+let client2Projector: Projector<
+  "server1" | "server2" | "client1" | "client2" | "analyst",
+  "client2"
+>;
+let analystProjector: Projector<
+  "server1" | "server2" | "client1" | "client2" | "analyst",
+  "analyst"
+>;
 
-
-let server1Projector: Projector<"server1" | "server2" | "client1" | "client2" | "analyst", "server1">;
-let server2Projector: Projector<"server1" | "server2" | "client1" | "client2" | "analyst", "server2">;
-let client1Projector: Projector<"server1" | "server2" | "client1" | "client2" | "analyst", "client1">;
-let client2Projector: Projector<"server1" | "server2" | "client1" | "client2" | "analyst", "client2">;
-let analystProjector: Projector<"server1" | "server2" | "client1" | "client2" | "analyst", "analyst">;
-
-const config: HttpConfig<"server1" | "server2" | "client1" | "client2" | "analyst"> = {
+const config: HttpConfig<
+  "server1" | "server2" | "client1" | "client2" | "analyst"
+> = {
   server1: ["127.0.0.1", await getPort()],
   server2: ["127.0.0.1", await getPort()],
   client1: ["127.0.0.1", await getPort()],
   client2: ["127.0.0.1", await getPort()],
   analyst: ["127.0.0.1", await getPort()],
 };
-
-
 
 describe("lottery", () => {
   beforeAll(async () => {
@@ -46,32 +59,41 @@ describe("lottery", () => {
   });
   afterAll(async () => {
     await Promise.all([
-        server1Projector.transport.teardown(),
-        server2Projector.transport.teardown(),
-        client1Projector.transport.teardown(),
-        client2Projector.transport.teardown(),
-        analystProjector.transport.teardown(),
+      server1Projector.transport.teardown(),
+      server2Projector.transport.teardown(),
+      client1Projector.transport.teardown(),
+      client2Projector.transport.teardown(),
+      analystProjector.transport.teardown(),
     ]);
   });
   it("Test lottery", async () => {
-    
     const client1Secret = Math.floor(Math.random() * 999983);
     const client2Secret = Math.floor(Math.random() * 999983);
     const server1Secret = Math.floor(Math.random() * 10);
     const server2Secret = Math.floor(Math.random() * 10);
 
-    const asAnswer = (num: number) => () => Promise.resolve(num.toString())
+    const asAnswer = (num: number) => () => Promise.resolve(num.toString());
 
-    const [,,,,analystAnswer] = await Promise.all([
-      client1Projector.epp(lottery(servers, clients, asAnswer(client1Secret)))(undefined),
-      client2Projector.epp(lottery(servers, clients, asAnswer(client2Secret)))(undefined),
-      server1Projector.epp(lottery(servers, clients, asAnswer(server1Secret)))(undefined),
-      server2Projector.epp(lottery(servers, clients, asAnswer(server2Secret)))(undefined),
-      analystProjector.epp(lottery(servers, clients, () => Promise.resolve("Not invoked")))(undefined),
+    const [, , , , analystAnswer] = await Promise.all([
+      client1Projector.epp(lottery(servers, clients, asAnswer(client1Secret)))(
+        undefined,
+      ),
+      client2Projector.epp(lottery(servers, clients, asAnswer(client2Secret)))(
+        undefined,
+      ),
+      server1Projector.epp(lottery(servers, clients, asAnswer(server1Secret)))(
+        undefined,
+      ),
+      server2Projector.epp(lottery(servers, clients, asAnswer(server2Secret)))(
+        undefined,
+      ),
+      analystProjector.epp(
+        lottery(servers, clients, () => Promise.resolve("Not invoked")),
+      )(undefined),
     ]);
 
     const i = (server1Secret + server2Secret) % clients.length;
-    const expectedAnswer = [client1Secret, client2Secret][i]
+    const expectedAnswer = [client1Secret, client2Secret][i];
 
     expect(analystProjector.unwrap(analystAnswer)).toBe(expectedAnswer);
   });

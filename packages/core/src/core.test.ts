@@ -71,7 +71,7 @@ describe("core", () => {
         const msgAtSelectedTwo = await multicast(
           "alice",
           ["bob", "carol"],
-          msg
+          msg,
         );
         await locally("bob", (unwrap) => {
           expect(unwrap(msgAtSelectedTwo)).toBe("Hello, world!");
@@ -104,7 +104,7 @@ describe("core", () => {
             check = naked(mlv);
             return [];
           },
-          []
+          [],
         );
       };
       const g = runner.compile(test);
@@ -134,7 +134,7 @@ describe("core", () => {
             expect(msg).toBe("Hello, world!");
             count += 1;
           },
-          void 0
+          void 0,
         );
       };
       const g = runner.compile(test);

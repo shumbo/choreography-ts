@@ -3,7 +3,6 @@
 // Just contains the operators we need for this example
 
 class Field {
-
   prime: number;
   zero = 0;
 
@@ -17,7 +16,8 @@ class Field {
 
   sub(a: number, b: number) {
     const x = (a - b) % this.prime;
-    if (x < 0) { // I think this is right
+    if (x < 0) {
+      // I think this is right
       return x + this.prime;
     } else {
       return x;
@@ -27,8 +27,6 @@ class Field {
   rand() {
     return Math.floor(Math.random() * this.prime);
   }
-
-
 }
 
 export default Field;

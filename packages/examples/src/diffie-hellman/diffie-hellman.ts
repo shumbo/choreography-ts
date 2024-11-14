@@ -53,7 +53,7 @@ export type L = (typeof locations)[number];
 
 export const diffieHellman = <A extends Location, B extends Location>(
   a: A,
-  b: B
+  b: B,
 ) => {
   const choreo: Choreography<
     A | B,
@@ -88,7 +88,7 @@ export const diffieHellman = <A extends Location, B extends Location>(
       });
     });
     await locally(b, () =>
-      console.log("Waiting for alice to begin exchange...")
+      console.log("Waiting for alice to begin exchange..."),
     );
 
     // Alice picks p and g to send to bob
@@ -110,11 +110,11 @@ export const diffieHellman = <A extends Location, B extends Location>(
     // Alice and bob compute and exchange numbers
     const a_ = await locally(
       a,
-      (unwrap) => unwrap(ga) ^ unwrap(sa) % unwrap(pa)
+      (unwrap) => unwrap(ga) ^ unwrap(sa) % unwrap(pa),
     );
     const b_ = await locally(
       b,
-      (unwrap) => unwrap(gb) ^ unwrap(sb) % unwrap(pb)
+      (unwrap) => unwrap(gb) ^ unwrap(sb) % unwrap(pb),
     );
     const a__ = await comm(a, b, a_); // Send a_ to b
     const b__ = await comm(b, a, b_); // Send b_ to a

@@ -11,7 +11,7 @@ import {
 
 function moveAndPrint<L extends Location, L1 extends L, L2 extends L>(
   from: L1,
-  to: L2
+  to: L2,
 ) {
   const c: Choreography<
     L1 | L2,
@@ -57,8 +57,8 @@ async function main() {
 
   await Promise.all(
     [aliceProjector, bobProjector, carolProjector].map((p) =>
-      p.epp(choreography)([])
-    )
+      p.epp(choreography)([]),
+    ),
   );
   await Promise.all([
     aliceProjector.transport.teardown(),

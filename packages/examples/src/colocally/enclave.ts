@@ -12,7 +12,7 @@ const test: Choreography<Locations> = async ({ locally, enclave }) => {
       async ({ broadcast }) => {
         const _msgAtEveryone = await broadcast("carol", msgAtCarol);
       },
-      []
+      [],
     );
   } catch (e) {
     console.warn(e);

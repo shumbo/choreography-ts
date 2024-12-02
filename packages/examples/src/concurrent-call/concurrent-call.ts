@@ -2,14 +2,19 @@ import {
   HttpConfig,
   ExpressTransport,
 } from "@choreography-ts/transport-express";
-import { Choreography, Located, Projector } from "@choreography-ts/core";
+import {
+  Choreography,
+  MultiplyLocated,
+  Projector,
+} from "@choreography-ts/core";
+import esMain from "es-main";
 
 export type L = "alice" | "bob";
 
 export const concurrentCall: Choreography<
   L,
-  [Located<number, "alice">, Located<number, "alice">], // delay for alice
-  [Located<number, "bob">, Located<number, "bob">]
+  [MultiplyLocated<number, "alice">, MultiplyLocated<number, "alice">], // delay for alice
+  [MultiplyLocated<number, "bob">, MultiplyLocated<number, "bob">]
 > = async ({ locally, comm, call }, [d1, d2]) => {
   const m1 = await locally("alice", () => "before parallel call");
   await comm("alice", "bob", m1); // [1]
@@ -25,7 +30,7 @@ export const concurrentCall: Choreography<
     await locally("bob", (unwrap) => {
       console.log(unwrap(msgAtBob));
     });
-    return [oneAtBob] as [Located<number, "bob">];
+    return [oneAtBob] as const;
   }, []);
   const p2 = call(async ({ locally, comm }) => {
     // [3]
@@ -39,7 +44,7 @@ export const concurrentCall: Choreography<
     await locally("bob", (unwrap) => {
       console.log(unwrap(msgAtBob));
     });
-    return [twoAtBob] as [Located<number, "bob">];
+    return [twoAtBob] as const;
   }, []);
   const [[oneAtBob], [twoAtBob]] = await Promise.all([p1, p2]);
   return [oneAtBob, twoAtBob];
@@ -61,13 +66,13 @@ async function main() {
   const alice = aliceProjector.epp(concurrentCall);
   const bob = bobProjector.epp(concurrentCall);
   const [_, ret] = await Promise.all([
-    alice([100, 0]),
-    bob([undefined, undefined]),
+    alice([aliceProjector.local(100), aliceProjector.local(0)]),
+    bob([bobProjector.remote("alice"), bobProjector.remote("alice")]),
   ]);
   console.log(ret);
   return ret;
 }
 
-if (require.main === module) {
+if (esMain(import.meta)) {
   main();
 }

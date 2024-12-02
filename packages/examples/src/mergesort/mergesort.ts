@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { Choreography, Located, Projector } from "@choreography-ts/core";
+import {
+  Choreography,
+  MultiplyLocated,
+  Projector,
+} from "@choreography-ts/core";
 import {
   HttpConfig,
   ExpressTransport,
@@ -25,8 +29,8 @@ export const sort = <
 ) => {
   const choreography: Choreography<
     Location,
-    [Located<number[], A>],
-    [Located<number[], A>]
+    [MultiplyLocated<number[], A>],
+    [MultiplyLocated<number[], A>]
   > = async ({ locally, broadcast, comm, call }, [arr]) => {
     const conditionAtA = await locally(a, (unwrap) => unwrap(arr).length > 1);
     const condition = await broadcast(a, conditionAtA);
@@ -55,8 +59,8 @@ const merge = <A extends Location, B extends Location, C extends Location>(
 ) => {
   const choreography: Choreography<
     Location,
-    [Located<number[], B>, Located<number[], C>],
-    [Located<number[], A>]
+    [MultiplyLocated<number[], B>, MultiplyLocated<number[], C>],
+    [MultiplyLocated<number[], A>]
   > = async ({ locally, broadcast, comm, call }, [lhs, rhs]) => {
     const lhsHasElementsAtB = await locally(
       b,
@@ -130,11 +134,13 @@ async function main() {
 
   const mergesort = sort("primary", "worker1", "worker2");
   const [[sorted]] = await Promise.all([
-    primaryProjector.epp(mergesort)([[1, 4, 6, 2, 3, 5, 7, 8, 9, 10]]),
-    worker1Projector.epp(mergesort)([undefined]),
-    worker2Projector.epp(mergesort)([undefined]),
+    primaryProjector.epp(mergesort)([
+      primaryProjector.local([1, 4, 6, 2, 3, 5, 7, 8, 9, 10]),
+    ]),
+    worker1Projector.epp(mergesort)([worker1Projector.remote("primary")]),
+    worker2Projector.epp(mergesort)([worker2Projector.remote("primary")]),
   ]);
-  console.log(sorted);
+  console.log(primaryProjector.unwrap(sorted));
 }
 
 if (require.main === module) {

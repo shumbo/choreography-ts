@@ -31,17 +31,17 @@ describe("bookseller", () => {
     ]);
   });
   it("buyer can buy TAPL", async () => {
-    const [[dateForTAPL]] = await Promise.all([
-      buyerProjector.epp(bookseller)(["TAPL"]),
-      sellerProjector.epp(bookseller)([undefined]),
+    const [dateForTAPL] = await Promise.all([
+      buyerProjector.epp(bookseller)(buyerProjector.local("TAPL")),
+      sellerProjector.epp(bookseller)(sellerProjector.remote("buyer")),
     ]);
-    expect(dateForTAPL).toBeTruthy();
+    expect(buyerProjector.unwrap(dateForTAPL)).toBeTruthy();
   });
   it("buyer cannot buy HoTT", async () => {
-    const [[dateForHoTT]] = await Promise.all([
-      buyerProjector.epp(bookseller)(["HoTT"]),
-      sellerProjector.epp(bookseller)([undefined]),
+    const [dateForHoTT] = await Promise.all([
+      buyerProjector.epp(bookseller)(buyerProjector.local("HoTT")),
+      sellerProjector.epp(bookseller)(sellerProjector.remote("buyer")),
     ]);
-    expect(dateForHoTT).toBeFalsy();
+    expect(buyerProjector.unwrap(dateForHoTT)).toBeFalsy();
   });
 });

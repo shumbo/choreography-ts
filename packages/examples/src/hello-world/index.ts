@@ -13,7 +13,7 @@ const helloWorld: Choreography<Locations> = async ({ locally, comm }) => {
   await locally("bob", (unwrap) => {
     console.log(unwrap(msgAtBob));
   });
-  return [];
+  return undefined;
 };
 
 async function main(location: string) {
@@ -30,12 +30,12 @@ async function main(location: string) {
   if (location === "alice") {
     const aliceTransport = await ExpressTransport.create(config, "alice");
     const aliceProjector = new Projector(aliceTransport, "alice");
-    await aliceProjector.epp(helloWorld)([]);
+    await aliceProjector.epp(helloWorld)(undefined);
     await aliceTransport.teardown();
   } else {
     const bobTransport = await ExpressTransport.create(config, "bob");
     const bobProjector = new Projector(bobTransport, "bob");
-    await bobProjector.epp(helloWorld)([]);
+    await bobProjector.epp(helloWorld)(undefined);
     await bobTransport.teardown();
   }
 }

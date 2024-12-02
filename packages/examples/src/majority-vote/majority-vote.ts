@@ -1,4 +1,8 @@
-import { Choreography, Located, Projector } from "@choreography-ts/core";
+import {
+  Choreography,
+  MultiplyLocated,
+  Projector,
+} from "@choreography-ts/core";
 import {
   HttpConfig,
   ExpressTransport,
@@ -57,7 +61,7 @@ function reduceWhile<T, U>(
 }
 
 function doVote<Voter extends L>(voter: Voter) {
-  const c: Choreography<L, [], [Located<Vote, "judge">]> = async ({
+  const c: Choreography<L, [], [MultiplyLocated<Vote, "judge">]> = async ({
     comm,
     locally,
   }) => {
@@ -75,14 +79,17 @@ function doVote<Voter extends L>(voter: Voter) {
 export const majorityVote: Choreography<
   "judge" | "voter1" | "voter2" | "voter3",
   [],
-  [Located<boolean, "judge">]
+  [MultiplyLocated<boolean, "judge">]
 > = async ({ locally, call }) => {
   const pendingVote1 = call(doVote("voter1"), []);
   const pendingVote2 = call(doVote("voter2"), []);
   const pendingVote3 = call(doVote("voter3"), []);
 
   const isMajority = await locally("judge", async (unwrap) => {
-    const yesCount = await reduceWhile<[Located<Vote, "judge">], number>(
+    const yesCount = await reduceWhile<
+      [MultiplyLocated<Vote, "judge">],
+      number
+    >(
       [pendingVote1, pendingVote2, pendingVote3],
       (accumulator, value, acceptedCount, rejectedCount) => {
         const [locatedVote] = value;

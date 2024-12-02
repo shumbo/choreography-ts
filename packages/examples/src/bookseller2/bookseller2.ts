@@ -1,16 +1,23 @@
-import { Choreography, Located, Projector } from "@choreography-ts/core";
+import {
+  Choreography,
+  MultiplyLocated,
+  Projector,
+  flatten,
+} from "@choreography-ts/core";
 import {
   ExpressTransport,
   HttpConfig,
 } from "@choreography-ts/transport-express";
+
+import esMain from "es-main";
 
 const locations = ["buyer1", "buyer2", "seller"] as const;
 export type Locations = (typeof locations)[number];
 
 type MakeDecision = Choreography<
   Locations,
-  [Located<number, "buyer1">],
-  [Located<boolean, "buyer1">]
+  MultiplyLocated<number, "buyer1">,
+  MultiplyLocated<boolean, "buyer1">
 >;
 
 const buyer1Budget = 100;
@@ -24,15 +31,15 @@ const deliveryDateTable = new Map<string, Date>([
   ["HoTT", new Date("2023-05-01")],
 ]);
 
-export const oneBuyer: MakeDecision = async ({ locally }, [price]) => {
+export const oneBuyer: MakeDecision = async ({ locally }, price) => {
   const decision = await locally(
     "buyer1",
     (unwrap) => unwrap(price) <= buyer1Budget,
   );
-  return [decision];
+  return decision;
 };
 
-export const twoBuyers: MakeDecision = async ({ locally, comm }, [price]) => {
+export const twoBuyers: MakeDecision = async ({ locally, comm }, price) => {
   const remaining_ = await locally(
     "buyer1",
     (unwrap) => unwrap(price) - buyer1Budget,
@@ -43,32 +50,32 @@ export const twoBuyers: MakeDecision = async ({ locally, comm }, [price]) => {
     (unwrap) => unwrap(remaining) <= buyer2Budget,
   );
   const decision = await comm("buyer2", "buyer1", decision_);
-  return [decision];
+  return decision;
 };
 
 export const bookseller: (
   makeDecision: MakeDecision,
 ) => Choreography<
   Locations,
-  [Located<string, "buyer1">],
-  [Located<Date | null, "buyer1">]
+  MultiplyLocated<string, "buyer1">,
+  MultiplyLocated<Date | null, "buyer1">
 > = (makeDecision) => {
   const c: Choreography<
     Locations,
-    [Located<string, "buyer1">],
-    [Located<Date | null, "buyer1">]
-  > = async ({ locally, comm, multicast, colocally, call }, [titleAtBuyer]) => {
+    MultiplyLocated<string, "buyer1">,
+    MultiplyLocated<Date | null, "buyer1">
+  > = async ({ locally, comm, multicast, enclave, call }, titleAtBuyer) => {
     const titleAtSeller = await comm("buyer1", "seller", titleAtBuyer);
     const priceAtSeller = await locally("seller", (unwrap) => {
       return priceTable.get(unwrap(titleAtSeller)) ?? 0;
     });
     const priceAtBuyer = await comm("seller", "buyer1", priceAtSeller);
-    const [decisionAtBuyer] = await call(makeDecision, [priceAtBuyer]);
+    const decisionAtBuyer = await call(makeDecision, priceAtBuyer);
     const decision = await multicast("buyer1", ["seller"], decisionAtBuyer);
-    const [deliveryDateAtBuyer] = await colocally(
+    const deliveryDateAtBuyer = await enclave(
       ["buyer1", "seller"],
-      async ({ locally, comm, peel }) => {
-        const sharedDecision = peel(decision);
+      async ({ locally, comm, naked }) => {
+        const sharedDecision = naked(decision);
         if (sharedDecision) {
           const deliveryDateAtSeller = await locally(
             "seller",
@@ -85,22 +92,23 @@ export const bookseller: (
               `Your book will be delivered on ${unwrap(deliveryDateAtBuyer)}`,
             );
           });
-          return [deliveryDateAtBuyer];
+          return deliveryDateAtBuyer;
         } else {
           await locally("buyer1", () => {
             console.log("You don't have enough money to buy this book");
           });
-          return [await locally("buyer1", () => null)];
+          const n = await locally("buyer1", () => null);
+          return n;
         }
       },
-      [],
+      undefined,
     );
     await locally("buyer2", () => {
       console.log(
         "I have no idea what happened to the book purchase, but that's ok",
       );
     });
-    return [deliveryDateAtBuyer];
+    return flatten(deliveryDateAtBuyer);
   };
   return c;
 };
@@ -124,15 +132,19 @@ async function main() {
 
   console.log("--- PROTOCOL WITH ONE BUYER ---");
   await Promise.all([
-    buyer1Projector.epp(bookseller(oneBuyer))(["HoTT"]),
-    buyer2Projector.epp(bookseller(oneBuyer))([undefined]),
-    sellerProjector.epp(bookseller(oneBuyer))([undefined]),
+    buyer1Projector.epp(bookseller(oneBuyer))(buyer1Projector.local("HoTT")),
+    buyer2Projector.epp(bookseller(oneBuyer))(buyer2Projector.remote("buyer1")),
+    sellerProjector.epp(bookseller(oneBuyer))(sellerProjector.remote("buyer1")),
   ]);
   console.log("--- PROTOCOL WITH TWO BUYERS ---");
   await Promise.all([
-    buyer1Projector.epp(bookseller(twoBuyers))(["TAPL"]),
-    buyer2Projector.epp(bookseller(twoBuyers))([undefined]),
-    sellerProjector.epp(bookseller(twoBuyers))([undefined]),
+    buyer1Projector.epp(bookseller(twoBuyers))(buyer1Projector.local("TAPL")),
+    buyer2Projector.epp(bookseller(twoBuyers))(
+      buyer2Projector.remote("buyer1"),
+    ),
+    sellerProjector.epp(bookseller(twoBuyers))(
+      sellerProjector.remote("buyer1"),
+    ),
   ]);
   await Promise.all([
     buyer1Transport.teardown(),
@@ -141,6 +153,6 @@ async function main() {
   ]);
 }
 
-if (require.main === module) {
+if (esMain(import.meta)) {
   main();
 }

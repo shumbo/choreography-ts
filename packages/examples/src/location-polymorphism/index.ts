@@ -1,17 +1,22 @@
-import { Choreography, Located, Projector } from "@choreography-ts/core";
+import {
+  Choreography,
+  MultiplyLocated,
+  Projector,
+  Location,
+} from "@choreography-ts/core";
 import {
   HttpConfig,
   ExpressTransport,
 } from "@choreography-ts/transport-express";
 
-function moveAndPrint<L extends string, L1 extends L, L2 extends L>(
+function moveAndPrint<L extends Location, L1 extends L, L2 extends L>(
   from: L1,
   to: L2,
 ) {
   const c: Choreography<
-    L,
-    [Located<string, L1>],
-    [Located<string, L2>]
+    L1 | L2,
+    [MultiplyLocated<string, L1>],
+    [MultiplyLocated<string, L2>]
   > = async ({ comm, locally }, [msgAtSender]) => {
     const msgAtReceiver = await comm(from, to, msgAtSender);
     locally(to, (unwrap) => {
@@ -23,12 +28,9 @@ function moveAndPrint<L extends string, L1 extends L, L2 extends L>(
 }
 
 const locations = ["alice", "bob", "carol"] as const;
-type Location = (typeof locations)[number];
+type L = (typeof locations)[number];
 
-const choreography: Choreography<Location, [], []> = async ({
-  locally,
-  call,
-}) => {
+const choreography: Choreography<L, [], []> = async ({ locally, call }) => {
   const msgAtAlice = await locally("alice", () => "message from alice");
   const c = moveAndPrint("alice", "bob");
   const [msgAtBob] = await call(c, [msgAtAlice]);
@@ -37,7 +39,7 @@ const choreography: Choreography<Location, [], []> = async ({
 };
 
 async function main() {
-  const config: HttpConfig<Location> = {
+  const config: HttpConfig<L> = {
     alice: ["localhost", 3000],
     bob: ["localhost", 3001],
     carol: ["localhost", 3002],

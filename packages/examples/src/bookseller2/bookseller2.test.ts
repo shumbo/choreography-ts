@@ -39,20 +39,20 @@ describe("bookseller2", () => {
   });
   it("cannot buy HoTT with one buyer", async () => {
     const choreography = bookseller(oneBuyer);
-    const [[dateForHoTT]] = await Promise.all([
-      buyer1Projector.epp(choreography)(["HoTT"]),
-      buyer2Projector.epp(choreography)([undefined]),
-      sellerProjector.epp(choreography)([undefined]),
+    const [dateForHoTT, ,] = await Promise.all([
+      buyer1Projector.epp(choreography)(buyer1Projector.local("HoTT")),
+      buyer2Projector.epp(choreography)(buyer2Projector.remote("buyer1")),
+      sellerProjector.epp(choreography)(sellerProjector.remote("buyer1")),
     ]);
-    expect(dateForHoTT).toBeFalsy();
+    expect(buyer1Projector.unwrap(dateForHoTT)).toBeFalsy();
   });
   it("can buy HoTT with two buyers", async () => {
     const choreography = bookseller(twoBuyers);
-    const [[dateForHoTT]] = await Promise.all([
-      buyer1Projector.epp(choreography)(["HoTT"]),
-      buyer2Projector.epp(choreography)([undefined]),
-      sellerProjector.epp(choreography)([undefined]),
+    const [dateForHoTT, ,] = await Promise.all([
+      buyer1Projector.epp(choreography)(buyer1Projector.local("HoTT")),
+      buyer2Projector.epp(choreography)(buyer2Projector.remote("buyer1")),
+      sellerProjector.epp(choreography)(sellerProjector.remote("buyer1")),
     ]);
-    expect(dateForHoTT).toBeTruthy();
+    expect(buyer1Projector.unwrap(dateForHoTT)).toBeTruthy();
   });
 });

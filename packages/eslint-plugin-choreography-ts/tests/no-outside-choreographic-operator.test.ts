@@ -9,9 +9,9 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test: Choreography<Locations> = async ({
         locally,
         broadcast,
-        colocally,
+        enclave,
       }) => {
-        const msg = await colocally(["bob", "carol"], () => "I'm Carol");
+        const msg = await enclave(["bob", "carol"], () => "I'm Carol");
         return [];
       };`,
     },
@@ -21,12 +21,12 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
-        colocally,
+        enclave,
       }) => {
-        const [deliveryDateAtBuyer] = await colocally(
+        const [deliveryDateAtBuyer] = await enclave(
           ["buyer1", "seller"],
-          async ({ locally, comm, peel }) => {
-            const sharedDecision = peel(decision);
+          async ({ locally, comm, naked }) => {
+            const sharedDecision = naked(decision);
             if (sharedDecision) {
               const deliveryDateAtSeller = await locally(
                 "seller",
@@ -40,8 +40,8 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
     {
       name: "no error thrown on non-Choreography type",
       code: /* ts */ `
-      const nonChoreo = async (colocally) => {
-        await colocally(
+      const nonChoreo = async (enclave) => {
+        await enclave(
           "alice",
           async (locally) => {
             await locally("alice", () => "hi");
@@ -61,10 +61,10 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test1: Choreography<Locations> = async ({
         locally,
         broadcast,
-        colocally,
+        enclave,
       }) => {
         const msgAtCarol = await locally("carol", () => "I'm Carol");
-        await colocally(["alice", "bob"], async () => {
+        await enclave(["alice", "bob"], async () => {
           const msgAtEveryone = await broadcast("carol", msgAtCarol);
           return [];
         });
@@ -74,10 +74,10 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test1: Choreography<Locations> = async ({
         locally,
         broadcast,
-        colocally,
+        enclave,
       }) => {
         const msgAtCarol = await locally("carol", () => "I'm Carol");
-        await colocally(["alice", "bob"], async ({ broadcast }) => {
+        await enclave(["alice", "bob"], async ({ broadcast }) => {
           const msgAtEveryone = await broadcast("carol", msgAtCarol);
           return [];
         });
@@ -97,12 +97,12 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
-        colocally,
+        enclave,
       }) => {
-        const [deliveryDateAtBuyer] = await colocally(
+        const [deliveryDateAtBuyer] = await enclave(
           ["buyer1", "seller"],
           async (arg) => {
-            const sharedDecision = peel(decision);
+            const sharedDecision = naked(decision);
             if (sharedDecision) {
               const deliveryDateAtSeller = await locally(
                 "seller",
@@ -115,7 +115,7 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       output: null, // assert that no autofix is suggested
       errors: [
         {
-          // error for missing `peel` operator, with no suggestions
+          // error for missing `naked` operator, with no suggestions
           messageId: "error",
           suggestions: null,
         },
@@ -135,14 +135,14 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const _test2: MyType = async ({
         locally,
         broadcast,
-        colocally,
+        enclave,
       }) => {
         const msg = await locally("buyer1", () => 1);
         const decision = await broadcast("buyer1", msg);
-        await colocally(
+        await enclave(
           ["buyer1", "seller"],
           async function (arg) {
-            const sharedDecision = peel(decision);
+            const sharedDecision = naked(decision);
             await locally("seller", () => sharedDecision);
             return [];
           },
@@ -168,12 +168,12 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
-        colocally,
+        enclave,
       }) => {
-        const [deliveryDateAtBuyer] = await colocally(
+        const [deliveryDateAtBuyer] = await enclave(
           ["buyer1", "seller"],
-          async ({ peel }) => {
-            const sharedDecision = peel(decision);
+          async ({ naked }) => {
+            const sharedDecision = naked(decision);
             if (sharedDecision) {
               const deliveryDateAtSeller = await locally(
                 "seller",
@@ -187,12 +187,12 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
-        colocally,
+        enclave,
       }) => {
-        const [deliveryDateAtBuyer] = await colocally(
+        const [deliveryDateAtBuyer] = await enclave(
           ["buyer1", "seller"],
-          async ({ peel, locally }) => {
-            const sharedDecision = peel(decision);
+          async ({ naked, locally }) => {
+            const sharedDecision = naked(decision);
             if (sharedDecision) {
               const deliveryDateAtSeller = await locally(
                 "seller",
@@ -212,12 +212,12 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
-        colocally,
+        enclave,
       }) => {
-        const [deliveryDateAtBuyer] = await colocally(
+        const [deliveryDateAtBuyer] = await enclave(
           ["buyer1", "seller"],
-          async ({ peel, locally }) => {
-            const sharedDecision = peel(decision);
+          async ({ naked, locally }) => {
+            const sharedDecision = naked(decision);
             if (sharedDecision) {
               const deliveryDateAtSeller = await locally(
                 "seller",
@@ -239,12 +239,12 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
-        colocally,
+        enclave,
       }) => {
-        const [deliveryDateAtBuyer] = await colocally(
+        const [deliveryDateAtBuyer] = await enclave(
           ["buyer1", "seller"],
           async ({}) => {
-            const sharedDecision = peel(decision);
+            const sharedDecision = naked(decision);
           }
         )
       };`,
@@ -252,12 +252,12 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
-        colocally,
+        enclave,
       }) => {
-        const [deliveryDateAtBuyer] = await colocally(
+        const [deliveryDateAtBuyer] = await enclave(
           ["buyer1", "seller"],
-          async ({ peel }) => {
-            const sharedDecision = peel(decision);
+          async ({ naked }) => {
+            const sharedDecision = naked(decision);
           }
         )
       };`,
@@ -272,11 +272,11 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       correct nested context`,
       code: /* ts */ `
       type Locations = "alice" | "bob" | "carol";
-      const _test2: Choreography<Locations> = async ({ colocally }) => {
-        await colocally(
+      const _test2: Choreography<Locations> = async ({ enclave }) => {
+        await enclave(
           ["alice", "bob", "carol"],
-          async ({ colocally }) => {
-            await colocally(
+          async ({ enclave }) => {
+            await enclave(
               ["alice", "bob"],
               async ({}) => {
                 await locally("alice", () => {
@@ -294,11 +294,11 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       };`,
       output: /* ts */ `
       type Locations = "alice" | "bob" | "carol";
-      const _test2: Choreography<Locations> = async ({ colocally }) => {
-        await colocally(
+      const _test2: Choreography<Locations> = async ({ enclave }) => {
+        await enclave(
           ["alice", "bob", "carol"],
-          async ({ colocally }) => {
-            await colocally(
+          async ({ enclave }) => {
+            await enclave(
               ["alice", "bob"],
               async ({ locally }) => {
                 await locally("alice", () => {

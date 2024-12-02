@@ -33,19 +33,19 @@ describe("concurrentCall", () => {
   it("order 1", async () => {
     const alice = aliceProjector.epp(concurrentCall);
     const bob = bobProjector.epp(concurrentCall);
-    const [_, ret] = await Promise.all([
-      alice([0, 100]),
-      bob([undefined, undefined]),
+    const [_, [x, y]] = await Promise.all([
+      alice([aliceProjector.local(0), aliceProjector.local(100)]),
+      bob([bobProjector.remote("alice"), bobProjector.remote("alice")]),
     ]);
-    expect(ret).toEqual([1, 2]);
+    expect([bobProjector.unwrap(x), bobProjector.unwrap(y)]).toEqual([1, 2]);
   });
   it("order 2", async () => {
     const alice = aliceProjector.epp(concurrentCall);
     const bob = bobProjector.epp(concurrentCall);
-    const [_, ret] = await Promise.all([
-      alice([100, 0]),
-      bob([undefined, undefined]),
+    const [_, [x, y]] = await Promise.all([
+      alice([aliceProjector.local(100), aliceProjector.local(0)]),
+      bob([bobProjector.remote("alice"), bobProjector.remote("alice")]),
     ]);
-    expect(ret).toEqual([1, 2]);
+    expect([bobProjector.unwrap(x), bobProjector.unwrap(y)]).toEqual([1, 2]);
   });
 });

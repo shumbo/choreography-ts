@@ -5,6 +5,16 @@
 
 Choreographic Programming in TypeScript
 
+## Repository Structure
+
+This repository is a monorepo managed with [pnpm workspace](https://pnpm.io/workspaces). It contains the following packages:
+
+- [`@choreography-ts/core`](./packages/core): Core library for choreographic programming.
+- [`@choreography-ts/eslint-plugin-choreography-ts`](./packages/eslint-plugin-choreography-ts): ESLint plugin for choreography-ts.
+- [`@choreography-ts/examples`](./packages/examples): Example projects demonstrating the usage of choreography-ts.
+- [`@choreography-ts/transport-express`](./packages/transport-express): Express (HTTP) transport layer for choreography-ts.
+- [`@choreography-ts/transport-socketio`](./packages/transport-socketio): Socket.IO transport layer for choreography-ts.
+
 ## Development
 
 ### Requirements

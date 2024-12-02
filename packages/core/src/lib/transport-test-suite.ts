@@ -1,6 +1,6 @@
 import type { beforeAll, test, afterAll, expect } from "vitest";
 
-import { Choreography, Located, Projector, Transport } from "..";
+import { Choreography, MultiplyLocated, Projector, Transport } from "..";
 import { InMemoryLogManager } from "../in-memory-log-manager";
 
 export namespace TransportTestSuite {
@@ -85,9 +85,9 @@ export namespace TransportTestSuite {
     test("comm", async () => {
       const c: Choreography<
         Locations,
-        [Located<number, "alice">],
-        [Located<number, "dave">]
-      > = async ({ locally, comm }, [a]) => {
+        MultiplyLocated<number, "alice">,
+        MultiplyLocated<number, "dave">
+      > = async ({ locally, comm }, a) => {
         const a2 = await locally("alice", (unwrap) => {
           return unwrap(a) + 1;
         });
@@ -103,21 +103,21 @@ export namespace TransportTestSuite {
         const d2 = await locally("dave", (unwrap) => {
           return unwrap(d1) + 8;
         });
-        return [d2];
+        return d2;
       };
-      const [, , , [count]] = await Promise.all([
-        pa.epp(c)([0]),
-        pb.epp(c)([undefined]),
-        pc.epp(c)([undefined]),
-        pd.epp(c)([undefined]),
+      const [, , , count] = await Promise.all([
+        pa.epp(c)(pa.local(0)),
+        pb.epp(c)(pb.remote("alice")),
+        pc.epp(c)(pc.remote("alice")),
+        pd.epp(c)(pd.remote("alice")),
       ]);
-      expect(count).toEqual(15);
+      expect(pd.unwrap(count)).toEqual(15);
     });
     test("multicast", async () => {
       const test: Choreography<
         Locations,
-        [],
-        [Located<string, "bob">, Located<string, "carol">]
+        undefined,
+        [MultiplyLocated<string, "bob">, MultiplyLocated<string, "carol">]
       > = async ({ locally, multicast }) => {
         const msg = await locally("alice", () => "Hello, world!");
         const msgAtSelectedTwo = await multicast(
@@ -134,13 +134,13 @@ export namespace TransportTestSuite {
         return [msgAtBob, msgAtCarol];
       };
       const [, [msgAtBob], [, msgAtCarol]] = await Promise.all([
-        pa.epp(test)([]),
-        pb.epp(test)([]),
-        pc.epp(test)([]),
-        pd.epp(test)([]),
+        pa.epp(test)(void 0),
+        pb.epp(test)(void 0),
+        pc.epp(test)(void 0),
+        pd.epp(test)(void 0),
       ]);
-      expect(msgAtBob).toEqual("Hello, world!");
-      expect(msgAtCarol).toEqual("Hello, world!");
+      expect(pb.unwrap(msgAtBob)).toEqual("Hello, world!");
+      expect(pc.unwrap(msgAtCarol)).toEqual("Hello, world!");
     });
     test("broadcast", async () => {
       let count = 0;
@@ -177,10 +177,10 @@ export namespace TransportTestSuite {
       ]);
       expect(count).toEqual(4);
     });
-    test("colocally", async () => {
+    test("enclave", async () => {
       let count = 0;
-      const test: Choreography<Locations, [], []> = async ({ colocally }) => {
-        await colocally(
+      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
+        await enclave(
           ["alice", "bob"],
           async ({ locally, broadcast }) => {
             const bAtAlice = await locally("alice", () => "SECRET");
@@ -202,24 +202,23 @@ export namespace TransportTestSuite {
       expect(count).toEqual(2);
     });
 
-    test("colocally changes context", async () => {
+    test("enclave changes context", async () => {
       const test: Choreography<Locations> = async ({
         locally,
         broadcast,
-        colocally,
+        enclave,
       }) => {
         const msgAtCarol = await locally("carol", () => "I'm Carol");
-        await colocally(
+        await enclave(
           ["alice", "bob"],
           async () => {
             const _msgAtEveryone = await broadcast("carol", msgAtCarol);
-            return [];
           },
-          [],
+          undefined,
         );
-        return [];
+        return undefined;
       };
-      const p = pa.epp(test)([]);
+      const p = pa.epp(test)(void 0);
       await expect(p).rejects.toThrow();
     });
 
@@ -228,8 +227,8 @@ export namespace TransportTestSuite {
       let crashed = false;
       const test: Choreography<
         Locations,
-        [],
-        [Located<number, "alice">]
+        undefined,
+        [MultiplyLocated<number, "alice">]
       > = async ({ locally, comm }) => {
         const a1 = await locally("alice", () => {
           return 100;
@@ -246,10 +245,10 @@ export namespace TransportTestSuite {
         return [a2];
       };
       const [la, lb] = [new InMemoryLogManager(), new InMemoryLogManager()];
-      const alice = pa.epp(test)([], { logManager: la });
-      let bob = pb.epp(test)([], { logManager: lb });
+      const alice = pa.epp(test)(void 0, { logManager: la });
+      let bob = pb.epp(test)(void 0, { logManager: lb });
       await expect(bob).rejects.toThrow("why!?");
-      bob = pb.epp(test)([], { logManager: lb });
+      bob = pb.epp(test)(void 0, { logManager: lb });
       await expect(bob).resolves.not.toThrow();
       await expect(alice).resolves.not.toThrow();
     });

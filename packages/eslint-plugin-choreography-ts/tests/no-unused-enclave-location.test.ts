@@ -1,13 +1,13 @@
 import { ruleTester } from "./common";
-import noUnusedColocallyLocation from "../src/no-unused-colocally-location";
+import noUnusedEnclaveLocation from "../src/no-unused-enclave-location";
 
-ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
+ruleTester.run("no-unused-enclave-location", noUnusedEnclaveLocation, {
   valid: [
     {
-      name: `passing test case 1: all locations for 'colocally' are used operationally with 'locally' in the body`,
+      name: `passing test case 1: all locations for 'enclave' are used operationally with 'locally' in the body`,
       code: /* ts */ `type Locations = "alice" | "bob";
-      const test: Choreography<Locations, [], []> = async ({ colocally }) => {
-        await colocally(
+      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
+        await enclave(
           ["alice", "bob"],
           async ({ locally }) => {
             await locally("alice", () => "bob");
@@ -20,10 +20,10 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
       };`,
     },
     {
-      name: `passing test case 2: all locations for 'colocally' are used with 'locally' and 'multicast' in the body`,
+      name: `passing test case 2: all locations for 'enclave' are used with 'locally' and 'multicast' in the body`,
       code: /* ts */ `type Locations = "alice" | "bob" | "carol";
-      const test: Choreography<Locations, [], []> = async ({ colocally }) => {
-        await colocally(
+      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
+        await enclave(
           ["alice", "bob", "carol"],
           async ({ locally, multicast }) => {
             const msgAtCarol = await locally("carol", () => "Hi from carol");
@@ -36,10 +36,10 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
       };`,
     },
     {
-      name: `passing test case 3: all locations for 'colocally' are used with 'locally' and 'comm' in the body`,
+      name: `passing test case 3: all locations for 'enclave' are used with 'locally' and 'comm' in the body`,
       code: /* ts */ `type Locations = "alice" | "bob" | "carol";
-      const test: Choreography<Locations, [], []> = async ({ colocally }) => {
-        await colocally(
+      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
+        await enclave(
           ["alice", "bob", "carol"],
           async ({ locally, comm }) => {
             const msgAtCarol = await locally("carol", () => "Hi from carol");
@@ -53,15 +53,15 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
       };`,
     },
     {
-      name: `passing test case 4: all locations marked as used when 'broadcast' is used, and then using the same locations with other operators in 'colocally' causes no problems`,
+      name: `passing test case 4: all locations marked as used when 'broadcast' is used, and then using the same locations with other operators in 'enclave' causes no problems`,
       code: /* ts */ `type Locations = "alice" | "bob" | "carol";
-      const test: Choreography<Locations, [], []> = async ({ colocally }) => {
-        await colocally(
+      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
+        await enclave(
           ["alice", "bob", "carol"],
-          async ({ locally, colocally, comm, broadcast, multicast, call }) => {
+          async ({ locally, enclave, comm, broadcast, multicast, call }) => {
             const msgAtCarol = await locally("carol", () => "Hi from carol");
             await broadcast("carol", msgAtCarol);
-            const [msgAtBob] = await colocally(
+            const [msgAtBob] = await enclave(
               ["bob", "carol"],
               async ({ locally, broadcast }) => {
                 const msgAtBob = await locally("bob", () => "Hi at bob");
@@ -89,7 +89,7 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
       };`,
     },
     {
-      name: `passing test case 5: all locations marked as used when 'call' is used in 'colocally'`,
+      name: `passing test case 5: all locations marked as used when 'call' is used in 'enclave'`,
       code: /* ts */ `type Locations = "alice" | "bob" | "carol";
       const subChoreo: Choreography<Locations, [], []> = async ({ locally }) => {
         await locally("alice", () => "Hi from alice");
@@ -97,8 +97,8 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
         await locally("carol", () => "Hi from carol");
         return [];
       };
-      const test: Choreography<Locations, [], []> = async ({ colocally }) => {
-        await colocally(
+      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
+        await enclave(
           ["alice", "bob", "carol"],
           async ({ locally, call }) => {
             await locally("carol", () => "Hi from carol");
@@ -111,10 +111,10 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
       };`,
     },
     {
-      name: `passing test case 6: all locations are used as type arguments and with 'locally' inside 'colocally'`,
+      name: `passing test case 6: all locations are used as type arguments and with 'locally' inside 'enclave'`,
       code: /* ts */ `type Locations = "alice" | "bob" | "carol";
-      const test: Choreography<Locations, [], []> = async ({ colocally }) => {
-        await colocally(
+      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
+        await enclave(
           ["alice", "bob", "carol"],
           async ({ call }) => {
             const subChoreo: Choreography<
@@ -133,13 +133,13 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
       };`,
     },
     {
-      name: `passing test case 7: all locations for 'colocally' and nested 'colocally' calls are used as arguments inside the 'colocally' bodies`,
+      name: `passing test case 7: all locations for 'enclave' and nested 'enclave' calls are used as arguments inside the 'enclave' bodies`,
       code: /* ts */ `type Locations = "alice" | "bob" | "carol";
-      const test: Choreography<Locations, [], []> = async ({ colocally }) => {
-        await colocally(
+      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
+        await enclave(
           ["alice", "bob", "carol"],
-          async ({ colocally }) => {
-            await colocally(
+          async ({ enclave }) => {
+            await enclave(
               ["alice", "bob", "carol"],
               async ({ locally }) => {
                 await locally("alice", () => "Hi from alice");
@@ -159,10 +159,10 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
   ],
   invalid: [
     {
-      name: `failing test case 1: not all locations specified for top-level 'colocally' call are used inside the body`,
+      name: `failing test case 1: not all locations specified for top-level 'enclave' call are used inside the body`,
       code: /* ts */ `type Locations = "alice" | "bob";
-      const test: Choreography<Locations, [], []> = async ({ colocally }) => {
-        await colocally(
+      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
+        await enclave(
           ["alice", "bob"],
           async ({ locally }) => {
             await locally("alice", () => "bob");
@@ -179,13 +179,13 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
       ],
     },
     {
-      name: `failing test case 2: not all locations for nested 'colocally' call are used inside the body`,
+      name: `failing test case 2: not all locations for nested 'enclave' call are used inside the body`,
       code: /* ts */ `type Locations = "alice" | "bob" | "carol";
-      const test: Choreography<Locations, [], []> = async ({ colocally }) => {
-        await colocally(
+      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
+        await enclave(
           ["alice", "bob", "carol"],
-          async ({ colocally }) => {
-            await colocally(
+          async ({ enclave }) => {
+            await enclave(
               ["alice", "bob", "carol"],
               async ({ locally }) => {
                 await locally("alice", () => "Hi from alice");
@@ -207,15 +207,15 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
       ],
     },
     {
-      name: `failing test case 3: locations are correctly marked as not used in nested 'colocally' call where 'broadcast' is left unused`,
+      name: `failing test case 3: locations are correctly marked as not used in nested 'enclave' call where 'broadcast' is left unused`,
       code: /* ts */ `type Locations = "alice" | "bob" | "carol";
-        const test: Choreography<Locations, [], []> = async ({ colocally }) => {
-          await colocally(
+        const test: Choreography<Locations, [], []> = async ({ enclave }) => {
+          await enclave(
             ["alice", "bob", "carol"],
-            async ({ locally, colocally, comm, broadcast, multicast, call }) => {
+            async ({ locally, enclave, comm, broadcast, multicast, call }) => {
               const msgAtCarol = await locally("carol", () => "Hi from carol");
               await broadcast("carol", msgAtCarol);
-              const [msgAtBob] = await colocally(
+              const [msgAtBob] = await enclave(
                 ["bob", "carol"],
                 async ({ locally, broadcast }) => {
                   const msgAtBob = await locally("bob", () => "Hi at bob");
@@ -247,11 +247,11 @@ ruleTester.run("no-unused-colocally-location", noUnusedColocallyLocation, {
       ],
     },
     {
-      name: `failing test case 4: location use warnings are correctly reported for 'colocally' expressions in choreographies declared with a type alias`,
+      name: `failing test case 4: location use warnings are correctly reported for 'enclave' expressions in choreographies declared with a type alias`,
       code: /* ts */ `type Locations = "alice" | "bob" | "carol";
       type TypeAlias = Choreography<Locations, [], []>;
-      const subtleChoreo: TypeAlias = async ({ colocally }) => {
-        colocally(
+      const subtleChoreo: TypeAlias = async ({ enclave }) => {
+        enclave(
           ["alice", "bob"],
           async ({ locally }) => {
             await locally("alice", () => "Hi from alice");

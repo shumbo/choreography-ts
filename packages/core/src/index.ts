@@ -3,23 +3,23 @@ export type {
   Dependencies,
   Locally,
   Comm,
-  Colocally,
-  Peel,
+  Enclave,
+  Naked,
   Multicast,
   Broadcast,
   Call,
   Choreography,
-  LocatedElements,
   Subscription,
   Parcel,
 } from "./core.js";
 export {
-  Located,
-  Colocated,
+  MultiplyLocated,
+  Faceted,
   Transport,
   Projector,
   Runner,
   parcelFromJSON,
+  flatten,
 } from "./core.js";
 export { Queue } from "./lib/queue.js";
 export { Tag } from "./lib/tag.js";

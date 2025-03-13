@@ -3,7 +3,7 @@ export type {
   Dependencies,
   Locally,
   Comm,
-  Enclave,
+  Conclave,
   Naked,
   Multicast,
   Broadcast,
@@ -26,3 +26,4 @@ export { Tag } from "./lib/tag.js";
 export { DefaultDict } from "./lib/default-dict.js";
 export { IVar } from "./lib/ivar.js";
 export { TransportTestSuite } from "./lib/transport-test-suite.js";
+export { LocalTransport, LocalTransportChannel } from "./transport-local.js";

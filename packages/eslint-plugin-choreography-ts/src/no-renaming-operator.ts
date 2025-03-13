@@ -14,7 +14,7 @@ import ts from "typescript";
 
 type MessageIDs = "rename" | "invalid";
 
-const operators = /^(enclave|call)$/; // The operators that accept a choreography as an argument
+const operators = /^(conclave|call)$/; // The operators that accept a choreography as an argument
 const choreographySelector = `VariableDeclaration[kind = "const"] > VariableDeclarator`;
 const operatorSelector = `${choreographySelector} CallExpression[callee.name = ${operators}]`;
 // Match any top-level choreography, or any choreographic operator call that accepts a choreography argument
@@ -64,7 +64,7 @@ const noRenameRule: TSESLint.RuleModule<MessageIDs, []> = {
           if (node.params[0]?.type === AST_NODE_TYPES.ObjectPattern) {
             // If the first argument for the choreography is an object pattern
             node.params[0].properties.forEach((property) => {
-              // Check for shorthand json format: {locally, enclave, ...}, and no rest element `...rest`
+              // Check for shorthand json format: {locally, conclave, ...}, and no rest element `...rest`
               if (
                 property.type === AST_NODE_TYPES.Property
                   ? property.shorthand !== true

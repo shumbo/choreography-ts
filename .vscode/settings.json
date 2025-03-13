@@ -1,5 +1,5 @@
 {
-  "cSpell.words": ["enclave", "Colocated", "TAPL"],
+  "cSpell.words": ["conclave", "Colocated", "TAPL"],
   "eslint.options": {
     "overrideConfigFile": "./.eslintrc.cjs"
   },

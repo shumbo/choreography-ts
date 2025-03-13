@@ -64,7 +64,7 @@ export const bookseller: (
     Locations,
     MultiplyLocated<string, "buyer1">,
     MultiplyLocated<Date | null, "buyer1">
-  > = async ({ locally, comm, multicast, enclave, call }, titleAtBuyer) => {
+  > = async ({ locally, comm, multicast, conclave, call }, titleAtBuyer) => {
     const titleAtSeller = await comm("buyer1", "seller", titleAtBuyer);
     const priceAtSeller = await locally("seller", (unwrap) => {
       return priceTable.get(unwrap(titleAtSeller)) ?? 0;
@@ -72,7 +72,7 @@ export const bookseller: (
     const priceAtBuyer = await comm("seller", "buyer1", priceAtSeller);
     const decisionAtBuyer = await call(makeDecision, priceAtBuyer);
     const decision = await multicast("buyer1", ["seller"], decisionAtBuyer);
-    const deliveryDateAtBuyer = await enclave(
+    const deliveryDateAtBuyer = await conclave(
       ["buyer1", "seller"],
       async ({ locally, comm, naked }) => {
         const sharedDecision = naked(decision);

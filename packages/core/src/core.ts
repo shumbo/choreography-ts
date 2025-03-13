@@ -73,7 +73,7 @@ export class Faceted<T, L extends Location> {
 export type Dependencies<L extends Location> = {
   locally: Locally<L>;
   comm: Comm<L>;
-  enclave: Enclave<L>;
+  conclave: Conclave<L>;
   multicast: Multicast<L>;
   broadcast: Broadcast<L>;
   call: Call<L>;
@@ -107,7 +107,7 @@ export type Comm<L extends Location> = <L1 extends L, L2 extends L, T>(
   value: MultiplyLocated<T, L1>,
 ) => Promise<MultiplyLocated<T, L2>>;
 
-export type Enclave<L extends Location> = <LL extends L, Args, Return>(
+export type Conclave<L extends Location> = <LL extends L, Args, Return>(
   locations: LL[],
   choreography: Choreography<LL, Args, Return>,
   args: Args,
@@ -415,7 +415,7 @@ export class Projector<L extends Location, L1 extends L> {
           return new MultiplyLocated(m as any, key);
         };
 
-      const enclave: (t: Tag) => Enclave<L> =
+      const conclave: (t: Tag) => Conclave<L> =
         (t: Tag) =>
         async <LL extends L, Args, Return>(
           locations: LL[],
@@ -430,7 +430,7 @@ export class Projector<L extends Location, L1 extends L> {
                 wrapMethods((m) => ctxManager.checkContext(m), {
                   locally: locally(childTag),
                   comm: comm(childTag),
-                  enclave: enclave(childTag),
+                  conclave: conclave(childTag),
                   multicast: multicast(childTag),
                   broadcast: broadcast(childTag),
                   call: call(childTag),
@@ -552,7 +552,7 @@ export class Projector<L extends Location, L1 extends L> {
               broadcast: broadcast(childTag),
               call: call(childTag),
               multicast: multicast(childTag),
-              enclave: enclave(childTag),
+              conclave: conclave(childTag),
               naked: naked,
               parallel: parallel(childTag),
               fanout: fanout(childTag),
@@ -571,7 +571,7 @@ export class Projector<L extends Location, L1 extends L> {
           broadcast: broadcast(tag),
           call: call(tag),
           multicast: multicast(tag),
-          enclave: enclave(tag),
+          conclave: conclave(tag),
           naked: naked,
           parallel: parallel(tag),
           fanout: fanout(tag),
@@ -712,7 +712,7 @@ export class Runner {
           }
           return new MultiplyLocated(m as any, key);
         };
-      const enclave: Enclave<L> = async <LL extends L, Args, Return>(
+      const conclave: Conclave<L> = async <LL extends L, Args, Return>(
         locations: LL[],
         choreography: Choreography<LL, Args, Return>,
         args: Args,
@@ -723,7 +723,7 @@ export class Runner {
           wrapMethods((m) => m, {
             locally: locally,
             comm: comm,
-            enclave: enclave,
+            conclave: conclave,
             multicast: multicast,
             broadcast: broadcast,
             call: call,
@@ -766,7 +766,7 @@ export class Runner {
             broadcast: broadcast,
             call: call,
             multicast: multicast,
-            enclave: enclave,
+            conclave: conclave,
             naked: naked,
             parallel,
             fanout: fanout(),
@@ -786,7 +786,7 @@ export class Runner {
           broadcast: broadcast,
           call: call,
           multicast: multicast,
-          enclave: enclave,
+          conclave: conclave,
           naked: naked,
           parallel: parallel,
           fanout: fanout(),

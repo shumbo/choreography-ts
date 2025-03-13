@@ -65,11 +65,11 @@ ruleTester.run("no-renaming-operator", noRenameRule, {
       ],
     },
     {
-      name: "test for error in choreography as a `enclave` argument",
+      name: "test for error in choreography as a `conclave` argument",
       code: /* ts */ `
       type Locations = "alice" | "bob" | "carol";
-      const _test: Choreography<Locations> = async ({ enclave }) => {
-        await enclave(
+      const _test: Choreography<Locations> = async ({ conclave }) => {
+        await conclave(
           ["alice", "bob"],
           async ({ locally: l }) => {
             await l("alice", () => {

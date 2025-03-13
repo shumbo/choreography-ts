@@ -9,9 +9,9 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test: Choreography<Locations> = async ({
         locally,
         broadcast,
-        enclave,
+        conclave,
       }) => {
-        const msg = await enclave(["bob", "carol"], () => "I'm Carol");
+        const msg = await conclave(["bob", "carol"], () => "I'm Carol");
         return [];
       };`,
     },
@@ -21,9 +21,9 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
-        enclave,
+        conclave,
       }) => {
-        const [deliveryDateAtBuyer] = await enclave(
+        const [deliveryDateAtBuyer] = await conclave(
           ["buyer1", "seller"],
           async ({ locally, comm, naked }) => {
             const sharedDecision = naked(decision);
@@ -40,8 +40,8 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
     {
       name: "no error thrown on non-Choreography type",
       code: /* ts */ `
-      const nonChoreo = async (enclave) => {
-        await enclave(
+      const nonChoreo = async (conclave) => {
+        await conclave(
           "alice",
           async (locally) => {
             await locally("alice", () => "hi");
@@ -61,10 +61,10 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test1: Choreography<Locations> = async ({
         locally,
         broadcast,
-        enclave,
+        conclave,
       }) => {
         const msgAtCarol = await locally("carol", () => "I'm Carol");
-        await enclave(["alice", "bob"], async () => {
+        await conclave(["alice", "bob"], async () => {
           const msgAtEveryone = await broadcast("carol", msgAtCarol);
           return [];
         });
@@ -74,10 +74,10 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test1: Choreography<Locations> = async ({
         locally,
         broadcast,
-        enclave,
+        conclave,
       }) => {
         const msgAtCarol = await locally("carol", () => "I'm Carol");
-        await enclave(["alice", "bob"], async ({ broadcast }) => {
+        await conclave(["alice", "bob"], async ({ broadcast }) => {
           const msgAtEveryone = await broadcast("carol", msgAtCarol);
           return [];
         });
@@ -97,9 +97,9 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
-        enclave,
+        conclave,
       }) => {
-        const [deliveryDateAtBuyer] = await enclave(
+        const [deliveryDateAtBuyer] = await conclave(
           ["buyer1", "seller"],
           async (arg) => {
             const sharedDecision = naked(decision);
@@ -135,11 +135,11 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const _test2: MyType = async ({
         locally,
         broadcast,
-        enclave,
+        conclave,
       }) => {
         const msg = await locally("buyer1", () => 1);
         const decision = await broadcast("buyer1", msg);
-        await enclave(
+        await conclave(
           ["buyer1", "seller"],
           async function (arg) {
             const sharedDecision = naked(decision);
@@ -168,9 +168,9 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
-        enclave,
+        conclave,
       }) => {
-        const [deliveryDateAtBuyer] = await enclave(
+        const [deliveryDateAtBuyer] = await conclave(
           ["buyer1", "seller"],
           async ({ naked }) => {
             const sharedDecision = naked(decision);
@@ -187,9 +187,9 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
-        enclave,
+        conclave,
       }) => {
-        const [deliveryDateAtBuyer] = await enclave(
+        const [deliveryDateAtBuyer] = await conclave(
           ["buyer1", "seller"],
           async ({ naked, locally }) => {
             const sharedDecision = naked(decision);
@@ -212,9 +212,9 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
-        enclave,
+        conclave,
       }) => {
-        const [deliveryDateAtBuyer] = await enclave(
+        const [deliveryDateAtBuyer] = await conclave(
           ["buyer1", "seller"],
           async ({ naked, locally }) => {
             const sharedDecision = naked(decision);
@@ -239,9 +239,9 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
-        enclave,
+        conclave,
       }) => {
-        const [deliveryDateAtBuyer] = await enclave(
+        const [deliveryDateAtBuyer] = await conclave(
           ["buyer1", "seller"],
           async ({}) => {
             const sharedDecision = naked(decision);
@@ -252,9 +252,9 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       const test2: Choreography<Locations> = async ({
         locally,
         broadcast,
-        enclave,
+        conclave,
       }) => {
-        const [deliveryDateAtBuyer] = await enclave(
+        const [deliveryDateAtBuyer] = await conclave(
           ["buyer1", "seller"],
           async ({ naked }) => {
             const sharedDecision = naked(decision);
@@ -272,11 +272,11 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       correct nested context`,
       code: /* ts */ `
       type Locations = "alice" | "bob" | "carol";
-      const _test2: Choreography<Locations> = async ({ enclave }) => {
-        await enclave(
+      const _test2: Choreography<Locations> = async ({ conclave }) => {
+        await conclave(
           ["alice", "bob", "carol"],
-          async ({ enclave }) => {
-            await enclave(
+          async ({ conclave }) => {
+            await conclave(
               ["alice", "bob"],
               async ({}) => {
                 await locally("alice", () => {
@@ -294,11 +294,11 @@ ruleTester.run("no-outside-choreographic-operator", noOutsideOperatorRule, {
       };`,
       output: /* ts */ `
       type Locations = "alice" | "bob" | "carol";
-      const _test2: Choreography<Locations> = async ({ enclave }) => {
-        await enclave(
+      const _test2: Choreography<Locations> = async ({ conclave }) => {
+        await conclave(
           ["alice", "bob", "carol"],
-          async ({ enclave }) => {
-            await enclave(
+          async ({ conclave }) => {
+            await conclave(
               ["alice", "bob"],
               async ({ locally }) => {
                 await locally("alice", () => {

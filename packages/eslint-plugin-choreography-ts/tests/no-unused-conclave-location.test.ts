@@ -1,13 +1,13 @@
 import { ruleTester } from "./common";
-import noUnusedEnclaveLocation from "../src/no-unused-enclave-location";
+import noUnusedConclaveLocation from "../src/no-unused-conclave-location";
 
-ruleTester.run("no-unused-enclave-location", noUnusedEnclaveLocation, {
+ruleTester.run("no-unused-conclave-location", noUnusedConclaveLocation, {
   valid: [
     {
-      name: `passing test case 1: all locations for 'enclave' are used operationally with 'locally' in the body`,
+      name: `passing test case 1: all locations for 'conclave' are used operationally with 'locally' in the body`,
       code: /* ts */ `type Locations = "alice" | "bob";
-      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
-        await enclave(
+      const test: Choreography<Locations, [], []> = async ({ conclave }) => {
+        await conclave(
           ["alice", "bob"],
           async ({ locally }) => {
             await locally("alice", () => "bob");
@@ -20,10 +20,10 @@ ruleTester.run("no-unused-enclave-location", noUnusedEnclaveLocation, {
       };`,
     },
     {
-      name: `passing test case 2: all locations for 'enclave' are used with 'locally' and 'multicast' in the body`,
+      name: `passing test case 2: all locations for 'conclave' are used with 'locally' and 'multicast' in the body`,
       code: /* ts */ `type Locations = "alice" | "bob" | "carol";
-      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
-        await enclave(
+      const test: Choreography<Locations, [], []> = async ({ conclave }) => {
+        await conclave(
           ["alice", "bob", "carol"],
           async ({ locally, multicast }) => {
             const msgAtCarol = await locally("carol", () => "Hi from carol");
@@ -36,10 +36,10 @@ ruleTester.run("no-unused-enclave-location", noUnusedEnclaveLocation, {
       };`,
     },
     {
-      name: `passing test case 3: all locations for 'enclave' are used with 'locally' and 'comm' in the body`,
+      name: `passing test case 3: all locations for 'conclave' are used with 'locally' and 'comm' in the body`,
       code: /* ts */ `type Locations = "alice" | "bob" | "carol";
-      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
-        await enclave(
+      const test: Choreography<Locations, [], []> = async ({ conclave }) => {
+        await conclave(
           ["alice", "bob", "carol"],
           async ({ locally, comm }) => {
             const msgAtCarol = await locally("carol", () => "Hi from carol");
@@ -53,15 +53,15 @@ ruleTester.run("no-unused-enclave-location", noUnusedEnclaveLocation, {
       };`,
     },
     {
-      name: `passing test case 4: all locations marked as used when 'broadcast' is used, and then using the same locations with other operators in 'enclave' causes no problems`,
+      name: `passing test case 4: all locations marked as used when 'broadcast' is used, and then using the same locations with other operators in 'conclave' causes no problems`,
       code: /* ts */ `type Locations = "alice" | "bob" | "carol";
-      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
-        await enclave(
+      const test: Choreography<Locations, [], []> = async ({ conclave }) => {
+        await conclave(
           ["alice", "bob", "carol"],
-          async ({ locally, enclave, comm, broadcast, multicast, call }) => {
+          async ({ locally, conclave, comm, broadcast, multicast, call }) => {
             const msgAtCarol = await locally("carol", () => "Hi from carol");
             await broadcast("carol", msgAtCarol);
-            const [msgAtBob] = await enclave(
+            const [msgAtBob] = await conclave(
               ["bob", "carol"],
               async ({ locally, broadcast }) => {
                 const msgAtBob = await locally("bob", () => "Hi at bob");
@@ -89,7 +89,7 @@ ruleTester.run("no-unused-enclave-location", noUnusedEnclaveLocation, {
       };`,
     },
     {
-      name: `passing test case 5: all locations marked as used when 'call' is used in 'enclave'`,
+      name: `passing test case 5: all locations marked as used when 'call' is used in 'conclave'`,
       code: /* ts */ `type Locations = "alice" | "bob" | "carol";
       const subChoreo: Choreography<Locations, [], []> = async ({ locally }) => {
         await locally("alice", () => "Hi from alice");
@@ -97,8 +97,8 @@ ruleTester.run("no-unused-enclave-location", noUnusedEnclaveLocation, {
         await locally("carol", () => "Hi from carol");
         return [];
       };
-      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
-        await enclave(
+      const test: Choreography<Locations, [], []> = async ({ conclave }) => {
+        await conclave(
           ["alice", "bob", "carol"],
           async ({ locally, call }) => {
             await locally("carol", () => "Hi from carol");
@@ -111,10 +111,10 @@ ruleTester.run("no-unused-enclave-location", noUnusedEnclaveLocation, {
       };`,
     },
     {
-      name: `passing test case 6: all locations are used as type arguments and with 'locally' inside 'enclave'`,
+      name: `passing test case 6: all locations are used as type arguments and with 'locally' inside 'conclave'`,
       code: /* ts */ `type Locations = "alice" | "bob" | "carol";
-      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
-        await enclave(
+      const test: Choreography<Locations, [], []> = async ({ conclave }) => {
+        await conclave(
           ["alice", "bob", "carol"],
           async ({ call }) => {
             const subChoreo: Choreography<
@@ -133,13 +133,13 @@ ruleTester.run("no-unused-enclave-location", noUnusedEnclaveLocation, {
       };`,
     },
     {
-      name: `passing test case 7: all locations for 'enclave' and nested 'enclave' calls are used as arguments inside the 'enclave' bodies`,
+      name: `passing test case 7: all locations for 'conclave' and nested 'conclave' calls are used as arguments inside the 'conclave' bodies`,
       code: /* ts */ `type Locations = "alice" | "bob" | "carol";
-      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
-        await enclave(
+      const test: Choreography<Locations, [], []> = async ({ conclave }) => {
+        await conclave(
           ["alice", "bob", "carol"],
-          async ({ enclave }) => {
-            await enclave(
+          async ({ conclave }) => {
+            await conclave(
               ["alice", "bob", "carol"],
               async ({ locally }) => {
                 await locally("alice", () => "Hi from alice");
@@ -159,10 +159,10 @@ ruleTester.run("no-unused-enclave-location", noUnusedEnclaveLocation, {
   ],
   invalid: [
     {
-      name: `failing test case 1: not all locations specified for top-level 'enclave' call are used inside the body`,
+      name: `failing test case 1: not all locations specified for top-level 'conclave' call are used inside the body`,
       code: /* ts */ `type Locations = "alice" | "bob";
-      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
-        await enclave(
+      const test: Choreography<Locations, [], []> = async ({ conclave }) => {
+        await conclave(
           ["alice", "bob"],
           async ({ locally }) => {
             await locally("alice", () => "bob");
@@ -179,13 +179,13 @@ ruleTester.run("no-unused-enclave-location", noUnusedEnclaveLocation, {
       ],
     },
     {
-      name: `failing test case 2: not all locations for nested 'enclave' call are used inside the body`,
+      name: `failing test case 2: not all locations for nested 'conclave' call are used inside the body`,
       code: /* ts */ `type Locations = "alice" | "bob" | "carol";
-      const test: Choreography<Locations, [], []> = async ({ enclave }) => {
-        await enclave(
+      const test: Choreography<Locations, [], []> = async ({ conclave }) => {
+        await conclave(
           ["alice", "bob", "carol"],
-          async ({ enclave }) => {
-            await enclave(
+          async ({ conclave }) => {
+            await conclave(
               ["alice", "bob", "carol"],
               async ({ locally }) => {
                 await locally("alice", () => "Hi from alice");
@@ -207,15 +207,15 @@ ruleTester.run("no-unused-enclave-location", noUnusedEnclaveLocation, {
       ],
     },
     {
-      name: `failing test case 3: locations are correctly marked as not used in nested 'enclave' call where 'broadcast' is left unused`,
+      name: `failing test case 3: locations are correctly marked as not used in nested 'conclave' call where 'broadcast' is left unused`,
       code: /* ts */ `type Locations = "alice" | "bob" | "carol";
-        const test: Choreography<Locations, [], []> = async ({ enclave }) => {
-          await enclave(
+        const test: Choreography<Locations, [], []> = async ({ conclave }) => {
+          await conclave(
             ["alice", "bob", "carol"],
-            async ({ locally, enclave, comm, broadcast, multicast, call }) => {
+            async ({ locally, conclave, comm, broadcast, multicast, call }) => {
               const msgAtCarol = await locally("carol", () => "Hi from carol");
               await broadcast("carol", msgAtCarol);
-              const [msgAtBob] = await enclave(
+              const [msgAtBob] = await conclave(
                 ["bob", "carol"],
                 async ({ locally, broadcast }) => {
                   const msgAtBob = await locally("bob", () => "Hi at bob");
@@ -247,11 +247,11 @@ ruleTester.run("no-unused-enclave-location", noUnusedEnclaveLocation, {
       ],
     },
     {
-      name: `failing test case 4: location use warnings are correctly reported for 'enclave' expressions in choreographies declared with a type alias`,
+      name: `failing test case 4: location use warnings are correctly reported for 'conclave' expressions in choreographies declared with a type alias`,
       code: /* ts */ `type Locations = "alice" | "bob" | "carol";
       type TypeAlias = Choreography<Locations, [], []>;
-      const subtleChoreo: TypeAlias = async ({ enclave }) => {
-        enclave(
+      const subtleChoreo: TypeAlias = async ({ conclave }) => {
+        conclave(
           ["alice", "bob"],
           async ({ locally }) => {
             await locally("alice", () => "Hi from alice");

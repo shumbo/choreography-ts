@@ -1,5 +1,5 @@
-// no-unused-enclave-location rule
-// All locations specified for a `enclave` call must be used inside the body
+// no-unused-conclave-location rule
+// All locations specified for a `conclave` call must be used inside the body
 // https://github.com/shumbo/choreography-ts/issues/7
 
 "use strict";
@@ -7,26 +7,26 @@ import { AST_NODE_TYPES, TSESLint, TSESTree } from "@typescript-eslint/utils";
 
 type MessageIDs = "warning";
 
-const enclaveSelector = `CallExpression[callee.name = "enclave"]`;
-const enclaveEnclaveUseLocater = `${enclaveSelector} CallExpression[callee.name = "enclave"]`;
-const enclaveLocallyUseLocater = `${enclaveSelector} CallExpression[callee.name = "locally"]`;
-const enclaveMulticastUseLocater = `${enclaveSelector} CallExpression[callee.name = "multicast"]`;
-const enclaveCommUseLocater = `${enclaveSelector} CallExpression[callee.name = "comm"]`;
-const enclaveBroadcastUseLocater = `${enclaveSelector} CallExpression[callee.name = "broadcast"]`;
-const enclaveCallUseLocater = `${enclaveSelector} CallExpression[callee.name = "call"]`;
-const enclaveTypeUseLocater = `${enclaveSelector} TSLiteralType`;
-const enclaveAtExit = `${enclaveSelector}:exit`;
+const conclaveSelector = `CallExpression[callee.name = "conclave"]`;
+const conclaveConclaveUseLocater = `${conclaveSelector} CallExpression[callee.name = "conclave"]`;
+const conclaveLocallyUseLocater = `${conclaveSelector} CallExpression[callee.name = "locally"]`;
+const conclaveMulticastUseLocater = `${conclaveSelector} CallExpression[callee.name = "multicast"]`;
+const conclaveCommUseLocater = `${conclaveSelector} CallExpression[callee.name = "comm"]`;
+const conclaveBroadcastUseLocater = `${conclaveSelector} CallExpression[callee.name = "broadcast"]`;
+const conclaveCallUseLocater = `${conclaveSelector} CallExpression[callee.name = "call"]`;
+const conclaveTypeUseLocater = `${conclaveSelector} TSLiteralType`;
+const conclaveAtExit = `${conclaveSelector}:exit`;
 
-// Implementation: Check whether each location passed to `enclave` is present inside the body of the choreography argument
-// as an argument to any operator that accepts or uses location parameters (locally, enclave, comm, multicast, broadcast, call)
+// Implementation: Check whether each location passed to `conclave` is present inside the body of the choreography argument
+// as an argument to any operator that accepts or uses location parameters (locally, conclave, comm, multicast, broadcast, call)
 // or as a type argument
-const noUnusedEnclaveLocation: TSESLint.RuleModule<MessageIDs, []> = {
+const noUnusedConclaveLocation: TSESLint.RuleModule<MessageIDs, []> = {
   defaultOptions: [],
   meta: {
     type: "problem",
     docs: {
       description:
-        "All locations specified for `enclave` must be used inside the body of the call",
+        "All locations specified for `conclave` must be used inside the body of the call",
       recommended: "recommended",
       url: "https://github.com/shumbo/choreography-ts/issues/7",
     },
@@ -38,17 +38,17 @@ const noUnusedEnclaveLocation: TSESLint.RuleModule<MessageIDs, []> = {
     schema: [],
   },
   create(context) {
-    // Store locations for each `enclave` usage
-    // This is a `Map` where each location name is associated with its error to report if it goes unsued throughout the `enclave` choreography
-    // Each new `enclave` node replaces the previous rpeort associated with the location
+    // Store locations for each `conclave` usage
+    // This is a `Map` where each location name is associated with its error to report if it goes unsued throughout the `conclave` choreography
+    // Each new `conclave` node replaces the previous rpeort associated with the location
     const locations: Map<string, TSESLint.ReportDescriptor<MessageIDs>>[] = [];
     return {
-      // Gather locations passed to a `enclave` call
-      [enclaveSelector]: function (node: TSESTree.CallExpression) {
-        const map = new Map(); // Create a new mapping for the `enclave` context
+      // Gather locations passed to a `conclave` call
+      [conclaveSelector]: function (node: TSESTree.CallExpression) {
+        const map = new Map(); // Create a new mapping for the `conclave` context
         const args = node.arguments;
         if (args[0]?.type === AST_NODE_TYPES.ArrayExpression) {
-          // To ensure that only `enclave` calls are checked for which the inner choreography is defined as an
+          // To ensure that only `conclave` calls are checked for which the inner choreography is defined as an
           // arrow function where the use of the locations can be easily verified
           if (args[1]?.type === AST_NODE_TYPES.ArrowFunctionExpression) {
             args[0].elements.forEach((arg) => {
@@ -56,7 +56,7 @@ const noUnusedEnclaveLocation: TSESLint.RuleModule<MessageIDs, []> = {
                 arg?.type === AST_NODE_TYPES.Literal &&
                 typeof arg.value === "string"
               ) {
-                // Set error reports for locations passed to the `enclave` call
+                // Set error reports for locations passed to the `conclave` call
                 map.set(arg.value, {
                   node: arg,
                   messageId: "warning",
@@ -70,11 +70,11 @@ const noUnusedEnclaveLocation: TSESLint.RuleModule<MessageIDs, []> = {
         }
         locations.push(map);
       },
-      // Check whether any location is used an argument to a nested `enclave` expression
-      // and also add the locations to `locations` for checking their use inside the nested `enclave` body
-      [enclaveEnclaveUseLocater]: function (node: TSESTree.CallExpression) {
+      // Check whether any location is used an argument to a nested `conclave` expression
+      // and also add the locations to `locations` for checking their use inside the nested `conclave` body
+      [conclaveConclaveUseLocater]: function (node: TSESTree.CallExpression) {
         const map = locations.pop()!; // Get the mapping from the end of the `locations` array - there will be at least one mapping in `locations` at this point
-        const newMap = new Map(); // Create a new mapping for the nested `enclave` context
+        const newMap = new Map(); // Create a new mapping for the nested `conclave` context
         const args = node.arguments;
         if (args[0]?.type === AST_NODE_TYPES.ArrayExpression) {
           args[0].elements.forEach((location) => {
@@ -82,9 +82,9 @@ const noUnusedEnclaveLocation: TSESLint.RuleModule<MessageIDs, []> = {
               location?.type === AST_NODE_TYPES.Literal &&
               typeof location.value === "string"
             ) {
-              // Remove locations used from the outer `enclave` mapping
+              // Remove locations used from the outer `conclave` mapping
               map.delete(location.value);
-              // Add error reports for locations for the nested `enclave` context
+              // Add error reports for locations for the nested `conclave` context
               newMap.set(location.value, {
                 node: location,
                 messageId: "warning",
@@ -95,11 +95,11 @@ const noUnusedEnclaveLocation: TSESLint.RuleModule<MessageIDs, []> = {
             }
           });
         }
-        locations.push(map); // Push mapping for outer `enclave` context
-        locations.push(newMap); // Push new mapping for nested `enclave` context
+        locations.push(map); // Push mapping for outer `conclave` context
+        locations.push(newMap); // Push new mapping for nested `conclave` context
       },
       // Check whether any location is used as an argument to a nested `locally` expression
-      [enclaveLocallyUseLocater]: function (node: TSESTree.CallExpression) {
+      [conclaveLocallyUseLocater]: function (node: TSESTree.CallExpression) {
         const map = locations.pop()!;
         const args = node.arguments;
         if (
@@ -111,7 +111,7 @@ const noUnusedEnclaveLocation: TSESLint.RuleModule<MessageIDs, []> = {
         locations.push(map);
       },
       // Check whether any location is used as an argument to a nested `multicast` expression
-      [enclaveMulticastUseLocater]: function (node: TSESTree.CallExpression) {
+      [conclaveMulticastUseLocater]: function (node: TSESTree.CallExpression) {
         const map = locations.pop()!;
         const args = node.arguments;
         // Check whether any location is the sender
@@ -134,20 +134,20 @@ const noUnusedEnclaveLocation: TSESLint.RuleModule<MessageIDs, []> = {
         }
         locations.push(map);
       },
-      // Check whether any `broadcast` is used inside the `enclave` call, which instantly designates the locations as being used
-      [enclaveBroadcastUseLocater]: function () {
+      // Check whether any `broadcast` is used inside the `conclave` call, which instantly designates the locations as being used
+      [conclaveBroadcastUseLocater]: function () {
         const map = locations.pop()!;
-        map.clear(); // Remove all locations from the mapping for the current `enclave` context
+        map.clear(); // Remove all locations from the mapping for the current `conclave` context
         locations.push(map);
       },
       // Check for any use of `call`, which should also mark all the locations as being used
-      [enclaveCallUseLocater]: function () {
+      [conclaveCallUseLocater]: function () {
         const map = locations.pop()!;
-        map.clear(); // Remove all locations from the mapping for the current `enclave` context
+        map.clear(); // Remove all locations from the mapping for the current `conclave` context
         locations.push(map);
       },
       // Check whether any location is used as an argument to a nested `comm` expression
-      [enclaveCommUseLocater]: function (node: TSESTree.CallExpression) {
+      [conclaveCommUseLocater]: function (node: TSESTree.CallExpression) {
         const map = locations.pop()!;
         const args = node.arguments;
         // Check whether any location is the sender
@@ -167,7 +167,7 @@ const noUnusedEnclaveLocation: TSESLint.RuleModule<MessageIDs, []> = {
         locations.push(map);
       },
       // Check whether any location is used as a type argument in the inner choreography
-      [enclaveTypeUseLocater]: function (node: TSESTree.TSLiteralType) {
+      [conclaveTypeUseLocater]: function (node: TSESTree.TSLiteralType) {
         const map = locations.pop()!;
         if (
           node.literal.type === AST_NODE_TYPES.Literal &&
@@ -178,12 +178,12 @@ const noUnusedEnclaveLocation: TSESLint.RuleModule<MessageIDs, []> = {
         locations.push(map);
       },
       // Report errors for unused location arguments once the AST for the entire program is traversed
-      [enclaveAtExit]: function () {
-        const map = locations.pop()!; // Remove the unused locations mapping for the current `enclave` context
+      [conclaveAtExit]: function () {
+        const map = locations.pop()!; // Remove the unused locations mapping for the current `conclave` context
         map.forEach((report) => context.report(report)); // Report warnings for the unused locations
       },
     };
   },
 };
 
-export default noUnusedEnclaveLocation;
+export default noUnusedConclaveLocation;

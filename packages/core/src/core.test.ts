@@ -92,13 +92,13 @@ describe("core", () => {
         locally,
         multicast,
         naked,
-        enclave,
+        conclave,
       }) => {
         const msg = await locally("alice", () => "Hello, world!");
         const mlv = await multicast("alice", ["bob"], msg);
         // @ts-expect-error: xx
         naked(mlv);
-        enclave(
+        conclave(
           ["alice", "bob"],
           async ({ naked }) => {
             check = naked(mlv);
@@ -123,10 +123,10 @@ describe("core", () => {
       await g(void 0);
       expect(count).toBe(1);
     });
-    test("enclave", async () => {
+    test("conclave", async () => {
       let count = 0;
-      const test: Choreography<Locations> = async ({ enclave }) => {
-        await enclave(
+      const test: Choreography<Locations> = async ({ conclave }) => {
+        await conclave(
           ["bob", "carol"],
           async ({ locally, broadcast }) => {
             const msgAtBob = await locally("bob", () => "Hello, world!");

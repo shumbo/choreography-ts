@@ -7,10 +7,10 @@ export class Tag {
     return this.v.length - 1;
   }
   public comm(): void {
-    this.v[this.lastIndex()]++;
+    this.v[this.lastIndex()]!++;
   }
   public call(): Tag {
-    this.v[this.lastIndex()]++;
+    this.v[this.lastIndex()]!++;
     const child = new Tag([...this.v]);
     child.v.push(0);
     return child;

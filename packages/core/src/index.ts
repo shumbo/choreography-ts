@@ -3,7 +3,7 @@ export type {
   Dependencies,
   Locally,
   Comm,
-  Enclave,
+  Conclave,
   Naked,
   Multicast,
   Broadcast,

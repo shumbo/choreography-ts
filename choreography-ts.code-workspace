@@ -29,7 +29,12 @@
     "search.exclude": {
       "dist/**": true,
     },
-    "cSpell.words": ["choreographies", "Enclave", "Colocated", "ivar"],
+    "cSpell.words": [
+      "choreographies",
+      "Conclave",
+      "Colocated",
+      "ivar"
+    ],
     "files.associations": {
       "turbo.json": "jsonc",
     },

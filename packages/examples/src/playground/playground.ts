@@ -40,7 +40,6 @@ const mainChoreography: Choreography<Locations, void, void> = async ({
       if (isNaN(number)) {
         console.error("Invalid number input");
       } else {
-        console.log("Alpha sending:", number);
         return number;
       }
     }

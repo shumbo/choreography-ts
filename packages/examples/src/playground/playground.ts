@@ -4,16 +4,21 @@
  * To run this file, use the following command:
  *
  * ```sh
- * pnpm tsx ./playground.ts
+ * pnpm tsx ./playground.ts [alpha|beta]
  * ```
  */
 
 import esMain from "es-main";
 
-import { Choreography, Projector, LocalTransport } from "@choreography-ts/core";
+import { Choreography, Projector } from "@choreography-ts/core";
+import { createInterface } from "readline";
+import {
+  ExpressTransport,
+  HttpConfig,
+} from "@choreography-ts/transport-express";
 
 // STEP 1: Define locations
-const locations = ["alice", "bob"] as const;
+const locations = ["alpha", "beta"] as const;
 type Locations = (typeof locations)[number];
 
 // STEP 2: Write a choreography
@@ -21,29 +26,69 @@ const mainChoreography: Choreography<Locations, void, void> = async ({
   locally,
   comm,
 }) => {
-  const randomNumberAtAlice = await locally("alice", () => {
-    const randomNumber = Math.random();
-    console.log(`Alice generated random number: ${randomNumber}`);
-    return randomNumber;
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout,
   });
-  const randomNumberAtBob = await comm("alice", "bob", randomNumberAtAlice);
-  locally("bob", (unwrap) => {
-    console.log(`Bob received random number: ${unwrap(randomNumberAtBob)}`);
+  const a = await locally("alpha", async () => {
+    for (;;) {
+      const input = await new Promise<string>((resolve) => {
+        rl.question("Enter a number: ", resolve);
+      });
+
+      const number = Number(input);
+      if (isNaN(number)) {
+        console.error("Invalid number input");
+      } else {
+        console.log("Alpha sending:", number);
+        return number;
+      }
+    }
   });
-  return;
+  const a_at_beta = await comm("alpha", "beta", a);
+  const b = await locally("beta", async () => {
+    const msg = new Promise<string>((resolve) => {
+      rl.question("Enter a word for Beta to send to Alpha: ", resolve);
+    });
+    return msg;
+  });
+  const b_at_alpha = await comm("beta", "alpha", b);
+  await locally("alpha", async (unwrap) => {
+    console.log("Alpha received:", unwrap(b_at_alpha));
+  });
+  await locally("beta", async (unwrap) => {
+    console.log("Beta received:", unwrap(a_at_beta));
+  });
+  rl.close();
 };
 
 // STEP 3: Run the choreography
 async function main() {
-  const channel = LocalTransport.createChannel(locations);
-  const tasks: Promise<void>[] = [];
-  for (const target of locations) {
-    // Use the `LocalTransport` for the demo purpose.
-    const transport = new LocalTransport(locations, target, channel);
-    const projector = new Projector(transport, target);
-    tasks.push(projector.epp(mainChoreography)());
+  const config: HttpConfig<Locations> = {
+    alpha: ["127.0.0.1", 8000],
+    beta: ["127.0.0.1", 8001],
+  };
+  if (process.argv.length < 3) {
+    console.error("Please provide a location");
+    return;
   }
-  await Promise.all(tasks);
+  const location = process.argv[2] as Locations;
+  if (!config[location]) {
+    console.error("Invalid location");
+    return;
+  }
+  if (location === "alpha") {
+    const transport = await ExpressTransport.create(config, "alpha");
+    const projector = new Projector(transport, "alpha");
+    await projector.epp(mainChoreography)();
+    await transport.teardown();
+  }
+  if (location === "beta") {
+    const transport = await ExpressTransport.create(config, "beta");
+    const projector = new Projector(transport, "beta");
+    await projector.epp(mainChoreography)();
+    await transport.teardown();
+  }
 }
 
 if (esMain(import.meta)) {

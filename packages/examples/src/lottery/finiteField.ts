@@ -27,6 +27,10 @@ class Field {
   rand() {
     return Math.floor(Math.random() * this.prime);
   }
+
+  range(): [number, number] {
+    return [0, this.prime - 1];
+  }
 }
 
 export default Field;

@@ -39,6 +39,11 @@ function askQuestion(query: string): Promise<string> {
 const maxSalt = 2 ^ 18;
 const minSalt = 2 ^ 20;
 
+const clients = ["client1", "client2"] as const;
+const numClients = clients.length;
+const multiplier = 10;
+const tau = numClients * multiplier;
+
 export const lottery =
   <SL extends Location, CL extends Location>(
     serverLocations: SL[],
@@ -51,7 +56,8 @@ export const lottery =
   > =>
   async ({ locally, fanin, fanout, parallel }) => {
     const secret = await parallel(clientLocations, async () => {
-      const secretStr = await askQuestion("Secret: ");
+      const [low, high] = field.range();
+      const secretStr = await askQuestion(`Secret (${low} to ${high}): `);
       return parseInt(secretStr);
     });
 
@@ -92,8 +98,8 @@ export const lottery =
 
     // 1) Each server selects a random number; τ is some multiple of the number of clients.
     const rho = await parallel(serverLocations, async () => {
-      const tauStr = await askQuestion("Pick a number from 1 to tau:");
-      return parseInt(tauStr);
+      const rhoStr = await askQuestion(`Pick a number from 1 to ${tau}:`);
+      return parseInt(rhoStr);
     });
 
     // Salt value

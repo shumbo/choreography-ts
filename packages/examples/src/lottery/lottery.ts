@@ -42,7 +42,7 @@ const minSalt = 2 ^ 20;
 const clients = ["client1", "client2"] as const;
 const numClients = clients.length;
 const multiplier = 10;
-const tao = numClients * multiplier;
+const tau = numClients * multiplier;
 
 export const lottery =
   <SL extends Location, CL extends Location>(
@@ -98,8 +98,8 @@ export const lottery =
 
     // 1) Each server selects a random number; τ is some multiple of the number of clients.
     const rho = await parallel(serverLocations, async () => {
-      const tauStr = await askQuestion(`Pick a number from 1 to ${tao}:`);
-      return parseInt(tauStr);
+      const rhoStr = await askQuestion(`Pick a number from 1 to ${tau}:`);
+      return parseInt(rhoStr);
     });
 
     // Salt value

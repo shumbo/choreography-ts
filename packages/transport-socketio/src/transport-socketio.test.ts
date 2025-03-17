@@ -14,7 +14,7 @@ const socketIOTransportFactory: TransportTestSuite.TransportFactory =
     setupServer(server);
     server.listen(port);
     const config: SocketIOConfig<TransportTestSuite.Locations> = {
-      uri: `http://localhost:${port}`,
+      uri: `http://127.0.0.1:${port}`,
       prefix: "choreography",
       locations: ["alice", "bob", "carol", "dave"],
     };

@@ -76,7 +76,7 @@ export const bookseller: Choreography<
 async function main() {
   const config: HttpConfig<Locations> = {
     seller: ["127.0.0.1", 3000],
-    buyer: ["localhost", 3001],
+    buyer: ["127.0.0.1", 3001],
   };
   const [sellerTransport, buyerTransport] = await Promise.all([
     ExpressTransport.create(config, "seller"),

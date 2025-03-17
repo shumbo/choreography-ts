@@ -116,9 +116,9 @@ const merge = <A extends Location, B extends Location, C extends Location>(
 
 async function main() {
   const config: HttpConfig<Location> = {
-    primary: ["localhost", 3000],
-    worker1: ["localhost", 3001],
-    worker2: ["localhost", 3002],
+    primary: ["127.0.0.1", 3000],
+    worker1: ["127.0.0.1", 3001],
+    worker2: ["127.0.0.1", 3002],
   };
 
   const [primaryTransport, worker1Transport, worker2Transport] =

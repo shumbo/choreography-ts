@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const role = roleInput;
     const transport = await SocketIOTransport.create(
       {
-        uri: "http://localhost:3400",
+        uri: "http://127.0.0.1:3400",
         prefix: room,
         locations: ["Alice", "Bob"],
       },

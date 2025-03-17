@@ -127,10 +127,10 @@ export const majorityVote: Choreography<
 
 async function main() {
   const config: HttpConfig<L> = {
-    judge: ["localhost", 3000],
-    voter1: ["localhost", 3001],
-    voter2: ["localhost", 3002],
-    voter3: ["localhost", 3003],
+    judge: ["127.0.0.1", 3000],
+    voter1: ["127.0.0.1", 3001],
+    voter2: ["127.0.0.1", 3002],
+    voter3: ["127.0.0.1", 3003],
   };
 
   const [judgeTransport, voter1Transport, voter2Transport, voter3Transport] =

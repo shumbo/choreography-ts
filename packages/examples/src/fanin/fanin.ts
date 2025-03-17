@@ -32,9 +32,9 @@ export const fanin_test: Choreography<Locations, [], []> = async ({
 
 async function main() {
   const config: HttpConfig<Locations> = {
-    alice: ["localhost", 3000],
-    bob: ["localhost", 3001],
-    carol: ["localhost", 3002],
+    alice: ["127.0.0.1", 3000],
+    bob: ["127.0.0.1", 3001],
+    carol: ["127.0.0.1", 3002],
   };
   const [aliceTransport, bobTransport, carolTransport] = await Promise.all([
     ExpressTransport.create(config, "alice"),

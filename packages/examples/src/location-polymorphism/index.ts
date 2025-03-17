@@ -40,9 +40,9 @@ const choreography: Choreography<L, [], []> = async ({ locally, call }) => {
 
 async function main() {
   const config: HttpConfig<L> = {
-    alice: ["localhost", 3000],
-    bob: ["localhost", 3001],
-    carol: ["localhost", 3002],
+    alice: ["127.0.0.1", 3000],
+    bob: ["127.0.0.1", 3001],
+    carol: ["127.0.0.1", 3002],
   };
 
   const [aliceTransport, bobTransport, carolTransport] = await Promise.all([

@@ -16,9 +16,9 @@ let worker2Projector: Projector<Location, "worker2">;
 describe("mergesort", () => {
   beforeAll(async () => {
     const config: HttpConfig<Location> = {
-      primary: ["localhost", await getPort()],
-      worker1: ["localhost", await getPort()],
-      worker2: ["localhost", await getPort()],
+      primary: ["127.0.0.1", await getPort()],
+      worker1: ["127.0.0.1", await getPort()],
+      worker2: ["127.0.0.1", await getPort()],
     };
     const [primaryTransport, worker1Transport, worker2Transport] =
       await Promise.all([

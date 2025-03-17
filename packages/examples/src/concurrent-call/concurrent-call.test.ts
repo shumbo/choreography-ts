@@ -14,8 +14,8 @@ let bobProjector: Projector<L, "bob">;
 describe("concurrentCall", () => {
   beforeAll(async () => {
     const config: HttpConfig<L> = {
-      alice: ["localhost", await getPort()],
-      bob: ["localhost", await getPort()],
+      alice: ["127.0.0.1", await getPort()],
+      bob: ["127.0.0.1", await getPort()],
     };
     const [aliceTransport, bobTransport] = await Promise.all([
       ExpressTransport.create(config, "alice"),

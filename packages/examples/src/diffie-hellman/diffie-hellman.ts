@@ -140,8 +140,8 @@ export const diffieHellman = <A extends Location, B extends Location>(
 /////////////
 async function main(host: string): Promise<void> {
   const config: HttpConfig<L> = {
-    alice: ["localhost", 3000],
-    bob: ["localhost", 3001],
+    alice: ["127.0.0.1", 3000],
+    bob: ["127.0.0.1", 3001],
   };
 
   const keyExchange = diffieHellman("alice", "bob");

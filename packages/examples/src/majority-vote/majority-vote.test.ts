@@ -9,10 +9,10 @@ import { L, majorityVote } from "./majority-vote";
 import { Projector } from "@choreography-ts/core";
 
 const config: HttpConfig<L> = {
-  judge: ["localhost", await getPort()],
-  voter1: ["localhost", await getPort()],
-  voter2: ["localhost", await getPort()],
-  voter3: ["localhost", await getPort()],
+  judge: ["127.0.0.1", await getPort()],
+  voter1: ["127.0.0.1", await getPort()],
+  voter2: ["127.0.0.1", await getPort()],
+  voter3: ["127.0.0.1", await getPort()],
 };
 
 let judgeProjector: Projector<L, "judge">;

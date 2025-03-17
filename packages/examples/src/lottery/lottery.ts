@@ -209,11 +209,11 @@ async function main() {
         | "client2"
         | "analyst";
       const config: HttpConfig<Locations> = {
-        server1: ["localhost", 3000],
-        server2: ["localhost", 3001],
-        client1: ["localhost", 3002],
-        client2: ["localhost", 3003],
-        analyst: ["localhost", 3004],
+        server1: ["127.0.0.1", 3000],
+        server2: ["127.0.0.1", 3001],
+        client1: ["127.0.0.1", 3002],
+        client2: ["127.0.0.1", 3003],
+        analyst: ["127.0.0.1", 3004],
       };
 
       // Create transport for the chosen role
